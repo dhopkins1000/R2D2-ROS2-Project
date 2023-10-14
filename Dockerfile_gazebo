@@ -1,0 +1,35 @@
+# Verwende ein Basis-Image mit ROS Iron und Ubuntu Jammy
+FROM ros:iron-ros-base-jammy
+
+# Setze die Umgebungsvariable für den X11-Display-Server
+ENV DISPLAY=:0
+
+# Installiere notwendige Tools
+RUN apt-get update && apt-get install -y \
+    lsb-release wget gnupg curl
+
+# Füge die Gazebo-Quelle hinzu
+# Füge die Gazebo-Quelle hinzu
+RUN wget https://packages.osrfoundation.org/gazebo.gpg -O /usr/share/keyrings/pkgs-osrf-archive-keyring.gpg
+RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/pkgs-osrf-archive-keyring.gpg] http://packages.osrfoundation.org/gazebo/ubuntu-stable $(lsb_release -cs) main" > /etc/apt/sources.list.d/gazebo-stable.list
+
+# Füge die ROS 2-Quellen hinzu
+RUN sh -c 'echo "deb [arch=$(dpkg --print-architecture)] http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" > /etc/apt/sources.list.d/ros2-latest.list'
+RUN curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add -
+
+# Installiere Gazebo Citadel
+RUN apt-get update && apt-get install -y \
+    ros-iron-ros-gzharmonic \
+    && rm -rf /var/lib/apt/lists/*
+
+# Setze den Arbeitsverzeichnis
+WORKDIR /root/catkin_ws
+
+# Kopiere dein ROS2-Projekt in den Container (optional)
+# COPY ./src /root/catkin_ws/src
+
+# Baue das ROS2-Projekt (optional)
+# RUN /bin/bash -c "source /opt/ros/iron/setup.bash; colcon build"
+
+# Starte Gazebo beim Start des Containers
+#CMD ["gazebo"]
