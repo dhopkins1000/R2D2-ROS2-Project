@@ -22,16 +22,16 @@ class R2D2Node(Node):
             self.listen_command
         )
 
-# R2D2 Status Publisher
-def publish_status(self):
-    msg = String()
-    msg.data = 'R2D2 is online.'
-    self.publisher.publish(msg)
-    self.get_logger().info('Published: "%s"' % msg.data)
+    # R2D2 Status Publisher
+    def publish_status(self):
+        msg = String()
+        msg.data = 'R2D2 is online.'
+        self.publisher.publish(msg)
+        self.get_logger().info('Published: "%s"' % msg.data)
 
-# R2D2 Command Subscriber
-def listen_command(self, msg):
-    self.get_logger().info('Received command: "%s"' % msg.data)
+    # R2D2 Command Subscriber
+    def listen_command(self, msg):
+        self.get_logger().info('Received command: "%s"' % msg.data)
 
 def main(args=None):
     rclpy.init(args=args)

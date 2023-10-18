@@ -32,4 +32,4 @@ WORKDIR /root/catkin_ws
 # RUN /bin/bash -c "source /opt/ros/iron/setup.bash; colcon build"
 
 # Starte Gazebo beim Start des Containers
-#CMD ["gazebo"]
+#CMD ["gz"]
