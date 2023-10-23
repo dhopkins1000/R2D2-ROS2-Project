@@ -12,17 +12,16 @@ class R2D2Node(Node):
         self.publisher = self.create_publisher(
             String,
             '/r2d2_status',
-            10
-        )
+            10)
+        
         self.timer = self.create_timer(1.0, self.publish_status)
         self.get_logger().info('Status Publisher started and status published.')
 
         self.subscription = self.create_subscription(
             String,
             '/r2d2_command',
-            10,
-            self.listen_command
-        )
+            self.listen_command,
+            10)
 
     # R2D2 Status Publisher
     def publish_status(self):
