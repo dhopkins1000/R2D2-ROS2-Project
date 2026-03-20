@@ -1,0 +1,15 @@
+[12.374s] Invoking command in '/home/r2d2/ros2_ws/build/r2d2_head': PYTHONPATH=/home/r2d2/ros2_ws/build/r2d2_head/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/r2d2/ros2_ws/install/r2d2_head/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/r2d2/ros2_ws/build/r2d2_head/build --no-deps symlink_data
+[16.120s] running develop
+[18.627s] running egg_info
+[18.856s] writing r2d2_head.egg-info/PKG-INFO
+[18.858s] writing dependency_links to r2d2_head.egg-info/dependency_links.txt
+[18.863s] writing requirements to r2d2_head.egg-info/requires.txt
+[18.864s] writing top-level names to r2d2_head.egg-info/top_level.txt
+[19.331s] reading manifest file 'r2d2_head.egg-info/SOURCES.txt'
+[19.339s] writing manifest file 'r2d2_head.egg-info/SOURCES.txt'
+[19.485s] running build_ext
+[19.486s] Creating /home/r2d2/ros2_ws/install/r2d2_head/lib/python3.12/site-packages/r2d2-head.egg-link (link to .)
+[19.488s] 
+[19.489s] Installed /home/r2d2/ros2_ws/build/r2d2_head
+[19.489s] running symlink_data
+[19.769s] Invoked command in '/home/r2d2/ros2_ws/build/r2d2_head' returned '0': PYTHONPATH=/home/r2d2/ros2_ws/build/r2d2_head/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/r2d2/ros2_ws/install/r2d2_head/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/r2d2/ros2_ws/build/r2d2_head/build --no-deps symlink_data

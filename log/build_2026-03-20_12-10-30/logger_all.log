@@ -1,0 +1,466 @@
+[1.181s] DEBUG:colcon:Command line arguments: ['/usr/bin/colcon', 'build', '--symlink-install']
+[1.182s] DEBUG:colcon:Parsed command line arguments: Namespace(log_base=None, log_level=None, verb_name='build', build_base='build', install_base='install', merge_install=False, symlink_install=True, test_result_base=None, continue_on_error=False, executor='parallel', parallel_workers=4, event_handlers=None, ignore_user_meta=False, metas=['./colcon.meta'], base_paths=['.'], packages_ignore=None, packages_ignore_regex=None, paths=None, packages_up_to=None, packages_up_to_regex=None, packages_above=None, packages_above_and_dependencies=None, packages_above_depth=None, packages_select_by_dep=None, packages_skip_by_dep=None, packages_skip_up_to=None, packages_select_build_failed=False, packages_skip_build_finished=False, packages_select_test_failures=False, packages_skip_test_passed=False, packages_select=None, packages_skip=None, packages_select_regex=None, packages_skip_regex=None, packages_start=None, packages_end=None, allow_overriding=[], cmake_args=None, cmake_target=None, cmake_target_skip_unavailable=False, cmake_clean_cache=False, cmake_clean_first=False, cmake_force_configure=False, ament_cmake_args=None, catkin_cmake_args=None, catkin_skip_building_tests=False, mixin_files=None, mixin=None, verb_parser=<colcon_mixin.mixin.mixin_argument.MixinArgumentDecorator object at 0xffff81156d80>, verb_extension=<colcon_core.verb.build.BuildVerb object at 0xffff8130b320>, main=<bound method BuildVerb.main of <colcon_core.verb.build.BuildVerb object at 0xffff8130b320>>, mixin_verb=('build',))
+[1.641s] Level 1:colcon.colcon_core.package_discovery:discover_packages(colcon_meta) check parameters
+[1.642s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) check parameters
+[1.642s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) check parameters
+[1.642s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) check parameters
+[1.643s] Level 1:colcon.colcon_core.package_discovery:discover_packages(colcon_meta) discover
+[1.643s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) discover
+[1.644s] INFO:colcon.colcon_core.package_discovery:Crawling recursively for packages in '/home/r2d2/ros2_ws'
+[1.645s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['ignore', 'ignore_ament_install']
+[1.646s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ignore'
+[1.647s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ignore_ament_install'
+[1.647s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['colcon_pkg']
+[1.648s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'colcon_pkg'
+[1.648s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['colcon_meta']
+[1.648s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'colcon_meta'
+[1.649s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['ros']
+[1.649s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ros'
+[1.930s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['cmake', 'python']
+[1.930s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'cmake'
+[1.931s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'python'
+[1.931s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['python_setup_py']
+[1.932s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'python_setup_py'
+[1.933s] Level 1:colcon.colcon_core.package_identification:_identify(build) by extensions ['ignore', 'ignore_ament_install']
+[1.934s] Level 1:colcon.colcon_core.package_identification:_identify(build) by extension 'ignore'
+[1.935s] Level 1:colcon.colcon_core.package_identification:_identify(build) ignored
+[1.936s] Level 1:colcon.colcon_core.package_identification:_identify(install) by extensions ['ignore', 'ignore_ament_install']
+[1.937s] Level 1:colcon.colcon_core.package_identification:_identify(install) by extension 'ignore'
+[1.938s] Level 1:colcon.colcon_core.package_identification:_identify(install) ignored
+[1.939s] Level 1:colcon.colcon_core.package_identification:_identify(log) by extensions ['ignore', 'ignore_ament_install']
+[1.940s] Level 1:colcon.colcon_core.package_identification:_identify(log) by extension 'ignore'
+[1.941s] Level 1:colcon.colcon_core.package_identification:_identify(log) ignored
+[1.942s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['ignore', 'ignore_ament_install']
+[1.943s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'ignore'
+[1.943s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'ignore_ament_install'
+[1.944s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['colcon_pkg']
+[1.944s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'colcon_pkg'
+[1.945s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['colcon_meta']
+[1.945s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'colcon_meta'
+[1.946s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['ros']
+[1.946s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'ros'
+[1.947s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['cmake', 'python']
+[1.948s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'cmake'
+[1.948s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'python'
+[1.949s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['python_setup_py']
+[1.949s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'python_setup_py'
+[1.950s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_audio) by extensions ['ignore', 'ignore_ament_install']
+[1.951s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_audio) by extension 'ignore'
+[1.952s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_audio) by extension 'ignore_ament_install'
+[1.953s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_audio) by extensions ['colcon_pkg']
+[1.953s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_audio) by extension 'colcon_pkg'
+[1.953s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_audio) by extensions ['colcon_meta']
+[1.954s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_audio) by extension 'colcon_meta'
+[1.954s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_audio) by extensions ['ros']
+[1.955s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_audio) by extension 'ros'
+[1.975s] DEBUG:colcon.colcon_core.package_identification:Package 'src/r2d2_audio' with type 'ros.ament_python' and name 'r2d2_audio'
+[1.977s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_base) by extensions ['ignore', 'ignore_ament_install']
+[1.978s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_base) by extension 'ignore'
+[1.978s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_base) by extension 'ignore_ament_install'
+[1.979s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_base) by extensions ['colcon_pkg']
+[1.980s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_base) by extension 'colcon_pkg'
+[1.980s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_base) by extensions ['colcon_meta']
+[1.981s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_base) by extension 'colcon_meta'
+[1.981s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_base) by extensions ['ros']
+[1.981s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_base) by extension 'ros'
+[1.986s] DEBUG:colcon.colcon_core.package_identification:Package 'src/r2d2_base' with type 'ros.ament_python' and name 'r2d2_base'
+[1.987s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_behavior) by extensions ['ignore', 'ignore_ament_install']
+[1.988s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_behavior) by extension 'ignore'
+[1.989s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_behavior) by extension 'ignore_ament_install'
+[1.989s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_behavior) by extensions ['colcon_pkg']
+[1.990s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_behavior) by extension 'colcon_pkg'
+[1.990s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_behavior) by extensions ['colcon_meta']
+[1.991s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_behavior) by extension 'colcon_meta'
+[1.991s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_behavior) by extensions ['ros']
+[1.992s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_behavior) by extension 'ros'
+[1.995s] DEBUG:colcon.colcon_core.package_identification:Package 'src/r2d2_behavior' with type 'ros.ament_python' and name 'r2d2_behavior'
+[1.997s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_bringup) by extensions ['ignore', 'ignore_ament_install']
+[1.998s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_bringup) by extension 'ignore'
+[1.998s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_bringup) by extension 'ignore_ament_install'
+[1.999s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_bringup) by extensions ['colcon_pkg']
+[1.999s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_bringup) by extension 'colcon_pkg'
+[2.000s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_bringup) by extensions ['colcon_meta']
+[2.000s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_bringup) by extension 'colcon_meta'
+[2.001s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_bringup) by extensions ['ros']
+[2.001s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_bringup) by extension 'ros'
+[2.006s] DEBUG:colcon.colcon_core.package_identification:Package 'src/r2d2_bringup' with type 'ros.ament_python' and name 'r2d2_bringup'
+[2.007s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_description) by extensions ['ignore', 'ignore_ament_install']
+[2.008s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_description) by extension 'ignore'
+[2.008s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_description) by extension 'ignore_ament_install'
+[2.008s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_description) by extensions ['colcon_pkg']
+[2.009s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_description) by extension 'colcon_pkg'
+[2.009s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_description) by extensions ['colcon_meta']
+[2.009s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_description) by extension 'colcon_meta'
+[2.009s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_description) by extensions ['ros']
+[2.009s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_description) by extension 'ros'
+[2.011s] DEBUG:colcon.colcon_core.package_identification:Package 'src/r2d2_description' with type 'ros.ament_cmake' and name 'r2d2_description'
+[2.011s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_head) by extensions ['ignore', 'ignore_ament_install']
+[2.012s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_head) by extension 'ignore'
+[2.012s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_head) by extension 'ignore_ament_install'
+[2.012s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_head) by extensions ['colcon_pkg']
+[2.013s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_head) by extension 'colcon_pkg'
+[2.013s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_head) by extensions ['colcon_meta']
+[2.013s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_head) by extension 'colcon_meta'
+[2.013s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_head) by extensions ['ros']
+[2.013s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_head) by extension 'ros'
+[2.015s] DEBUG:colcon.colcon_core.package_identification:Package 'src/r2d2_head' with type 'ros.ament_python' and name 'r2d2_head'
+[2.016s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_perception) by extensions ['ignore', 'ignore_ament_install']
+[2.016s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_perception) by extension 'ignore'
+[2.016s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_perception) by extension 'ignore_ament_install'
+[2.017s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_perception) by extensions ['colcon_pkg']
+[2.017s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_perception) by extension 'colcon_pkg'
+[2.017s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_perception) by extensions ['colcon_meta']
+[2.017s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_perception) by extension 'colcon_meta'
+[2.017s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_perception) by extensions ['ros']
+[2.017s] Level 1:colcon.colcon_core.package_identification:_identify(src/r2d2_perception) by extension 'ros'
+[2.019s] DEBUG:colcon.colcon_core.package_identification:Package 'src/r2d2_perception' with type 'ros.ament_python' and name 'r2d2_perception'
+[2.019s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) using defaults
+[2.019s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) discover
+[2.020s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) using defaults
+[2.020s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) discover
+[2.020s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) using defaults
+[2.092s] Level 1:colcon.colcon_core.package_discovery:discover_packages(prefix_path) check parameters
+[2.092s] Level 1:colcon.colcon_core.package_discovery:discover_packages(prefix_path) discover
+[2.105s] DEBUG:colcon.colcon_installed_package_information.package_discovery:Found 212 installed packages in /opt/ros/jazzy
+[2.108s] Level 1:colcon.colcon_core.package_discovery:discover_packages(prefix_path) using defaults
+[2.528s] Level 5:colcon.colcon_core.verb:set package 'r2d2_audio' build argument 'cmake_args' from command line to 'None'
+[2.528s] Level 5:colcon.colcon_core.verb:set package 'r2d2_audio' build argument 'cmake_target' from command line to 'None'
+[2.528s] Level 5:colcon.colcon_core.verb:set package 'r2d2_audio' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[2.529s] Level 5:colcon.colcon_core.verb:set package 'r2d2_audio' build argument 'cmake_clean_cache' from command line to 'False'
+[2.529s] Level 5:colcon.colcon_core.verb:set package 'r2d2_audio' build argument 'cmake_clean_first' from command line to 'False'
+[2.529s] Level 5:colcon.colcon_core.verb:set package 'r2d2_audio' build argument 'cmake_force_configure' from command line to 'False'
+[2.530s] Level 5:colcon.colcon_core.verb:set package 'r2d2_audio' build argument 'ament_cmake_args' from command line to 'None'
+[2.530s] Level 5:colcon.colcon_core.verb:set package 'r2d2_audio' build argument 'catkin_cmake_args' from command line to 'None'
+[2.530s] Level 5:colcon.colcon_core.verb:set package 'r2d2_audio' build argument 'catkin_skip_building_tests' from command line to 'False'
+[2.531s] DEBUG:colcon.colcon_core.verb:Building package 'r2d2_audio' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/r2d2/ros2_ws/build/r2d2_audio', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/r2d2/ros2_ws/install/r2d2_audio', 'merge_install': False, 'path': '/home/r2d2/ros2_ws/src/r2d2_audio', 'symlink_install': True, 'test_result_base': None}
+[2.534s] Level 5:colcon.colcon_core.verb:set package 'r2d2_base' build argument 'cmake_args' from command line to 'None'
+[2.535s] Level 5:colcon.colcon_core.verb:set package 'r2d2_base' build argument 'cmake_target' from command line to 'None'
+[2.535s] Level 5:colcon.colcon_core.verb:set package 'r2d2_base' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[2.535s] Level 5:colcon.colcon_core.verb:set package 'r2d2_base' build argument 'cmake_clean_cache' from command line to 'False'
+[2.536s] Level 5:colcon.colcon_core.verb:set package 'r2d2_base' build argument 'cmake_clean_first' from command line to 'False'
+[2.536s] Level 5:colcon.colcon_core.verb:set package 'r2d2_base' build argument 'cmake_force_configure' from command line to 'False'
+[2.536s] Level 5:colcon.colcon_core.verb:set package 'r2d2_base' build argument 'ament_cmake_args' from command line to 'None'
+[2.536s] Level 5:colcon.colcon_core.verb:set package 'r2d2_base' build argument 'catkin_cmake_args' from command line to 'None'
+[2.537s] Level 5:colcon.colcon_core.verb:set package 'r2d2_base' build argument 'catkin_skip_building_tests' from command line to 'False'
+[2.537s] DEBUG:colcon.colcon_core.verb:Building package 'r2d2_base' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/r2d2/ros2_ws/build/r2d2_base', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/r2d2/ros2_ws/install/r2d2_base', 'merge_install': False, 'path': '/home/r2d2/ros2_ws/src/r2d2_base', 'symlink_install': True, 'test_result_base': None}
+[2.540s] Level 5:colcon.colcon_core.verb:set package 'r2d2_behavior' build argument 'cmake_args' from command line to 'None'
+[2.541s] Level 5:colcon.colcon_core.verb:set package 'r2d2_behavior' build argument 'cmake_target' from command line to 'None'
+[2.541s] Level 5:colcon.colcon_core.verb:set package 'r2d2_behavior' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[2.541s] Level 5:colcon.colcon_core.verb:set package 'r2d2_behavior' build argument 'cmake_clean_cache' from command line to 'False'
+[2.542s] Level 5:colcon.colcon_core.verb:set package 'r2d2_behavior' build argument 'cmake_clean_first' from command line to 'False'
+[2.542s] Level 5:colcon.colcon_core.verb:set package 'r2d2_behavior' build argument 'cmake_force_configure' from command line to 'False'
+[2.542s] Level 5:colcon.colcon_core.verb:set package 'r2d2_behavior' build argument 'ament_cmake_args' from command line to 'None'
+[2.542s] Level 5:colcon.colcon_core.verb:set package 'r2d2_behavior' build argument 'catkin_cmake_args' from command line to 'None'
+[2.543s] Level 5:colcon.colcon_core.verb:set package 'r2d2_behavior' build argument 'catkin_skip_building_tests' from command line to 'False'
+[2.543s] DEBUG:colcon.colcon_core.verb:Building package 'r2d2_behavior' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/r2d2/ros2_ws/build/r2d2_behavior', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/r2d2/ros2_ws/install/r2d2_behavior', 'merge_install': False, 'path': '/home/r2d2/ros2_ws/src/r2d2_behavior', 'symlink_install': True, 'test_result_base': None}
+[2.546s] Level 5:colcon.colcon_core.verb:set package 'r2d2_bringup' build argument 'cmake_args' from command line to 'None'
+[2.547s] Level 5:colcon.colcon_core.verb:set package 'r2d2_bringup' build argument 'cmake_target' from command line to 'None'
+[2.547s] Level 5:colcon.colcon_core.verb:set package 'r2d2_bringup' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[2.547s] Level 5:colcon.colcon_core.verb:set package 'r2d2_bringup' build argument 'cmake_clean_cache' from command line to 'False'
+[2.548s] Level 5:colcon.colcon_core.verb:set package 'r2d2_bringup' build argument 'cmake_clean_first' from command line to 'False'
+[2.548s] Level 5:colcon.colcon_core.verb:set package 'r2d2_bringup' build argument 'cmake_force_configure' from command line to 'False'
+[2.548s] Level 5:colcon.colcon_core.verb:set package 'r2d2_bringup' build argument 'ament_cmake_args' from command line to 'None'
+[2.548s] Level 5:colcon.colcon_core.verb:set package 'r2d2_bringup' build argument 'catkin_cmake_args' from command line to 'None'
+[2.549s] Level 5:colcon.colcon_core.verb:set package 'r2d2_bringup' build argument 'catkin_skip_building_tests' from command line to 'False'
+[2.549s] DEBUG:colcon.colcon_core.verb:Building package 'r2d2_bringup' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/r2d2/ros2_ws/build/r2d2_bringup', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/r2d2/ros2_ws/install/r2d2_bringup', 'merge_install': False, 'path': '/home/r2d2/ros2_ws/src/r2d2_bringup', 'symlink_install': True, 'test_result_base': None}
+[2.552s] Level 5:colcon.colcon_core.verb:set package 'r2d2_description' build argument 'cmake_args' from command line to 'None'
+[2.553s] Level 5:colcon.colcon_core.verb:set package 'r2d2_description' build argument 'cmake_target' from command line to 'None'
+[2.553s] Level 5:colcon.colcon_core.verb:set package 'r2d2_description' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[2.553s] Level 5:colcon.colcon_core.verb:set package 'r2d2_description' build argument 'cmake_clean_cache' from command line to 'False'
+[2.554s] Level 5:colcon.colcon_core.verb:set package 'r2d2_description' build argument 'cmake_clean_first' from command line to 'False'
+[2.554s] Level 5:colcon.colcon_core.verb:set package 'r2d2_description' build argument 'cmake_force_configure' from command line to 'False'
+[2.554s] Level 5:colcon.colcon_core.verb:set package 'r2d2_description' build argument 'ament_cmake_args' from command line to 'None'
+[2.555s] Level 5:colcon.colcon_core.verb:set package 'r2d2_description' build argument 'catkin_cmake_args' from command line to 'None'
+[2.555s] Level 5:colcon.colcon_core.verb:set package 'r2d2_description' build argument 'catkin_skip_building_tests' from command line to 'False'
+[2.555s] DEBUG:colcon.colcon_core.verb:Building package 'r2d2_description' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/r2d2/ros2_ws/build/r2d2_description', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/r2d2/ros2_ws/install/r2d2_description', 'merge_install': False, 'path': '/home/r2d2/ros2_ws/src/r2d2_description', 'symlink_install': True, 'test_result_base': None}
+[2.558s] Level 5:colcon.colcon_core.verb:set package 'r2d2_head' build argument 'cmake_args' from command line to 'None'
+[2.559s] Level 5:colcon.colcon_core.verb:set package 'r2d2_head' build argument 'cmake_target' from command line to 'None'
+[2.559s] Level 5:colcon.colcon_core.verb:set package 'r2d2_head' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[2.559s] Level 5:colcon.colcon_core.verb:set package 'r2d2_head' build argument 'cmake_clean_cache' from command line to 'False'
+[2.560s] Level 5:colcon.colcon_core.verb:set package 'r2d2_head' build argument 'cmake_clean_first' from command line to 'False'
+[2.560s] Level 5:colcon.colcon_core.verb:set package 'r2d2_head' build argument 'cmake_force_configure' from command line to 'False'
+[2.560s] Level 5:colcon.colcon_core.verb:set package 'r2d2_head' build argument 'ament_cmake_args' from command line to 'None'
+[2.560s] Level 5:colcon.colcon_core.verb:set package 'r2d2_head' build argument 'catkin_cmake_args' from command line to 'None'
+[2.561s] Level 5:colcon.colcon_core.verb:set package 'r2d2_head' build argument 'catkin_skip_building_tests' from command line to 'False'
+[2.561s] DEBUG:colcon.colcon_core.verb:Building package 'r2d2_head' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/r2d2/ros2_ws/build/r2d2_head', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/r2d2/ros2_ws/install/r2d2_head', 'merge_install': False, 'path': '/home/r2d2/ros2_ws/src/r2d2_head', 'symlink_install': True, 'test_result_base': None}
+[2.564s] Level 5:colcon.colcon_core.verb:set package 'r2d2_perception' build argument 'cmake_args' from command line to 'None'
+[2.565s] Level 5:colcon.colcon_core.verb:set package 'r2d2_perception' build argument 'cmake_target' from command line to 'None'
+[2.565s] Level 5:colcon.colcon_core.verb:set package 'r2d2_perception' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[2.565s] Level 5:colcon.colcon_core.verb:set package 'r2d2_perception' build argument 'cmake_clean_cache' from command line to 'False'
+[2.566s] Level 5:colcon.colcon_core.verb:set package 'r2d2_perception' build argument 'cmake_clean_first' from command line to 'False'
+[2.566s] Level 5:colcon.colcon_core.verb:set package 'r2d2_perception' build argument 'cmake_force_configure' from command line to 'False'
+[2.566s] Level 5:colcon.colcon_core.verb:set package 'r2d2_perception' build argument 'ament_cmake_args' from command line to 'None'
+[2.567s] Level 5:colcon.colcon_core.verb:set package 'r2d2_perception' build argument 'catkin_cmake_args' from command line to 'None'
+[2.567s] Level 5:colcon.colcon_core.verb:set package 'r2d2_perception' build argument 'catkin_skip_building_tests' from command line to 'False'
+[2.567s] DEBUG:colcon.colcon_core.verb:Building package 'r2d2_perception' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/r2d2/ros2_ws/build/r2d2_perception', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/r2d2/ros2_ws/install/r2d2_perception', 'merge_install': False, 'path': '/home/r2d2/ros2_ws/src/r2d2_perception', 'symlink_install': True, 'test_result_base': None}
+[2.568s] INFO:colcon.colcon_core.executor:Executing jobs using 'parallel' executor
+[2.576s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:run_until_complete
+[2.578s] INFO:colcon.colcon_ros.task.ament_python.build:Building ROS package in '/home/r2d2/ros2_ws/src/r2d2_audio' with build type 'ament_python'
+[2.580s] Level 1:colcon.colcon_core.shell:create_environment_hook('r2d2_audio', 'ament_prefix_path')
+[2.599s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_core.shell.bat': Not used on non-Windows systems
+[2.601s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/r2d2/ros2_ws/install/r2d2_audio/share/r2d2_audio/hook/ament_prefix_path.ps1'
+[2.607s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/r2d2/ros2_ws/install/r2d2_audio/share/r2d2_audio/hook/ament_prefix_path.dsv'
+[2.611s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/r2d2/ros2_ws/install/r2d2_audio/share/r2d2_audio/hook/ament_prefix_path.sh'
+[2.618s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[2.618s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[2.655s] INFO:colcon.colcon_ros.task.ament_python.build:Building ROS package in '/home/r2d2/ros2_ws/src/r2d2_base' with build type 'ament_python'
+[2.656s] Level 1:colcon.colcon_core.shell:create_environment_hook('r2d2_base', 'ament_prefix_path')
+[2.658s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/r2d2/ros2_ws/install/r2d2_base/share/r2d2_base/hook/ament_prefix_path.ps1'
+[2.662s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/r2d2/ros2_ws/install/r2d2_base/share/r2d2_base/hook/ament_prefix_path.dsv'
+[2.666s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/r2d2/ros2_ws/install/r2d2_base/share/r2d2_base/hook/ament_prefix_path.sh'
+[2.671s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[2.671s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[2.707s] INFO:colcon.colcon_ros.task.ament_python.build:Building ROS package in '/home/r2d2/ros2_ws/src/r2d2_behavior' with build type 'ament_python'
+[2.708s] Level 1:colcon.colcon_core.shell:create_environment_hook('r2d2_behavior', 'ament_prefix_path')
+[2.711s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/r2d2/ros2_ws/install/r2d2_behavior/share/r2d2_behavior/hook/ament_prefix_path.ps1'
+[2.716s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/r2d2/ros2_ws/install/r2d2_behavior/share/r2d2_behavior/hook/ament_prefix_path.dsv'
+[2.720s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/r2d2/ros2_ws/install/r2d2_behavior/share/r2d2_behavior/hook/ament_prefix_path.sh'
+[2.725s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[2.726s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[2.761s] INFO:colcon.colcon_ros.task.ament_python.build:Building ROS package in '/home/r2d2/ros2_ws/src/r2d2_bringup' with build type 'ament_python'
+[2.762s] Level 1:colcon.colcon_core.shell:create_environment_hook('r2d2_bringup', 'ament_prefix_path')
+[2.764s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/r2d2/ros2_ws/install/r2d2_bringup/share/r2d2_bringup/hook/ament_prefix_path.ps1'
+[2.769s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/r2d2/ros2_ws/install/r2d2_bringup/share/r2d2_bringup/hook/ament_prefix_path.dsv'
+[2.773s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/r2d2/ros2_ws/install/r2d2_bringup/share/r2d2_bringup/hook/ament_prefix_path.sh'
+[2.779s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[2.779s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[4.744s] INFO:colcon.colcon_core.task.python.build:Building Python package in '/home/r2d2/ros2_ws/src/r2d2_audio'
+[4.745s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[4.746s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[7.065s] INFO:colcon.colcon_core.task.python.build:Building Python package in '/home/r2d2/ros2_ws/src/r2d2_base'
+[7.067s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[7.067s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[9.376s] INFO:colcon.colcon_core.task.python.build:Building Python package in '/home/r2d2/ros2_ws/src/r2d2_behavior'
+[9.378s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[9.378s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[11.450s] INFO:colcon.colcon_core.task.python.build:Building Python package in '/home/r2d2/ros2_ws/src/r2d2_bringup'
+[11.451s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[11.452s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[19.485s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/r2d2/ros2_ws/build/r2d2_base': PYTHONPATH=/home/r2d2/ros2_ws/build/r2d2_base/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/r2d2/ros2_ws/install/r2d2_base/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/r2d2/ros2_ws/build/r2d2_base/build --no-deps symlink_data
+[19.753s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/r2d2/ros2_ws/build/r2d2_audio': PYTHONPATH=/home/r2d2/ros2_ws/build/r2d2_audio/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/r2d2/ros2_ws/install/r2d2_audio/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/r2d2/ros2_ws/build/r2d2_audio/build --no-deps symlink_data
+[19.801s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/r2d2/ros2_ws/build/r2d2_bringup': PYTHONPATH=/home/r2d2/ros2_ws/build/r2d2_bringup/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/r2d2/ros2_ws/install/r2d2_bringup/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/r2d2/ros2_ws/build/r2d2_bringup/build --no-deps symlink_data
+[19.937s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/r2d2/ros2_ws/build/r2d2_behavior': PYTHONPATH=/home/r2d2/ros2_ws/build/r2d2_behavior/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/r2d2/ros2_ws/install/r2d2_behavior/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/r2d2/ros2_ws/build/r2d2_behavior/build --no-deps symlink_data
+[29.145s] Level 1:colcon.colcon_core.shell:create_environment_hook('r2d2_behavior', 'pythonpath_develop')
+[29.148s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/r2d2/ros2_ws/build/r2d2_behavior/share/r2d2_behavior/hook/pythonpath_develop.ps1'
+[29.155s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/r2d2/ros2_ws/build/r2d2_behavior' returned '0': PYTHONPATH=/home/r2d2/ros2_ws/build/r2d2_behavior/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/r2d2/ros2_ws/install/r2d2_behavior/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/r2d2/ros2_ws/build/r2d2_behavior/build --no-deps symlink_data
+[29.167s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/r2d2/ros2_ws/build/r2d2_behavior/share/r2d2_behavior/hook/pythonpath_develop.dsv'
+[29.174s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/r2d2/ros2_ws/build/r2d2_behavior/share/r2d2_behavior/hook/pythonpath_develop.sh'
+[29.213s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_behavior' for CMake module files
+[29.221s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_behavior' for CMake config files
+[29.231s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_behavior/lib'
+[29.233s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_behavior/bin'
+[29.234s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_behavior/lib/pkgconfig/r2d2_behavior.pc'
+[29.236s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_behavior/lib/python3.12/site-packages'
+[29.237s] Level 1:colcon.colcon_core.shell:create_environment_hook('r2d2_behavior', 'pythonpath')
+[29.239s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/r2d2/ros2_ws/install/r2d2_behavior/share/r2d2_behavior/hook/pythonpath.ps1'
+[29.244s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/r2d2/ros2_ws/install/r2d2_behavior/share/r2d2_behavior/hook/pythonpath.dsv'
+[29.251s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/r2d2/ros2_ws/install/r2d2_behavior/share/r2d2_behavior/hook/pythonpath.sh'
+[29.258s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_behavior/bin'
+[29.259s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(r2d2_behavior)
+[29.262s] INFO:colcon.colcon_core.shell:Creating package script '/home/r2d2/ros2_ws/install/r2d2_behavior/share/r2d2_behavior/package.ps1'
+[29.272s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/r2d2/ros2_ws/install/r2d2_behavior/share/r2d2_behavior/package.dsv'
+[29.279s] INFO:colcon.colcon_core.shell:Creating package script '/home/r2d2/ros2_ws/install/r2d2_behavior/share/r2d2_behavior/package.sh'
+[29.286s] INFO:colcon.colcon_core.shell:Creating package script '/home/r2d2/ros2_ws/install/r2d2_behavior/share/r2d2_behavior/package.bash'
+[29.294s] INFO:colcon.colcon_core.shell:Creating package script '/home/r2d2/ros2_ws/install/r2d2_behavior/share/r2d2_behavior/package.zsh'
+[29.300s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/r2d2/ros2_ws/install/r2d2_behavior/share/colcon-core/packages/r2d2_behavior)
+[29.312s] INFO:colcon.colcon_ros.task.ament_cmake.build:Building ROS package in '/home/r2d2/ros2_ws/src/r2d2_description' with build type 'ament_cmake'
+[29.314s] INFO:colcon.colcon_cmake.task.cmake.build:Building CMake package in '/home/r2d2/ros2_ws/src/r2d2_description'
+[29.316s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[29.317s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[29.361s] Level 1:colcon.colcon_core.shell:create_environment_hook('r2d2_audio', 'pythonpath_develop')
+[29.363s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/r2d2/ros2_ws/build/r2d2_audio/share/r2d2_audio/hook/pythonpath_develop.ps1'
+[29.368s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/r2d2/ros2_ws/build/r2d2_audio/share/r2d2_audio/hook/pythonpath_develop.dsv'
+[29.374s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/r2d2/ros2_ws/build/r2d2_audio/share/r2d2_audio/hook/pythonpath_develop.sh'
+[29.382s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/r2d2/ros2_ws/build/r2d2_audio' returned '0': PYTHONPATH=/home/r2d2/ros2_ws/build/r2d2_audio/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/r2d2/ros2_ws/install/r2d2_audio/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/r2d2/ros2_ws/build/r2d2_audio/build --no-deps symlink_data
+[29.384s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_audio' for CMake module files
+[29.387s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_audio' for CMake config files
+[29.392s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_audio/lib'
+[29.393s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_audio/bin'
+[29.393s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_audio/lib/pkgconfig/r2d2_audio.pc'
+[29.395s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_audio/lib/python3.12/site-packages'
+[29.396s] Level 1:colcon.colcon_core.shell:create_environment_hook('r2d2_audio', 'pythonpath')
+[29.397s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/r2d2/ros2_ws/install/r2d2_audio/share/r2d2_audio/hook/pythonpath.ps1'
+[29.400s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/r2d2/ros2_ws/install/r2d2_audio/share/r2d2_audio/hook/pythonpath.dsv'
+[29.402s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/r2d2/ros2_ws/install/r2d2_audio/share/r2d2_audio/hook/pythonpath.sh'
+[29.407s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_audio/bin'
+[29.407s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(r2d2_audio)
+[29.409s] INFO:colcon.colcon_core.shell:Creating package script '/home/r2d2/ros2_ws/install/r2d2_audio/share/r2d2_audio/package.ps1'
+[29.414s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/r2d2/ros2_ws/install/r2d2_audio/share/r2d2_audio/package.dsv'
+[29.419s] INFO:colcon.colcon_core.shell:Creating package script '/home/r2d2/ros2_ws/install/r2d2_audio/share/r2d2_audio/package.sh'
+[29.423s] INFO:colcon.colcon_core.shell:Creating package script '/home/r2d2/ros2_ws/install/r2d2_audio/share/r2d2_audio/package.bash'
+[29.426s] INFO:colcon.colcon_core.shell:Creating package script '/home/r2d2/ros2_ws/install/r2d2_audio/share/r2d2_audio/package.zsh'
+[29.429s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/r2d2/ros2_ws/install/r2d2_audio/share/colcon-core/packages/r2d2_audio)
+[29.431s] Level 1:colcon.colcon_core.shell:create_environment_hook('r2d2_base', 'pythonpath_develop')
+[29.433s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/r2d2/ros2_ws/build/r2d2_base/share/r2d2_base/hook/pythonpath_develop.ps1'
+[29.440s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/r2d2/ros2_ws/build/r2d2_base/share/r2d2_base/hook/pythonpath_develop.dsv'
+[29.441s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/r2d2/ros2_ws/build/r2d2_base' returned '0': PYTHONPATH=/home/r2d2/ros2_ws/build/r2d2_base/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/r2d2/ros2_ws/install/r2d2_base/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/r2d2/ros2_ws/build/r2d2_base/build --no-deps symlink_data
+[29.445s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/r2d2/ros2_ws/build/r2d2_base/share/r2d2_base/hook/pythonpath_develop.sh'
+[29.449s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_base' for CMake module files
+[29.452s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_base' for CMake config files
+[29.456s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_base/lib'
+[29.457s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_base/bin'
+[29.457s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_base/lib/pkgconfig/r2d2_base.pc'
+[29.459s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_base/lib/python3.12/site-packages'
+[29.459s] Level 1:colcon.colcon_core.shell:create_environment_hook('r2d2_base', 'pythonpath')
+[29.460s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/r2d2/ros2_ws/install/r2d2_base/share/r2d2_base/hook/pythonpath.ps1'
+[29.463s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/r2d2/ros2_ws/install/r2d2_base/share/r2d2_base/hook/pythonpath.dsv'
+[29.467s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/r2d2/ros2_ws/install/r2d2_base/share/r2d2_base/hook/pythonpath.sh'
+[29.476s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_base/bin'
+[29.477s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(r2d2_base)
+[29.479s] INFO:colcon.colcon_core.shell:Creating package script '/home/r2d2/ros2_ws/install/r2d2_base/share/r2d2_base/package.ps1'
+[29.486s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/r2d2/ros2_ws/install/r2d2_base/share/r2d2_base/package.dsv'
+[29.494s] INFO:colcon.colcon_core.shell:Creating package script '/home/r2d2/ros2_ws/install/r2d2_base/share/r2d2_base/package.sh'
+[29.501s] INFO:colcon.colcon_core.shell:Creating package script '/home/r2d2/ros2_ws/install/r2d2_base/share/r2d2_base/package.bash'
+[29.507s] INFO:colcon.colcon_core.shell:Creating package script '/home/r2d2/ros2_ws/install/r2d2_base/share/r2d2_base/package.zsh'
+[29.512s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/r2d2/ros2_ws/install/r2d2_base/share/colcon-core/packages/r2d2_base)
+[29.522s] INFO:colcon.colcon_ros.task.ament_python.build:Building ROS package in '/home/r2d2/ros2_ws/src/r2d2_head' with build type 'ament_python'
+[29.523s] Level 1:colcon.colcon_core.shell:create_environment_hook('r2d2_head', 'ament_prefix_path')
+[29.525s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/r2d2/ros2_ws/install/r2d2_head/share/r2d2_head/hook/ament_prefix_path.ps1'
+[29.531s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/r2d2/ros2_ws/install/r2d2_head/share/r2d2_head/hook/ament_prefix_path.dsv'
+[29.535s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/r2d2/ros2_ws/install/r2d2_head/share/r2d2_head/hook/ament_prefix_path.sh'
+[29.540s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[29.541s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[29.577s] INFO:colcon.colcon_ros.task.ament_python.build:Building ROS package in '/home/r2d2/ros2_ws/src/r2d2_perception' with build type 'ament_python'
+[29.578s] Level 1:colcon.colcon_core.shell:create_environment_hook('r2d2_perception', 'ament_prefix_path')
+[29.582s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/r2d2/ros2_ws/install/r2d2_perception/share/r2d2_perception/hook/ament_prefix_path.ps1'
+[29.587s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/r2d2/ros2_ws/install/r2d2_perception/share/r2d2_perception/hook/ament_prefix_path.dsv'
+[29.592s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/r2d2/ros2_ws/install/r2d2_perception/share/r2d2_perception/hook/ament_prefix_path.sh'
+[29.599s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[29.599s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[29.641s] Level 1:colcon.colcon_core.shell:create_environment_hook('r2d2_bringup', 'pythonpath_develop')
+[29.643s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/r2d2/ros2_ws/build/r2d2_bringup/share/r2d2_bringup/hook/pythonpath_develop.ps1'
+[29.650s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/r2d2/ros2_ws/build/r2d2_bringup' returned '0': PYTHONPATH=/home/r2d2/ros2_ws/build/r2d2_bringup/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/r2d2/ros2_ws/install/r2d2_bringup/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/r2d2/ros2_ws/build/r2d2_bringup/build --no-deps symlink_data
+[29.651s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/r2d2/ros2_ws/build/r2d2_bringup/share/r2d2_bringup/hook/pythonpath_develop.dsv'
+[29.657s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/r2d2/ros2_ws/build/r2d2_bringup/share/r2d2_bringup/hook/pythonpath_develop.sh'
+[29.665s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_bringup' for CMake module files
+[29.672s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_bringup' for CMake config files
+[29.682s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_bringup/lib'
+[29.683s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_bringup/bin'
+[29.684s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_bringup/lib/pkgconfig/r2d2_bringup.pc'
+[29.686s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_bringup/lib/python3.12/site-packages'
+[29.688s] Level 1:colcon.colcon_core.shell:create_environment_hook('r2d2_bringup', 'pythonpath')
+[29.689s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/r2d2/ros2_ws/install/r2d2_bringup/share/r2d2_bringup/hook/pythonpath.ps1'
+[29.694s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/r2d2/ros2_ws/install/r2d2_bringup/share/r2d2_bringup/hook/pythonpath.dsv'
+[29.699s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/r2d2/ros2_ws/install/r2d2_bringup/share/r2d2_bringup/hook/pythonpath.sh'
+[29.707s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_bringup/bin'
+[29.708s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(r2d2_bringup)
+[29.711s] INFO:colcon.colcon_core.shell:Creating package script '/home/r2d2/ros2_ws/install/r2d2_bringup/share/r2d2_bringup/package.ps1'
+[29.717s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/r2d2/ros2_ws/install/r2d2_bringup/share/r2d2_bringup/package.dsv'
+[29.723s] INFO:colcon.colcon_core.shell:Creating package script '/home/r2d2/ros2_ws/install/r2d2_bringup/share/r2d2_bringup/package.sh'
+[29.729s] INFO:colcon.colcon_core.shell:Creating package script '/home/r2d2/ros2_ws/install/r2d2_bringup/share/r2d2_bringup/package.bash'
+[29.734s] INFO:colcon.colcon_core.shell:Creating package script '/home/r2d2/ros2_ws/install/r2d2_bringup/share/r2d2_bringup/package.zsh'
+[29.738s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/r2d2/ros2_ws/install/r2d2_bringup/share/colcon-core/packages/r2d2_bringup)
+[29.784s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/r2d2/ros2_ws/build/r2d2_description': CMAKE_PREFIX_PATH=/opt/ros/jazzy /usr/bin/cmake /home/r2d2/ros2_ws/src/r2d2_description -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/r2d2/ros2_ws/install/r2d2_description
+[32.434s] INFO:colcon.colcon_core.task.python.build:Building Python package in '/home/r2d2/ros2_ws/src/r2d2_head'
+[32.436s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[32.436s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[34.912s] INFO:colcon.colcon_core.task.python.build:Building Python package in '/home/r2d2/ros2_ws/src/r2d2_perception'
+[34.914s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[34.914s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[34.975s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/r2d2/ros2_ws/build/r2d2_description' returned '0': CMAKE_PREFIX_PATH=/opt/ros/jazzy /usr/bin/cmake /home/r2d2/ros2_ws/src/r2d2_description -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/r2d2/ros2_ws/install/r2d2_description
+[34.982s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/r2d2/ros2_ws/build/r2d2_description': CMAKE_PREFIX_PATH=/opt/ros/jazzy /usr/bin/cmake --build /home/r2d2/ros2_ws/build/r2d2_description -- -j4 -l4
+[35.509s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/r2d2/ros2_ws/build/r2d2_description' returned '0': CMAKE_PREFIX_PATH=/opt/ros/jazzy /usr/bin/cmake --build /home/r2d2/ros2_ws/build/r2d2_description -- -j4 -l4
+[35.568s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/r2d2/ros2_ws/build/r2d2_description': CMAKE_PREFIX_PATH=/opt/ros/jazzy /usr/bin/cmake --install /home/r2d2/ros2_ws/build/r2d2_description
+[37.791s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(r2d2_description)
+[37.794s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_description' for CMake module files
+[37.798s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/r2d2/ros2_ws/build/r2d2_description' returned '0': CMAKE_PREFIX_PATH=/opt/ros/jazzy /usr/bin/cmake --install /home/r2d2/ros2_ws/build/r2d2_description
+[37.807s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_description' for CMake config files
+[37.812s] Level 1:colcon.colcon_core.shell:create_environment_hook('r2d2_description', 'cmake_prefix_path')
+[37.815s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/r2d2/ros2_ws/install/r2d2_description/share/r2d2_description/hook/cmake_prefix_path.ps1'
+[37.821s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/r2d2/ros2_ws/install/r2d2_description/share/r2d2_description/hook/cmake_prefix_path.dsv'
+[37.828s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/r2d2/ros2_ws/install/r2d2_description/share/r2d2_description/hook/cmake_prefix_path.sh'
+[37.836s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_description/bin'
+[37.838s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_description/lib/pkgconfig/r2d2_description.pc'
+[37.841s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_description/lib/python3.12/site-packages'
+[37.847s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_description/bin'
+[37.853s] INFO:colcon.colcon_core.shell:Creating package script '/home/r2d2/ros2_ws/install/r2d2_description/share/r2d2_description/package.ps1'
+[37.859s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/r2d2/ros2_ws/install/r2d2_description/share/r2d2_description/package.dsv'
+[37.863s] INFO:colcon.colcon_core.shell:Creating package script '/home/r2d2/ros2_ws/install/r2d2_description/share/r2d2_description/package.sh'
+[37.868s] INFO:colcon.colcon_core.shell:Creating package script '/home/r2d2/ros2_ws/install/r2d2_description/share/r2d2_description/package.bash'
+[37.872s] INFO:colcon.colcon_core.shell:Creating package script '/home/r2d2/ros2_ws/install/r2d2_description/share/r2d2_description/package.zsh'
+[37.877s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/r2d2/ros2_ws/install/r2d2_description/share/colcon-core/packages/r2d2_description)
+[37.882s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(r2d2_description)
+[37.884s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_description' for CMake module files
+[37.893s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_description' for CMake config files
+[37.898s] Level 1:colcon.colcon_core.shell:create_environment_hook('r2d2_description', 'cmake_prefix_path')
+[37.900s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/r2d2/ros2_ws/install/r2d2_description/share/r2d2_description/hook/cmake_prefix_path.ps1'
+[37.905s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/r2d2/ros2_ws/install/r2d2_description/share/r2d2_description/hook/cmake_prefix_path.dsv'
+[37.909s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/r2d2/ros2_ws/install/r2d2_description/share/r2d2_description/hook/cmake_prefix_path.sh'
+[37.915s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_description/bin'
+[37.916s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_description/lib/pkgconfig/r2d2_description.pc'
+[37.919s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_description/lib/python3.12/site-packages'
+[37.923s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_description/bin'
+[37.925s] INFO:colcon.colcon_core.shell:Creating package script '/home/r2d2/ros2_ws/install/r2d2_description/share/r2d2_description/package.ps1'
+[37.931s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/r2d2/ros2_ws/install/r2d2_description/share/r2d2_description/package.dsv'
+[37.938s] INFO:colcon.colcon_core.shell:Creating package script '/home/r2d2/ros2_ws/install/r2d2_description/share/r2d2_description/package.sh'
+[37.943s] INFO:colcon.colcon_core.shell:Creating package script '/home/r2d2/ros2_ws/install/r2d2_description/share/r2d2_description/package.bash'
+[37.948s] INFO:colcon.colcon_core.shell:Creating package script '/home/r2d2/ros2_ws/install/r2d2_description/share/r2d2_description/package.zsh'
+[37.954s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/r2d2/ros2_ws/install/r2d2_description/share/colcon-core/packages/r2d2_description)
+[41.906s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/r2d2/ros2_ws/build/r2d2_head': PYTHONPATH=/home/r2d2/ros2_ws/build/r2d2_head/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/r2d2/ros2_ws/install/r2d2_head/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/r2d2/ros2_ws/build/r2d2_head/build --no-deps symlink_data
+[41.937s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/r2d2/ros2_ws/build/r2d2_perception': PYTHONPATH=/home/r2d2/ros2_ws/build/r2d2_perception/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/r2d2/ros2_ws/install/r2d2_perception/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/r2d2/ros2_ws/build/r2d2_perception/build --no-deps symlink_data
+[49.293s] Level 1:colcon.colcon_core.shell:create_environment_hook('r2d2_head', 'pythonpath_develop')
+[49.296s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/r2d2/ros2_ws/build/r2d2_head/share/r2d2_head/hook/pythonpath_develop.ps1'
+[49.300s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/r2d2/ros2_ws/build/r2d2_head' returned '0': PYTHONPATH=/home/r2d2/ros2_ws/build/r2d2_head/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/r2d2/ros2_ws/install/r2d2_head/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/r2d2/ros2_ws/build/r2d2_head/build --no-deps symlink_data
+[49.305s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/r2d2/ros2_ws/build/r2d2_head/share/r2d2_head/hook/pythonpath_develop.dsv'
+[49.311s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/r2d2/ros2_ws/build/r2d2_head/share/r2d2_head/hook/pythonpath_develop.sh'
+[49.317s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_head' for CMake module files
+[49.326s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_head' for CMake config files
+[49.337s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_head/lib'
+[49.338s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_head/bin'
+[49.340s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_head/lib/pkgconfig/r2d2_head.pc'
+[49.343s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_head/lib/python3.12/site-packages'
+[49.344s] Level 1:colcon.colcon_core.shell:create_environment_hook('r2d2_head', 'pythonpath')
+[49.346s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/r2d2/ros2_ws/install/r2d2_head/share/r2d2_head/hook/pythonpath.ps1'
+[49.353s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/r2d2/ros2_ws/install/r2d2_head/share/r2d2_head/hook/pythonpath.dsv'
+[49.359s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/r2d2/ros2_ws/install/r2d2_head/share/r2d2_head/hook/pythonpath.sh'
+[49.370s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_head/bin'
+[49.370s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(r2d2_head)
+[49.374s] INFO:colcon.colcon_core.shell:Creating package script '/home/r2d2/ros2_ws/install/r2d2_head/share/r2d2_head/package.ps1'
+[49.382s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/r2d2/ros2_ws/install/r2d2_head/share/r2d2_head/package.dsv'
+[49.389s] INFO:colcon.colcon_core.shell:Creating package script '/home/r2d2/ros2_ws/install/r2d2_head/share/r2d2_head/package.sh'
+[49.396s] INFO:colcon.colcon_core.shell:Creating package script '/home/r2d2/ros2_ws/install/r2d2_head/share/r2d2_head/package.bash'
+[49.401s] INFO:colcon.colcon_core.shell:Creating package script '/home/r2d2/ros2_ws/install/r2d2_head/share/r2d2_head/package.zsh'
+[49.405s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/r2d2/ros2_ws/install/r2d2_head/share/colcon-core/packages/r2d2_head)
+[49.463s] Level 1:colcon.colcon_core.shell:create_environment_hook('r2d2_perception', 'pythonpath_develop')
+[49.466s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/r2d2/ros2_ws/build/r2d2_perception/share/r2d2_perception/hook/pythonpath_develop.ps1'
+[49.468s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/r2d2/ros2_ws/build/r2d2_perception' returned '0': PYTHONPATH=/home/r2d2/ros2_ws/build/r2d2_perception/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/r2d2/ros2_ws/install/r2d2_perception/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/r2d2/ros2_ws/build/r2d2_perception/build --no-deps symlink_data
+[49.473s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/r2d2/ros2_ws/build/r2d2_perception/share/r2d2_perception/hook/pythonpath_develop.dsv'
+[49.476s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/r2d2/ros2_ws/build/r2d2_perception/share/r2d2_perception/hook/pythonpath_develop.sh'
+[49.482s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_perception' for CMake module files
+[49.489s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_perception' for CMake config files
+[49.497s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_perception/lib'
+[49.498s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_perception/bin'
+[49.499s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_perception/lib/pkgconfig/r2d2_perception.pc'
+[49.501s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_perception/lib/python3.12/site-packages'
+[49.502s] Level 1:colcon.colcon_core.shell:create_environment_hook('r2d2_perception', 'pythonpath')
+[49.504s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/r2d2/ros2_ws/install/r2d2_perception/share/r2d2_perception/hook/pythonpath.ps1'
+[49.508s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/r2d2/ros2_ws/install/r2d2_perception/share/r2d2_perception/hook/pythonpath.dsv'
+[49.512s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/r2d2/ros2_ws/install/r2d2_perception/share/r2d2_perception/hook/pythonpath.sh'
+[49.520s] Level 1:colcon.colcon_core.environment:checking '/home/r2d2/ros2_ws/install/r2d2_perception/bin'
+[49.520s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(r2d2_perception)
+[49.523s] INFO:colcon.colcon_core.shell:Creating package script '/home/r2d2/ros2_ws/install/r2d2_perception/share/r2d2_perception/package.ps1'
+[49.529s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/r2d2/ros2_ws/install/r2d2_perception/share/r2d2_perception/package.dsv'
+[49.534s] INFO:colcon.colcon_core.shell:Creating package script '/home/r2d2/ros2_ws/install/r2d2_perception/share/r2d2_perception/package.sh'
+[49.539s] INFO:colcon.colcon_core.shell:Creating package script '/home/r2d2/ros2_ws/install/r2d2_perception/share/r2d2_perception/package.bash'
+[49.544s] INFO:colcon.colcon_core.shell:Creating package script '/home/r2d2/ros2_ws/install/r2d2_perception/share/r2d2_perception/package.zsh'
+[49.548s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/r2d2/ros2_ws/install/r2d2_perception/share/colcon-core/packages/r2d2_perception)
+[49.550s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:closing loop
+[49.553s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:loop closed
+[49.554s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:run_until_complete finished with '0'
+[49.554s] DEBUG:colcon.colcon_core.event_reactor:joining thread
+[49.611s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_notification.desktop_notification.notify_send': Could not find 'notify-send'
+[49.612s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_notification.desktop_notification.terminal_notifier': Not used on non-Darwin systems
+[49.613s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_notification.desktop_notification.win32': Not used on non-Windows systems
+[49.614s] INFO:colcon.colcon_notification.desktop_notification:Sending desktop notification using 'notify2'
+[49.615s] DEBUG:colcon.colcon_notification.desktop_notification.notify2:Failed to initialize notify2: org.freedesktop.DBus.Error.NotSupported: Unable to autolaunch a dbus-daemon without a $DISPLAY for X11
+[49.616s] DEBUG:colcon.colcon_core.event_reactor:joined thread
+[49.617s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/r2d2/ros2_ws/install/local_setup.ps1'
+[49.626s] INFO:colcon.colcon_core.shell:Creating prefix util module '/home/r2d2/ros2_ws/install/_local_setup_util_ps1.py'
+[49.638s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/r2d2/ros2_ws/install/setup.ps1'
+[49.647s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/r2d2/ros2_ws/install/local_setup.sh'
+[49.653s] INFO:colcon.colcon_core.shell:Creating prefix util module '/home/r2d2/ros2_ws/install/_local_setup_util_sh.py'
+[49.661s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/r2d2/ros2_ws/install/setup.sh'
+[49.670s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/r2d2/ros2_ws/install/local_setup.bash'
+[49.675s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/r2d2/ros2_ws/install/setup.bash'
+[49.685s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/r2d2/ros2_ws/install/local_setup.zsh'
+[49.692s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/r2d2/ros2_ws/install/setup.zsh'

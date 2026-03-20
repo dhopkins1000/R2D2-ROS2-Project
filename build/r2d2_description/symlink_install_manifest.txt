@@ -1,0 +1,15 @@
+/home/r2d2/ros2_ws/install/r2d2_description/share/ament_index/resource_index/package_run_dependencies/r2d2_description
+/home/r2d2/ros2_ws/install/r2d2_description/share/ament_index/resource_index/parent_prefix_path/r2d2_description
+/home/r2d2/ros2_ws/install/r2d2_description/share/r2d2_description/environment/ament_prefix_path.sh
+/home/r2d2/ros2_ws/install/r2d2_description/share/r2d2_description/environment/ament_prefix_path.dsv
+/home/r2d2/ros2_ws/install/r2d2_description/share/r2d2_description/environment/path.sh
+/home/r2d2/ros2_ws/install/r2d2_description/share/r2d2_description/environment/path.dsv
+/home/r2d2/ros2_ws/install/r2d2_description/share/r2d2_description/local_setup.bash
+/home/r2d2/ros2_ws/install/r2d2_description/share/r2d2_description/local_setup.sh
+/home/r2d2/ros2_ws/install/r2d2_description/share/r2d2_description/local_setup.zsh
+/home/r2d2/ros2_ws/install/r2d2_description/share/r2d2_description/local_setup.dsv
+/home/r2d2/ros2_ws/install/r2d2_description/share/r2d2_description/package.dsv
+/home/r2d2/ros2_ws/install/r2d2_description/share/ament_index/resource_index/packages/r2d2_description
+/home/r2d2/ros2_ws/install/r2d2_description/share/r2d2_description/cmake/r2d2_descriptionConfig.cmake
+/home/r2d2/ros2_ws/install/r2d2_description/share/r2d2_description/cmake/r2d2_descriptionConfig-version.cmake
+/home/r2d2/ros2_ws/install/r2d2_description/share/r2d2_description/package.xml

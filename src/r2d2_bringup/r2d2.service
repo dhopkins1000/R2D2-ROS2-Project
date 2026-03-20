@@ -1,0 +1,27 @@
+[Unit]
+Description=R2D2 Robot Bringup (Xtion + Webcam + Foxglove Bridge)
+After=network.target
+Conflicts=foxglove-bridge.service
+
+[Service]
+Type=simple
+User=r2d2
+Group=r2d2
+Environment="HOME=/home/r2d2"
+Environment="ROS_DOMAIN_ID=0"
+Environment="RMW_IMPLEMENTATION=rmw_fastrtps_cpp"
+ExecStart=/bin/bash -c "\
+  source /opt/ros/jazzy/setup.bash && \
+  source /home/r2d2/ros2_ws/install/setup.bash && \
+  exec ros2 launch r2d2_bringup r2d2.launch.py"
+Restart=on-failure
+RestartSec=10
+StartLimitIntervalSec=120
+StartLimitBurst=5
+TimeoutStopSec=15
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=r2d2
+
+[Install]
+WantedBy=multi-user.target

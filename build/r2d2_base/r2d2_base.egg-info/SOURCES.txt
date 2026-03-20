@@ -1,0 +1,11 @@
+package.xml
+setup.cfg
+setup.py
+r2d2_base/__init__.py
+r2d2_base.egg-info/PKG-INFO
+r2d2_base.egg-info/SOURCES.txt
+r2d2_base.egg-info/dependency_links.txt
+r2d2_base.egg-info/requires.txt
+r2d2_base.egg-info/top_level.txt
+r2d2_base.egg-info/zip-safe
+resource/r2d2_base

@@ -1,0 +1,11 @@
+package.xml
+setup.cfg
+setup.py
+r2d2_audio/__init__.py
+r2d2_audio.egg-info/PKG-INFO
+r2d2_audio.egg-info/SOURCES.txt
+r2d2_audio.egg-info/dependency_links.txt
+r2d2_audio.egg-info/requires.txt
+r2d2_audio.egg-info/top_level.txt
+r2d2_audio.egg-info/zip-safe
+resource/r2d2_audio

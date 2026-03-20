@@ -1,0 +1,24 @@
+[12.143s] Invoking command in '/home/r2d2/ros2_ws/build/r2d2_base': PYTHONPATH=/home/r2d2/ros2_ws/build/r2d2_base/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/r2d2/ros2_ws/install/r2d2_base/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/r2d2/ros2_ws/build/r2d2_base/build --no-deps symlink_data
+[17.858s] running develop
+[21.108s] running egg_info
+[21.109s] creating r2d2_base.egg-info
+[21.407s] writing r2d2_base.egg-info/PKG-INFO
+[21.420s] writing dependency_links to r2d2_base.egg-info/dependency_links.txt
+[21.429s] writing requirements to r2d2_base.egg-info/requires.txt
+[21.430s] writing top-level names to r2d2_base.egg-info/top_level.txt
+[21.440s] writing manifest file 'r2d2_base.egg-info/SOURCES.txt'
+[21.992s] reading manifest file 'r2d2_base.egg-info/SOURCES.txt'
+[21.998s] writing manifest file 'r2d2_base.egg-info/SOURCES.txt'
+[22.327s] running build_ext
+[22.329s] Creating /home/r2d2/ros2_ws/install/r2d2_base/lib/python3.12/site-packages/r2d2-base.egg-link (link to .)
+[22.340s] 
+[22.341s] Installed /home/r2d2/ros2_ws/build/r2d2_base
+[22.347s] running symlink_data
+[22.348s] creating /home/r2d2/ros2_ws/install/r2d2_base/share
+[22.355s] creating /home/r2d2/ros2_ws/install/r2d2_base/share/ament_index
+[22.359s] creating /home/r2d2/ros2_ws/install/r2d2_base/share/ament_index/resource_index
+[22.364s] creating /home/r2d2/ros2_ws/install/r2d2_base/share/ament_index/resource_index/packages
+[22.366s] symbolically linking /home/r2d2/ros2_ws/build/r2d2_base/resource/r2d2_base -> /home/r2d2/ros2_ws/install/r2d2_base/share/ament_index/resource_index/packages
+[22.371s] creating /home/r2d2/ros2_ws/install/r2d2_base/share/r2d2_base
+[22.374s] symbolically linking /home/r2d2/ros2_ws/build/r2d2_base/package.xml -> /home/r2d2/ros2_ws/install/r2d2_base/share/r2d2_base
+[22.660s] Invoked command in '/home/r2d2/ros2_ws/build/r2d2_base' returned '0': PYTHONPATH=/home/r2d2/ros2_ws/build/r2d2_base/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/r2d2/ros2_ws/install/r2d2_base/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/r2d2/ros2_ws/build/r2d2_base/build --no-deps symlink_data

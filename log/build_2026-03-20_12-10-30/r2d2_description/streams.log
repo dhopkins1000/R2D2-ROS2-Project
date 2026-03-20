@@ -1,0 +1,28 @@
+[0.469s] Invoking command in '/home/r2d2/ros2_ws/build/r2d2_description': CMAKE_PREFIX_PATH=/opt/ros/jazzy /usr/bin/cmake /home/r2d2/ros2_ws/src/r2d2_description -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/r2d2/ros2_ws/install/r2d2_description
+[5.645s] -- Found ament_cmake: 2.5.5 (/opt/ros/jazzy/share/ament_cmake/cmake)
+[5.653s] -- Override CMake install command with custom implementation using symlinks instead of copying resources
+[5.656s] -- Configuring done (4.0s)
+[5.657s] -- Generating done (0.0s)
+[5.658s] -- Build files have been written to: /home/r2d2/ros2_ws/build/r2d2_description
+[5.660s] Invoked command in '/home/r2d2/ros2_ws/build/r2d2_description' returned '0': CMAKE_PREFIX_PATH=/opt/ros/jazzy /usr/bin/cmake /home/r2d2/ros2_ws/src/r2d2_description -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/r2d2/ros2_ws/install/r2d2_description
+[5.666s] Invoking command in '/home/r2d2/ros2_ws/build/r2d2_description': CMAKE_PREFIX_PATH=/opt/ros/jazzy /usr/bin/cmake --build /home/r2d2/ros2_ws/build/r2d2_description -- -j4 -l4
+[6.194s] Invoked command in '/home/r2d2/ros2_ws/build/r2d2_description' returned '0': CMAKE_PREFIX_PATH=/opt/ros/jazzy /usr/bin/cmake --build /home/r2d2/ros2_ws/build/r2d2_description -- -j4 -l4
+[6.251s] Invoking command in '/home/r2d2/ros2_ws/build/r2d2_description': CMAKE_PREFIX_PATH=/opt/ros/jazzy /usr/bin/cmake --install /home/r2d2/ros2_ws/build/r2d2_description
+[6.357s] -- Install configuration: ""
+[6.358s] -- Execute custom install script
+[6.366s] -- Symlinking: /home/r2d2/ros2_ws/install/r2d2_description/share/ament_index/resource_index/package_run_dependencies/r2d2_description
+[6.499s] -- Symlinking: /home/r2d2/ros2_ws/install/r2d2_description/share/ament_index/resource_index/parent_prefix_path/r2d2_description
+[6.634s] -- Symlinking: /home/r2d2/ros2_ws/install/r2d2_description/share/r2d2_description/environment/ament_prefix_path.sh
+[6.776s] -- Symlinking: /home/r2d2/ros2_ws/install/r2d2_description/share/r2d2_description/environment/ament_prefix_path.dsv
+[6.913s] -- Symlinking: /home/r2d2/ros2_ws/install/r2d2_description/share/r2d2_description/environment/path.sh
+[7.050s] -- Symlinking: /home/r2d2/ros2_ws/install/r2d2_description/share/r2d2_description/environment/path.dsv
+[7.202s] -- Symlinking: /home/r2d2/ros2_ws/install/r2d2_description/share/r2d2_description/local_setup.bash
+[7.352s] -- Symlinking: /home/r2d2/ros2_ws/install/r2d2_description/share/r2d2_description/local_setup.sh
+[7.491s] -- Symlinking: /home/r2d2/ros2_ws/install/r2d2_description/share/r2d2_description/local_setup.zsh
+[7.621s] -- Symlinking: /home/r2d2/ros2_ws/install/r2d2_description/share/r2d2_description/local_setup.dsv
+[7.762s] -- Symlinking: /home/r2d2/ros2_ws/install/r2d2_description/share/r2d2_description/package.dsv
+[7.899s] -- Symlinking: /home/r2d2/ros2_ws/install/r2d2_description/share/ament_index/resource_index/packages/r2d2_description
+[8.037s] -- Symlinking: /home/r2d2/ros2_ws/install/r2d2_description/share/r2d2_description/cmake/r2d2_descriptionConfig.cmake
+[8.179s] -- Symlinking: /home/r2d2/ros2_ws/install/r2d2_description/share/r2d2_description/cmake/r2d2_descriptionConfig-version.cmake
+[8.325s] -- Symlinking: /home/r2d2/ros2_ws/install/r2d2_description/share/r2d2_description/package.xml
+[8.483s] Invoked command in '/home/r2d2/ros2_ws/build/r2d2_description' returned '0': CMAKE_PREFIX_PATH=/opt/ros/jazzy /usr/bin/cmake --install /home/r2d2/ros2_ws/build/r2d2_description

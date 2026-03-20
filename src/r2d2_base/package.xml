@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>r2d2_base</name>
+  <version>0.1.0</version>
+  <description>Basisantriebs-Steuerung für R2D2 (Motoren, Odometrie, Navigation).</description>
+  <maintainer email="r2d2@r2d2.local">r2d2</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_python</buildtool_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

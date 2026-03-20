@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>r2d2_head</name>
+  <version>0.1.0</version>
+  <description>Kopfbewegungssteuerung für R2D2 (Pan/Tilt, Kameranachführung).</description>
+  <maintainer email="r2d2@r2d2.local">r2d2</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_python</buildtool_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

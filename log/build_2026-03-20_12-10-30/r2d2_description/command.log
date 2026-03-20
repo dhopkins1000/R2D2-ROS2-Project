@@ -1,0 +1,6 @@
+Invoking command in '/home/r2d2/ros2_ws/build/r2d2_description': CMAKE_PREFIX_PATH=/opt/ros/jazzy /usr/bin/cmake /home/r2d2/ros2_ws/src/r2d2_description -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/r2d2/ros2_ws/install/r2d2_description
+Invoked command in '/home/r2d2/ros2_ws/build/r2d2_description' returned '0': CMAKE_PREFIX_PATH=/opt/ros/jazzy /usr/bin/cmake /home/r2d2/ros2_ws/src/r2d2_description -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/r2d2/ros2_ws/install/r2d2_description
+Invoking command in '/home/r2d2/ros2_ws/build/r2d2_description': CMAKE_PREFIX_PATH=/opt/ros/jazzy /usr/bin/cmake --build /home/r2d2/ros2_ws/build/r2d2_description -- -j4 -l4
+Invoked command in '/home/r2d2/ros2_ws/build/r2d2_description' returned '0': CMAKE_PREFIX_PATH=/opt/ros/jazzy /usr/bin/cmake --build /home/r2d2/ros2_ws/build/r2d2_description -- -j4 -l4
+Invoking command in '/home/r2d2/ros2_ws/build/r2d2_description': CMAKE_PREFIX_PATH=/opt/ros/jazzy /usr/bin/cmake --install /home/r2d2/ros2_ws/build/r2d2_description
+Invoked command in '/home/r2d2/ros2_ws/build/r2d2_description' returned '0': CMAKE_PREFIX_PATH=/opt/ros/jazzy /usr/bin/cmake --install /home/r2d2/ros2_ws/build/r2d2_description

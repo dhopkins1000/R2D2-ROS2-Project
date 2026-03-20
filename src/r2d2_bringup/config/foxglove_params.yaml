@@ -1,0 +1,27 @@
+/**:
+  ros__parameters:
+    port: 8765
+    address: "0.0.0.0"
+    tls: false
+    topic_whitelist:
+      - ".*"
+    param_whitelist:
+      - ".*"
+    service_whitelist:
+      - ".*"
+    client_topic_whitelist:
+      - ".*"
+    min_qos_depth: 1
+    max_qos_depth: 25
+    num_threads: 4
+    send_buffer_limit: 20000000
+    use_sim_time: false
+    capabilities:
+      - "clientPublish"
+      - "parameters"
+      - "parametersSubscribe"
+      - "services"
+      - "connectionGraph"
+      - "assets"
+    include_hidden: false
+    ignore_unresponsive_param_nodes: true

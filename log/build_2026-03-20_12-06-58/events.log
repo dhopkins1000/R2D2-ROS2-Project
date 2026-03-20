@@ -1,0 +1,807 @@
+[0.000000] (-) TimerEvent: {}
+[0.000373] (r2d2_audio) JobQueued: {'identifier': 'r2d2_audio', 'dependencies': OrderedDict()}
+[0.000796] (r2d2_base) JobQueued: {'identifier': 'r2d2_base', 'dependencies': OrderedDict()}
+[0.000872] (r2d2_behavior) JobQueued: {'identifier': 'r2d2_behavior', 'dependencies': OrderedDict()}
+[0.000936] (r2d2_bringup) JobQueued: {'identifier': 'r2d2_bringup', 'dependencies': OrderedDict()}
+[0.000999] (r2d2_description) JobQueued: {'identifier': 'r2d2_description', 'dependencies': OrderedDict()}
+[0.001061] (r2d2_head) JobQueued: {'identifier': 'r2d2_head', 'dependencies': OrderedDict()}
+[0.001122] (r2d2_perception) JobQueued: {'identifier': 'r2d2_perception', 'dependencies': OrderedDict()}
+[0.001939] (r2d2_audio) JobStarted: {'identifier': 'r2d2_audio'}
+[0.033110] (r2d2_base) JobStarted: {'identifier': 'r2d2_base'}
+[0.048612] (r2d2_behavior) JobStarted: {'identifier': 'r2d2_behavior'}
+[0.064210] (r2d2_bringup) JobStarted: {'identifier': 'r2d2_bringup'}
+[0.099212] (-) TimerEvent: {}
+[0.199893] (-) TimerEvent: {}
+[0.300732] (-) TimerEvent: {}
+[0.401394] (-) TimerEvent: {}
+[0.501942] (-) TimerEvent: {}
+[0.602494] (-) TimerEvent: {}
+[0.703012] (-) TimerEvent: {}
+[0.803616] (-) TimerEvent: {}
+[0.904145] (-) TimerEvent: {}
+[1.004774] (-) TimerEvent: {}
+[1.105401] (-) TimerEvent: {}
+[1.206020] (-) TimerEvent: {}
+[1.306633] (-) TimerEvent: {}
+[1.407144] (-) TimerEvent: {}
+[1.507743] (-) TimerEvent: {}
+[1.608321] (-) TimerEvent: {}
+[1.708815] (-) TimerEvent: {}
+[1.809376] (-) TimerEvent: {}
+[1.909870] (-) TimerEvent: {}
+[2.010548] (-) TimerEvent: {}
+[2.111419] (-) TimerEvent: {}
+[2.212170] (-) TimerEvent: {}
+[2.314664] (-) TimerEvent: {}
+[2.415392] (-) TimerEvent: {}
+[2.516086] (-) TimerEvent: {}
+[2.616814] (-) TimerEvent: {}
+[2.717543] (-) TimerEvent: {}
+[2.818398] (-) TimerEvent: {}
+[2.918986] (-) TimerEvent: {}
+[3.019648] (-) TimerEvent: {}
+[3.120343] (-) TimerEvent: {}
+[3.220811] (-) TimerEvent: {}
+[3.321381] (-) TimerEvent: {}
+[3.421914] (-) TimerEvent: {}
+[3.522451] (-) TimerEvent: {}
+[3.622971] (-) TimerEvent: {}
+[3.723613] (-) TimerEvent: {}
+[3.824146] (-) TimerEvent: {}
+[3.924755] (-) TimerEvent: {}
+[4.025384] (-) TimerEvent: {}
+[4.126029] (-) TimerEvent: {}
+[4.228548] (-) TimerEvent: {}
+[4.329283] (-) TimerEvent: {}
+[4.431546] (-) TimerEvent: {}
+[4.532233] (-) TimerEvent: {}
+[4.633528] (-) TimerEvent: {}
+[4.734134] (-) TimerEvent: {}
+[4.837494] (-) TimerEvent: {}
+[4.938099] (-) TimerEvent: {}
+[5.038866] (-) TimerEvent: {}
+[5.140558] (-) TimerEvent: {}
+[5.241124] (-) TimerEvent: {}
+[5.341840] (-) TimerEvent: {}
+[5.442466] (-) TimerEvent: {}
+[5.543045] (-) TimerEvent: {}
+[5.643697] (-) TimerEvent: {}
+[5.744319] (-) TimerEvent: {}
+[5.844877] (-) TimerEvent: {}
+[5.946564] (-) TimerEvent: {}
+[6.047196] (-) TimerEvent: {}
+[6.149363] (-) TimerEvent: {}
+[6.250491] (-) TimerEvent: {}
+[6.351101] (-) TimerEvent: {}
+[6.453500] (-) TimerEvent: {}
+[6.553969] (-) TimerEvent: {}
+[6.654456] (-) TimerEvent: {}
+[6.755119] (-) TimerEvent: {}
+[6.855992] (-) TimerEvent: {}
+[6.959003] (-) TimerEvent: {}
+[7.059647] (-) TimerEvent: {}
+[7.162506] (-) TimerEvent: {}
+[7.263141] (-) TimerEvent: {}
+[7.364494] (-) TimerEvent: {}
+[7.467535] (-) TimerEvent: {}
+[7.568173] (-) TimerEvent: {}
+[7.668863] (-) TimerEvent: {}
+[7.769494] (-) TimerEvent: {}
+[7.872582] (-) TimerEvent: {}
+[7.973183] (-) TimerEvent: {}
+[8.073850] (-) TimerEvent: {}
+[8.177479] (-) TimerEvent: {}
+[8.278094] (-) TimerEvent: {}
+[8.378767] (-) TimerEvent: {}
+[8.480491] (-) TimerEvent: {}
+[8.581157] (-) TimerEvent: {}
+[8.682562] (-) TimerEvent: {}
+[8.785494] (-) TimerEvent: {}
+[8.886100] (-) TimerEvent: {}
+[8.986813] (-) TimerEvent: {}
+[9.087475] (-) TimerEvent: {}
+[9.190496] (-) TimerEvent: {}
+[9.291100] (-) TimerEvent: {}
+[9.391771] (-) TimerEvent: {}
+[9.492414] (-) TimerEvent: {}
+[9.593090] (-) TimerEvent: {}
+[9.696536] (-) TimerEvent: {}
+[9.797703] (-) TimerEvent: {}
+[9.898170] (-) TimerEvent: {}
+[9.999221] (-) TimerEvent: {}
+[10.102981] (-) TimerEvent: {}
+[10.203651] (-) TimerEvent: {}
+[10.304338] (-) TimerEvent: {}
+[10.382131] (r2d2_audio) Command: {'cmd': ['/usr/bin/python3', '-W', 'ignore:setup.py install is deprecated', '-W', 'ignore:easy_install command is deprecated', 'setup.py', 'develop', '--editable', '--build-directory', '/home/r2d2/ros2_ws/build/r2d2_audio/build', '--no-deps', 'symlink_data'], 'cwd': '/home/r2d2/ros2_ws/build/r2d2_audio', 'env': {'LESSOPEN': '| /usr/bin/lesspipe %s', 'VSCODE_CWD': '/home/r2d2', 'VSCODE_ESM_ENTRYPOINT': 'vs/workbench/api/node/extensionHostProcess', 'USER': 'r2d2', 'SSH_CLIENT': '100.81.166.78 56047 22', 'CLAUDE_CODE_ENTRYPOINT': 'claude-vscode', 'VSCODE_NLS_CONFIG': '{"userLocale":"de","osLocale":"de","resolvedLanguage":"de","defaultMessagesFile":"/home/r2d2/.vscode-server/cli/servers/Stable-ce099c1ed25d9eb3076c11e4a280f3eb52b4fbeb/server/out/nls.messages.json","languagePack":{"translationsConfigFile":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de/tcf.json","messagesFile":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de/ce099c1ed25d9eb3076c11e4a280f3eb52b4fbeb/nls.messages.json","corruptMarkerFile":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de/corrupted.info"},"locale":"de","availableLanguages":{"*":"de"},"_languagePackId":"15d47a4cb34d596b6eca93313ab25a1a.de","_languagePackSupport":true,"_translationsConfigFile":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de/tcf.json","_cacheRoot":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de","_resolvedLanguagePackCoreLocation":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de/ce099c1ed25d9eb3076c11e4a280f3eb52b4fbeb","_corruptedFile":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de/corrupted.info"}', 'GIT_EDITOR': 'true', 'VSCODE_HANDLES_UNCAUGHT_ERRORS': 'true', 'CLAUDE_AGENT_SDK_VERSION': '0.2.79', 'SHLVL': '2', 'LD_LIBRARY_PATH': '/opt/ros/jazzy/lib/aarch64-linux-gnu:/opt/ros/jazzy/lib', 'BROWSER': '/home/r2d2/.vscode-server/cli/servers/Stable-ce099c1ed25d9eb3076c11e4a280f3eb52b4fbeb/server/bin/helpers/browser.sh', 'HOME': '/home/r2d2', 'OLDPWD': '/home/r2d2', 'VSCODE_RECONNECTION_GRACE_TIME': '10800000', 'VSCODE_IPC_HOOK_CLI': '/tmp/vscode-ipc-65cd3e89-ef23-436b-8900-34fb44f71d90.sock', 'ROS_PYTHON_VERSION': '3', 'VSCODE_L10N_BUNDLE_LOCATION': 'vscode-local:/Users/daniel.hopkins/.vscode/extensions/ms-ceintl.vscode-language-pack-de-1.110.2026031919/translations/extensions/vscode.json-language-features.i18n.json', 'APPLICATION_INSIGHTS_NO_STATSBEAT': 'true', 'ROS_DISTRO': 'jazzy', 'VSCODE_HANDLES_SIGPIPE': 'true', '_': '/usr/bin/colcon', 'ROS_VERSION': '2', 'OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE': 'delta', 'VSCODE_CLI_REQUIRE_TOKEN': '63fc68ec-7288-4e30-9cc5-81f218ca1eb8', 'PATH': '/home/r2d2/.opencode/bin:/home/r2d2/.vscode-server/cli/servers/Stable-ce099c1ed25d9eb3076c11e4a280f3eb52b4fbeb/server/bin/remote-cli:/home/r2d2/.opencode/bin:/opt/ros/jazzy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin', 'VSCODE_AGENT_FOLDER': '/home/r2d2/.vscode-server', 'COREPACK_ENABLE_AUTO_PIN': '0', 'NoDefaultCurrentDirectoryInExePath': '1', 'LANG': 'C.UTF-8', 'LS_COLORS': '', 'AMENT_PREFIX_PATH': '/opt/ros/jazzy', 'SHELL': '/bin/bash', 'ELECTRON_RUN_AS_NODE': '1', 'CLAUDE_CODE_ENABLE_SDK_FILE_CHECKPOINTING': 'true', 'LESSCLOSE': '/usr/bin/lesspipe %s %s', 'CLAUDECODE': '1', 'ROS_AUTOMATIC_DISCOVERY_RANGE': 'SUBNET', 'PWD': '/home/r2d2/ros2_ws/build/r2d2_audio', 'SSH_CONNECTION': '100.81.166.78 56047 100.81.24.58 22', 'XDG_DATA_DIRS': '/usr/local/share:/usr/share:/var/lib/snapd/desktop', 'PYTHONPATH': '/home/r2d2/ros2_ws/build/r2d2_audio/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/r2d2/ros2_ws/install/r2d2_audio/lib/python3.12/site-packages:/opt/ros/jazzy/lib/python3.12/site-packages', 'COLCON': '1'}, 'shell': False}
+[10.406858] (-) TimerEvent: {}
+[10.508121] (-) TimerEvent: {}
+[10.610466] (-) TimerEvent: {}
+[10.711052] (-) TimerEvent: {}
+[10.813494] (-) TimerEvent: {}
+[10.914089] (-) TimerEvent: {}
+[11.014771] (-) TimerEvent: {}
+[11.115735] (-) TimerEvent: {}
+[11.216535] (-) TimerEvent: {}
+[11.320492] (-) TimerEvent: {}
+[11.422549] (-) TimerEvent: {}
+[11.525510] (-) TimerEvent: {}
+[11.626168] (-) TimerEvent: {}
+[11.729498] (-) TimerEvent: {}
+[11.830135] (-) TimerEvent: {}
+[11.930867] (-) TimerEvent: {}
+[12.031557] (-) TimerEvent: {}
+[12.134502] (-) TimerEvent: {}
+[12.162568] (r2d2_base) Command: {'cmd': ['/usr/bin/python3', '-W', 'ignore:setup.py install is deprecated', '-W', 'ignore:easy_install command is deprecated', 'setup.py', 'develop', '--editable', '--build-directory', '/home/r2d2/ros2_ws/build/r2d2_base/build', '--no-deps', 'symlink_data'], 'cwd': '/home/r2d2/ros2_ws/build/r2d2_base', 'env': {'LESSOPEN': '| /usr/bin/lesspipe %s', 'VSCODE_CWD': '/home/r2d2', 'VSCODE_ESM_ENTRYPOINT': 'vs/workbench/api/node/extensionHostProcess', 'USER': 'r2d2', 'SSH_CLIENT': '100.81.166.78 56047 22', 'CLAUDE_CODE_ENTRYPOINT': 'claude-vscode', 'VSCODE_NLS_CONFIG': '{"userLocale":"de","osLocale":"de","resolvedLanguage":"de","defaultMessagesFile":"/home/r2d2/.vscode-server/cli/servers/Stable-ce099c1ed25d9eb3076c11e4a280f3eb52b4fbeb/server/out/nls.messages.json","languagePack":{"translationsConfigFile":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de/tcf.json","messagesFile":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de/ce099c1ed25d9eb3076c11e4a280f3eb52b4fbeb/nls.messages.json","corruptMarkerFile":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de/corrupted.info"},"locale":"de","availableLanguages":{"*":"de"},"_languagePackId":"15d47a4cb34d596b6eca93313ab25a1a.de","_languagePackSupport":true,"_translationsConfigFile":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de/tcf.json","_cacheRoot":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de","_resolvedLanguagePackCoreLocation":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de/ce099c1ed25d9eb3076c11e4a280f3eb52b4fbeb","_corruptedFile":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de/corrupted.info"}', 'GIT_EDITOR': 'true', 'VSCODE_HANDLES_UNCAUGHT_ERRORS': 'true', 'CLAUDE_AGENT_SDK_VERSION': '0.2.79', 'SHLVL': '2', 'LD_LIBRARY_PATH': '/opt/ros/jazzy/lib/aarch64-linux-gnu:/opt/ros/jazzy/lib', 'BROWSER': '/home/r2d2/.vscode-server/cli/servers/Stable-ce099c1ed25d9eb3076c11e4a280f3eb52b4fbeb/server/bin/helpers/browser.sh', 'HOME': '/home/r2d2', 'OLDPWD': '/home/r2d2', 'VSCODE_RECONNECTION_GRACE_TIME': '10800000', 'VSCODE_IPC_HOOK_CLI': '/tmp/vscode-ipc-65cd3e89-ef23-436b-8900-34fb44f71d90.sock', 'ROS_PYTHON_VERSION': '3', 'VSCODE_L10N_BUNDLE_LOCATION': 'vscode-local:/Users/daniel.hopkins/.vscode/extensions/ms-ceintl.vscode-language-pack-de-1.110.2026031919/translations/extensions/vscode.json-language-features.i18n.json', 'APPLICATION_INSIGHTS_NO_STATSBEAT': 'true', 'ROS_DISTRO': 'jazzy', 'VSCODE_HANDLES_SIGPIPE': 'true', '_': '/usr/bin/colcon', 'ROS_VERSION': '2', 'OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE': 'delta', 'VSCODE_CLI_REQUIRE_TOKEN': '63fc68ec-7288-4e30-9cc5-81f218ca1eb8', 'PATH': '/home/r2d2/.opencode/bin:/home/r2d2/.vscode-server/cli/servers/Stable-ce099c1ed25d9eb3076c11e4a280f3eb52b4fbeb/server/bin/remote-cli:/home/r2d2/.opencode/bin:/opt/ros/jazzy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin', 'VSCODE_AGENT_FOLDER': '/home/r2d2/.vscode-server', 'COREPACK_ENABLE_AUTO_PIN': '0', 'NoDefaultCurrentDirectoryInExePath': '1', 'LANG': 'C.UTF-8', 'LS_COLORS': '', 'AMENT_PREFIX_PATH': '/opt/ros/jazzy', 'SHELL': '/bin/bash', 'ELECTRON_RUN_AS_NODE': '1', 'CLAUDE_CODE_ENABLE_SDK_FILE_CHECKPOINTING': 'true', 'LESSCLOSE': '/usr/bin/lesspipe %s %s', 'CLAUDECODE': '1', 'ROS_AUTOMATIC_DISCOVERY_RANGE': 'SUBNET', 'PWD': '/home/r2d2/ros2_ws/build/r2d2_base', 'SSH_CONNECTION': '100.81.166.78 56047 100.81.24.58 22', 'XDG_DATA_DIRS': '/usr/local/share:/usr/share:/var/lib/snapd/desktop', 'PYTHONPATH': '/home/r2d2/ros2_ws/build/r2d2_base/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/r2d2/ros2_ws/install/r2d2_base/lib/python3.12/site-packages:/opt/ros/jazzy/lib/python3.12/site-packages', 'COLCON': '1'}, 'shell': False}
+[12.239500] (-) TimerEvent: {}
+[12.340086] (-) TimerEvent: {}
+[12.440848] (-) TimerEvent: {}
+[12.541509] (-) TimerEvent: {}
+[12.642082] (-) TimerEvent: {}
+[12.744479] (-) TimerEvent: {}
+[12.845109] (-) TimerEvent: {}
+[12.948484] (-) TimerEvent: {}
+[13.049087] (-) TimerEvent: {}
+[13.150718] (-) TimerEvent: {}
+[13.252488] (-) TimerEvent: {}
+[13.352962] (-) TimerEvent: {}
+[13.453719] (-) TimerEvent: {}
+[13.554430] (-) TimerEvent: {}
+[13.656503] (-) TimerEvent: {}
+[13.757109] (-) TimerEvent: {}
+[13.858992] (-) TimerEvent: {}
+[13.959664] (-) TimerEvent: {}
+[14.062687] (-) TimerEvent: {}
+[14.163351] (-) TimerEvent: {}
+[14.263965] (-) TimerEvent: {}
+[14.364626] (-) TimerEvent: {}
+[14.467491] (-) TimerEvent: {}
+[14.568117] (-) TimerEvent: {}
+[14.668829] (-) TimerEvent: {}
+[14.771495] (-) TimerEvent: {}
+[14.872088] (-) TimerEvent: {}
+[14.972766] (-) TimerEvent: {}
+[15.073452] (-) TimerEvent: {}
+[15.176517] (-) TimerEvent: {}
+[15.277131] (-) TimerEvent: {}
+[15.378348] (-) TimerEvent: {}
+[15.480507] (-) TimerEvent: {}
+[15.581115] (-) TimerEvent: {}
+[15.683327] (-) TimerEvent: {}
+[15.785716] (-) TimerEvent: {}
+[15.811195] (r2d2_audio) StdoutLine: {'line': b'running develop\n'}
+[15.887542] (-) TimerEvent: {}
+[15.989514] (-) TimerEvent: {}
+[16.027475] (r2d2_behavior) Command: {'cmd': ['/usr/bin/python3', '-W', 'ignore:setup.py install is deprecated', '-W', 'ignore:easy_install command is deprecated', 'setup.py', 'develop', '--editable', '--build-directory', '/home/r2d2/ros2_ws/build/r2d2_behavior/build', '--no-deps', 'symlink_data'], 'cwd': '/home/r2d2/ros2_ws/build/r2d2_behavior', 'env': {'LESSOPEN': '| /usr/bin/lesspipe %s', 'VSCODE_CWD': '/home/r2d2', 'VSCODE_ESM_ENTRYPOINT': 'vs/workbench/api/node/extensionHostProcess', 'USER': 'r2d2', 'SSH_CLIENT': '100.81.166.78 56047 22', 'CLAUDE_CODE_ENTRYPOINT': 'claude-vscode', 'VSCODE_NLS_CONFIG': '{"userLocale":"de","osLocale":"de","resolvedLanguage":"de","defaultMessagesFile":"/home/r2d2/.vscode-server/cli/servers/Stable-ce099c1ed25d9eb3076c11e4a280f3eb52b4fbeb/server/out/nls.messages.json","languagePack":{"translationsConfigFile":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de/tcf.json","messagesFile":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de/ce099c1ed25d9eb3076c11e4a280f3eb52b4fbeb/nls.messages.json","corruptMarkerFile":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de/corrupted.info"},"locale":"de","availableLanguages":{"*":"de"},"_languagePackId":"15d47a4cb34d596b6eca93313ab25a1a.de","_languagePackSupport":true,"_translationsConfigFile":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de/tcf.json","_cacheRoot":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de","_resolvedLanguagePackCoreLocation":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de/ce099c1ed25d9eb3076c11e4a280f3eb52b4fbeb","_corruptedFile":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de/corrupted.info"}', 'GIT_EDITOR': 'true', 'VSCODE_HANDLES_UNCAUGHT_ERRORS': 'true', 'CLAUDE_AGENT_SDK_VERSION': '0.2.79', 'SHLVL': '2', 'LD_LIBRARY_PATH': '/opt/ros/jazzy/lib/aarch64-linux-gnu:/opt/ros/jazzy/lib', 'BROWSER': '/home/r2d2/.vscode-server/cli/servers/Stable-ce099c1ed25d9eb3076c11e4a280f3eb52b4fbeb/server/bin/helpers/browser.sh', 'HOME': '/home/r2d2', 'OLDPWD': '/home/r2d2', 'VSCODE_RECONNECTION_GRACE_TIME': '10800000', 'VSCODE_IPC_HOOK_CLI': '/tmp/vscode-ipc-65cd3e89-ef23-436b-8900-34fb44f71d90.sock', 'ROS_PYTHON_VERSION': '3', 'VSCODE_L10N_BUNDLE_LOCATION': 'vscode-local:/Users/daniel.hopkins/.vscode/extensions/ms-ceintl.vscode-language-pack-de-1.110.2026031919/translations/extensions/vscode.json-language-features.i18n.json', 'APPLICATION_INSIGHTS_NO_STATSBEAT': 'true', 'ROS_DISTRO': 'jazzy', 'VSCODE_HANDLES_SIGPIPE': 'true', '_': '/usr/bin/colcon', 'ROS_VERSION': '2', 'OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE': 'delta', 'VSCODE_CLI_REQUIRE_TOKEN': '63fc68ec-7288-4e30-9cc5-81f218ca1eb8', 'PATH': '/home/r2d2/.opencode/bin:/home/r2d2/.vscode-server/cli/servers/Stable-ce099c1ed25d9eb3076c11e4a280f3eb52b4fbeb/server/bin/remote-cli:/home/r2d2/.opencode/bin:/opt/ros/jazzy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin', 'VSCODE_AGENT_FOLDER': '/home/r2d2/.vscode-server', 'COREPACK_ENABLE_AUTO_PIN': '0', 'NoDefaultCurrentDirectoryInExePath': '1', 'LANG': 'C.UTF-8', 'LS_COLORS': '', 'AMENT_PREFIX_PATH': '/opt/ros/jazzy', 'SHELL': '/bin/bash', 'ELECTRON_RUN_AS_NODE': '1', 'CLAUDE_CODE_ENABLE_SDK_FILE_CHECKPOINTING': 'true', 'LESSCLOSE': '/usr/bin/lesspipe %s %s', 'CLAUDECODE': '1', 'ROS_AUTOMATIC_DISCOVERY_RANGE': 'SUBNET', 'PWD': '/home/r2d2/ros2_ws/build/r2d2_behavior', 'SSH_CONNECTION': '100.81.166.78 56047 100.81.24.58 22', 'XDG_DATA_DIRS': '/usr/local/share:/usr/share:/var/lib/snapd/desktop', 'PYTHONPATH': '/home/r2d2/ros2_ws/build/r2d2_behavior/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/r2d2/ros2_ws/install/r2d2_behavior/lib/python3.12/site-packages:/opt/ros/jazzy/lib/python3.12/site-packages', 'COLCON': '1'}, 'shell': False}
+[16.092497] (-) TimerEvent: {}
+[16.193093] (-) TimerEvent: {}
+[16.293778] (-) TimerEvent: {}
+[16.394439] (-) TimerEvent: {}
+[16.496491] (-) TimerEvent: {}
+[16.597638] (-) TimerEvent: {}
+[16.698158] (-) TimerEvent: {}
+[16.800500] (-) TimerEvent: {}
+[16.901089] (-) TimerEvent: {}
+[17.004536] (-) TimerEvent: {}
+[17.105155] (-) TimerEvent: {}
+[17.205864] (-) TimerEvent: {}
+[17.306473] (-) TimerEvent: {}
+[17.408596] (-) TimerEvent: {}
+[17.512593] (-) TimerEvent: {}
+[17.613358] (-) TimerEvent: {}
+[17.713932] (-) TimerEvent: {}
+[17.814588] (-) TimerEvent: {}
+[17.890110] (r2d2_base) StdoutLine: {'line': b'running develop\n'}
+[17.917493] (-) TimerEvent: {}
+[18.018064] (-) TimerEvent: {}
+[18.118712] (-) TimerEvent: {}
+[18.220491] (-) TimerEvent: {}
+[18.321084] (-) TimerEvent: {}
+[18.424473] (-) TimerEvent: {}
+[18.525061] (-) TimerEvent: {}
+[18.625738] (-) TimerEvent: {}
+[18.726417] (-) TimerEvent: {}
+[18.827007] (-) TimerEvent: {}
+[18.929554] (-) TimerEvent: {}
+[18.939764] (r2d2_audio) StdoutLine: {'line': b'running egg_info\n'}
+[18.941340] (r2d2_audio) StdoutLine: {'line': b'creating r2d2_audio.egg-info\n'}
+[18.995498] (r2d2_bringup) Command: {'cmd': ['/usr/bin/python3', '-W', 'ignore:setup.py install is deprecated', '-W', 'ignore:easy_install command is deprecated', 'setup.py', 'develop', '--editable', '--build-directory', '/home/r2d2/ros2_ws/build/r2d2_bringup/build', '--no-deps', 'symlink_data'], 'cwd': '/home/r2d2/ros2_ws/build/r2d2_bringup', 'env': {'LESSOPEN': '| /usr/bin/lesspipe %s', 'VSCODE_CWD': '/home/r2d2', 'VSCODE_ESM_ENTRYPOINT': 'vs/workbench/api/node/extensionHostProcess', 'USER': 'r2d2', 'SSH_CLIENT': '100.81.166.78 56047 22', 'CLAUDE_CODE_ENTRYPOINT': 'claude-vscode', 'VSCODE_NLS_CONFIG': '{"userLocale":"de","osLocale":"de","resolvedLanguage":"de","defaultMessagesFile":"/home/r2d2/.vscode-server/cli/servers/Stable-ce099c1ed25d9eb3076c11e4a280f3eb52b4fbeb/server/out/nls.messages.json","languagePack":{"translationsConfigFile":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de/tcf.json","messagesFile":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de/ce099c1ed25d9eb3076c11e4a280f3eb52b4fbeb/nls.messages.json","corruptMarkerFile":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de/corrupted.info"},"locale":"de","availableLanguages":{"*":"de"},"_languagePackId":"15d47a4cb34d596b6eca93313ab25a1a.de","_languagePackSupport":true,"_translationsConfigFile":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de/tcf.json","_cacheRoot":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de","_resolvedLanguagePackCoreLocation":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de/ce099c1ed25d9eb3076c11e4a280f3eb52b4fbeb","_corruptedFile":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de/corrupted.info"}', 'GIT_EDITOR': 'true', 'VSCODE_HANDLES_UNCAUGHT_ERRORS': 'true', 'CLAUDE_AGENT_SDK_VERSION': '0.2.79', 'SHLVL': '2', 'LD_LIBRARY_PATH': '/opt/ros/jazzy/lib/aarch64-linux-gnu:/opt/ros/jazzy/lib', 'BROWSER': '/home/r2d2/.vscode-server/cli/servers/Stable-ce099c1ed25d9eb3076c11e4a280f3eb52b4fbeb/server/bin/helpers/browser.sh', 'HOME': '/home/r2d2', 'OLDPWD': '/home/r2d2', 'VSCODE_RECONNECTION_GRACE_TIME': '10800000', 'VSCODE_IPC_HOOK_CLI': '/tmp/vscode-ipc-65cd3e89-ef23-436b-8900-34fb44f71d90.sock', 'ROS_PYTHON_VERSION': '3', 'VSCODE_L10N_BUNDLE_LOCATION': 'vscode-local:/Users/daniel.hopkins/.vscode/extensions/ms-ceintl.vscode-language-pack-de-1.110.2026031919/translations/extensions/vscode.json-language-features.i18n.json', 'APPLICATION_INSIGHTS_NO_STATSBEAT': 'true', 'ROS_DISTRO': 'jazzy', 'VSCODE_HANDLES_SIGPIPE': 'true', '_': '/usr/bin/colcon', 'ROS_VERSION': '2', 'OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE': 'delta', 'VSCODE_CLI_REQUIRE_TOKEN': '63fc68ec-7288-4e30-9cc5-81f218ca1eb8', 'PATH': '/home/r2d2/.opencode/bin:/home/r2d2/.vscode-server/cli/servers/Stable-ce099c1ed25d9eb3076c11e4a280f3eb52b4fbeb/server/bin/remote-cli:/home/r2d2/.opencode/bin:/opt/ros/jazzy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin', 'VSCODE_AGENT_FOLDER': '/home/r2d2/.vscode-server', 'COREPACK_ENABLE_AUTO_PIN': '0', 'NoDefaultCurrentDirectoryInExePath': '1', 'LANG': 'C.UTF-8', 'LS_COLORS': '', 'AMENT_PREFIX_PATH': '/opt/ros/jazzy', 'SHELL': '/bin/bash', 'ELECTRON_RUN_AS_NODE': '1', 'CLAUDE_CODE_ENABLE_SDK_FILE_CHECKPOINTING': 'true', 'LESSCLOSE': '/usr/bin/lesspipe %s %s', 'CLAUDECODE': '1', 'ROS_AUTOMATIC_DISCOVERY_RANGE': 'SUBNET', 'PWD': '/home/r2d2/ros2_ws/build/r2d2_bringup', 'SSH_CONNECTION': '100.81.166.78 56047 100.81.24.58 22', 'XDG_DATA_DIRS': '/usr/local/share:/usr/share:/var/lib/snapd/desktop', 'PYTHONPATH': '/home/r2d2/ros2_ws/build/r2d2_bringup/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/r2d2/ros2_ws/install/r2d2_bringup/lib/python3.12/site-packages:/opt/ros/jazzy/lib/python3.12/site-packages', 'COLCON': '1'}, 'shell': False}
+[19.032569] (-) TimerEvent: {}
+[19.133180] (-) TimerEvent: {}
+[19.235539] (-) TimerEvent: {}
+[19.261716] (r2d2_audio) StdoutLine: {'line': b'writing r2d2_audio.egg-info/PKG-INFO\n'}
+[19.267771] (r2d2_audio) StdoutLine: {'line': b'writing dependency_links to r2d2_audio.egg-info/dependency_links.txt\n'}
+[19.275480] (r2d2_audio) StdoutLine: {'line': b'writing requirements to r2d2_audio.egg-info/requires.txt\n'}
+[19.276930] (r2d2_audio) StdoutLine: {'line': b'writing top-level names to r2d2_audio.egg-info/top_level.txt\n'}
+[19.281463] (r2d2_audio) StdoutLine: {'line': b"writing manifest file 'r2d2_audio.egg-info/SOURCES.txt'\n"}
+[19.338498] (-) TimerEvent: {}
+[19.439069] (-) TimerEvent: {}
+[19.539821] (-) TimerEvent: {}
+[19.640464] (-) TimerEvent: {}
+[19.743503] (-) TimerEvent: {}
+[19.844140] (-) TimerEvent: {}
+[19.947511] (-) TimerEvent: {}
+[20.048046] (-) TimerEvent: {}
+[20.063756] (r2d2_audio) StdoutLine: {'line': b"reading manifest file 'r2d2_audio.egg-info/SOURCES.txt'\n"}
+[20.068135] (r2d2_audio) StdoutLine: {'line': b"writing manifest file 'r2d2_audio.egg-info/SOURCES.txt'\n"}
+[20.149509] (-) TimerEvent: {}
+[20.250103] (-) TimerEvent: {}
+[20.352508] (-) TimerEvent: {}
+[20.453148] (-) TimerEvent: {}
+[20.495983] (r2d2_audio) StdoutLine: {'line': b'running build_ext\n'}
+[20.501748] (r2d2_audio) StdoutLine: {'line': b'Creating /home/r2d2/ros2_ws/install/r2d2_audio/lib/python3.12/site-packages/r2d2-audio.egg-link (link to .)\n'}
+[20.507522] (r2d2_audio) StdoutLine: {'line': b'\n'}
+[20.508861] (r2d2_audio) StdoutLine: {'line': b'Installed /home/r2d2/ros2_ws/build/r2d2_audio\n'}
+[20.510147] (r2d2_audio) StdoutLine: {'line': b'running symlink_data\n'}
+[20.518581] (r2d2_audio) StdoutLine: {'line': b'creating /home/r2d2/ros2_ws/install/r2d2_audio/share\n'}
+[20.520860] (r2d2_audio) StdoutLine: {'line': b'creating /home/r2d2/ros2_ws/install/r2d2_audio/share/ament_index\n'}
+[20.526803] (r2d2_audio) StdoutLine: {'line': b'creating /home/r2d2/ros2_ws/install/r2d2_audio/share/ament_index/resource_index\n'}
+[20.528033] (r2d2_audio) StdoutLine: {'line': b'creating /home/r2d2/ros2_ws/install/r2d2_audio/share/ament_index/resource_index/packages\n'}
+[20.532900] (r2d2_audio) StdoutLine: {'line': b'symbolically linking /home/r2d2/ros2_ws/build/r2d2_audio/resource/r2d2_audio -> /home/r2d2/ros2_ws/install/r2d2_audio/share/ament_index/resource_index/packages\n'}
+[20.537496] (r2d2_audio) StdoutLine: {'line': b'creating /home/r2d2/ros2_ws/install/r2d2_audio/share/r2d2_audio\n'}
+[20.539136] (r2d2_audio) StdoutLine: {'line': b'symbolically linking /home/r2d2/ros2_ws/build/r2d2_audio/package.xml -> /home/r2d2/ros2_ws/install/r2d2_audio/share/r2d2_audio\n'}
+[20.553542] (-) TimerEvent: {}
+[20.654334] (-) TimerEvent: {}
+[20.755070] (-) TimerEvent: {}
+[20.856025] (r2d2_audio) CommandEnded: {'returncode': 0}
+[20.858685] (-) TimerEvent: {}
+[20.960074] (-) TimerEvent: {}
+[21.064165] (-) TimerEvent: {}
+[21.074117] (r2d2_audio) JobEnded: {'identifier': 'r2d2_audio', 'rc': 0}
+[21.085464] (r2d2_description) JobStarted: {'identifier': 'r2d2_description'}
+[21.139516] (r2d2_base) StdoutLine: {'line': b'running egg_info\n'}
+[21.140970] (r2d2_base) StdoutLine: {'line': b'creating r2d2_base.egg-info\n'}
+[21.169354] (r2d2_description) JobProgress: {'identifier': 'r2d2_description', 'progress': 'cmake'}
+[21.169666] (-) TimerEvent: {}
+[21.179065] (r2d2_description) Command: {'cmd': ['/usr/bin/cmake', '/home/r2d2/ros2_ws/src/r2d2_description', '-DCMAKE_INSTALL_PREFIX=/home/r2d2/ros2_ws/install/r2d2_description'], 'cwd': '/home/r2d2/ros2_ws/build/r2d2_description', 'env': OrderedDict({'LESSOPEN': '| /usr/bin/lesspipe %s', 'VSCODE_CWD': '/home/r2d2', 'VSCODE_ESM_ENTRYPOINT': 'vs/workbench/api/node/extensionHostProcess', 'USER': 'r2d2', 'SSH_CLIENT': '100.81.166.78 56047 22', 'CLAUDE_CODE_ENTRYPOINT': 'claude-vscode', 'VSCODE_NLS_CONFIG': '{"userLocale":"de","osLocale":"de","resolvedLanguage":"de","defaultMessagesFile":"/home/r2d2/.vscode-server/cli/servers/Stable-ce099c1ed25d9eb3076c11e4a280f3eb52b4fbeb/server/out/nls.messages.json","languagePack":{"translationsConfigFile":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de/tcf.json","messagesFile":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de/ce099c1ed25d9eb3076c11e4a280f3eb52b4fbeb/nls.messages.json","corruptMarkerFile":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de/corrupted.info"},"locale":"de","availableLanguages":{"*":"de"},"_languagePackId":"15d47a4cb34d596b6eca93313ab25a1a.de","_languagePackSupport":true,"_translationsConfigFile":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de/tcf.json","_cacheRoot":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de","_resolvedLanguagePackCoreLocation":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de/ce099c1ed25d9eb3076c11e4a280f3eb52b4fbeb","_corruptedFile":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de/corrupted.info"}', 'GIT_EDITOR': 'true', 'VSCODE_HANDLES_UNCAUGHT_ERRORS': 'true', 'CLAUDE_AGENT_SDK_VERSION': '0.2.79', 'SHLVL': '2', 'LD_LIBRARY_PATH': '/opt/ros/jazzy/lib/aarch64-linux-gnu:/opt/ros/jazzy/lib', 'BROWSER': '/home/r2d2/.vscode-server/cli/servers/Stable-ce099c1ed25d9eb3076c11e4a280f3eb52b4fbeb/server/bin/helpers/browser.sh', 'HOME': '/home/r2d2', 'OLDPWD': '/home/r2d2', 'VSCODE_RECONNECTION_GRACE_TIME': '10800000', 'VSCODE_IPC_HOOK_CLI': '/tmp/vscode-ipc-65cd3e89-ef23-436b-8900-34fb44f71d90.sock', 'ROS_PYTHON_VERSION': '3', 'VSCODE_L10N_BUNDLE_LOCATION': 'vscode-local:/Users/daniel.hopkins/.vscode/extensions/ms-ceintl.vscode-language-pack-de-1.110.2026031919/translations/extensions/vscode.json-language-features.i18n.json', 'APPLICATION_INSIGHTS_NO_STATSBEAT': 'true', 'ROS_DISTRO': 'jazzy', 'VSCODE_HANDLES_SIGPIPE': 'true', '_': '/usr/bin/colcon', 'ROS_VERSION': '2', 'OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE': 'delta', 'VSCODE_CLI_REQUIRE_TOKEN': '63fc68ec-7288-4e30-9cc5-81f218ca1eb8', 'PATH': '/home/r2d2/.opencode/bin:/home/r2d2/.vscode-server/cli/servers/Stable-ce099c1ed25d9eb3076c11e4a280f3eb52b4fbeb/server/bin/remote-cli:/home/r2d2/.opencode/bin:/opt/ros/jazzy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin', 'VSCODE_AGENT_FOLDER': '/home/r2d2/.vscode-server', 'COREPACK_ENABLE_AUTO_PIN': '0', 'NoDefaultCurrentDirectoryInExePath': '1', 'LANG': 'C.UTF-8', 'LS_COLORS': '', 'AMENT_PREFIX_PATH': '/opt/ros/jazzy', 'SHELL': '/bin/bash', 'ELECTRON_RUN_AS_NODE': '1', 'CLAUDE_CODE_ENABLE_SDK_FILE_CHECKPOINTING': 'true', 'LESSCLOSE': '/usr/bin/lesspipe %s %s', 'CLAUDECODE': '1', 'ROS_AUTOMATIC_DISCOVERY_RANGE': 'SUBNET', 'PWD': '/home/r2d2/ros2_ws/build/r2d2_description', 'SSH_CONNECTION': '100.81.166.78 56047 100.81.24.58 22', 'XDG_DATA_DIRS': '/usr/local/share:/usr/share:/var/lib/snapd/desktop', 'PYTHONPATH': '/opt/ros/jazzy/lib/python3.12/site-packages', 'COLCON': '1'}), 'shell': False}
+[21.271627] (-) TimerEvent: {}
+[21.372439] (-) TimerEvent: {}
+[21.438483] (r2d2_base) StdoutLine: {'line': b'writing r2d2_base.egg-info/PKG-INFO\n'}
+[21.439985] (r2d2_behavior) StdoutLine: {'line': b'running develop\n'}
+[21.452602] (r2d2_base) StdoutLine: {'line': b'writing dependency_links to r2d2_base.egg-info/dependency_links.txt\n'}
+[21.453871] (r2d2_base) StdoutLine: {'line': b'writing requirements to r2d2_base.egg-info/requires.txt\n'}
+[21.462426] (r2d2_base) StdoutLine: {'line': b'writing top-level names to r2d2_base.egg-info/top_level.txt\n'}
+[21.463696] (r2d2_base) StdoutLine: {'line': b"writing manifest file 'r2d2_base.egg-info/SOURCES.txt'\n"}
+[21.473571] (-) TimerEvent: {}
+[21.576490] (-) TimerEvent: {}
+[21.677096] (-) TimerEvent: {}
+[21.779225] (-) TimerEvent: {}
+[21.881475] (-) TimerEvent: {}
+[21.982072] (-) TimerEvent: {}
+[22.023924] (r2d2_base) StdoutLine: {'line': b"reading manifest file 'r2d2_base.egg-info/SOURCES.txt'\n"}
+[22.030406] (r2d2_base) StdoutLine: {'line': b"writing manifest file 'r2d2_base.egg-info/SOURCES.txt'\n"}
+[22.082434] (-) TimerEvent: {}
+[22.185474] (-) TimerEvent: {}
+[22.286096] (-) TimerEvent: {}
+[22.358574] (r2d2_base) StdoutLine: {'line': b'running build_ext\n'}
+[22.360698] (r2d2_base) StdoutLine: {'line': b'Creating /home/r2d2/ros2_ws/install/r2d2_base/lib/python3.12/site-packages/r2d2-base.egg-link (link to .)\n'}
+[22.371757] (r2d2_base) StdoutLine: {'line': b'\n'}
+[22.373097] (r2d2_base) StdoutLine: {'line': b'Installed /home/r2d2/ros2_ws/build/r2d2_base\n'}
+[22.378484] (r2d2_base) StdoutLine: {'line': b'running symlink_data\n'}
+[22.380036] (r2d2_base) StdoutLine: {'line': b'creating /home/r2d2/ros2_ws/install/r2d2_base/share\n'}
+[22.386040] (r2d2_base) StdoutLine: {'line': b'creating /home/r2d2/ros2_ws/install/r2d2_base/share/ament_index\n'}
+[22.390537] (-) TimerEvent: {}
+[22.390964] (r2d2_base) StdoutLine: {'line': b'creating /home/r2d2/ros2_ws/install/r2d2_base/share/ament_index/resource_index\n'}
+[22.392782] (r2d2_base) StdoutLine: {'line': b'creating /home/r2d2/ros2_ws/install/r2d2_base/share/ament_index/resource_index/packages\n'}
+[22.397718] (r2d2_base) StdoutLine: {'line': b'symbolically linking /home/r2d2/ros2_ws/build/r2d2_base/resource/r2d2_base -> /home/r2d2/ros2_ws/install/r2d2_base/share/ament_index/resource_index/packages\n'}
+[22.402566] (r2d2_base) StdoutLine: {'line': b'creating /home/r2d2/ros2_ws/install/r2d2_base/share/r2d2_base\n'}
+[22.404370] (r2d2_base) StdoutLine: {'line': b'symbolically linking /home/r2d2/ros2_ws/build/r2d2_base/package.xml -> /home/r2d2/ros2_ws/install/r2d2_base/share/r2d2_base\n'}
+[22.490070] (-) TimerEvent: {}
+[22.593427] (-) TimerEvent: {}
+[22.692046] (r2d2_base) CommandEnded: {'returncode': 0}
+[22.700154] (-) TimerEvent: {}
+[22.779968] (r2d2_base) JobEnded: {'identifier': 'r2d2_base', 'rc': 0}
+[22.789501] (r2d2_head) JobStarted: {'identifier': 'r2d2_head'}
+[22.804155] (-) TimerEvent: {}
+[22.907508] (-) TimerEvent: {}
+[23.008041] (-) TimerEvent: {}
+[23.108704] (-) TimerEvent: {}
+[23.210757] (-) TimerEvent: {}
+[23.311895] (-) TimerEvent: {}
+[23.414883] (-) TimerEvent: {}
+[23.516633] (-) TimerEvent: {}
+[23.617329] (-) TimerEvent: {}
+[23.719605] (-) TimerEvent: {}
+[23.823507] (-) TimerEvent: {}
+[23.924093] (-) TimerEvent: {}
+[24.024798] (-) TimerEvent: {}
+[24.126149] (-) TimerEvent: {}
+[24.226905] (-) TimerEvent: {}
+[24.329488] (-) TimerEvent: {}
+[24.430074] (-) TimerEvent: {}
+[24.530712] (-) TimerEvent: {}
+[24.631348] (-) TimerEvent: {}
+[24.733504] (-) TimerEvent: {}
+[24.834097] (-) TimerEvent: {}
+[24.934949] (-) TimerEvent: {}
+[25.038525] (-) TimerEvent: {}
+[25.139111] (-) TimerEvent: {}
+[25.239796] (-) TimerEvent: {}
+[25.340431] (-) TimerEvent: {}
+[25.446497] (-) TimerEvent: {}
+[25.547173] (-) TimerEvent: {}
+[25.606061] (r2d2_description) StdoutLine: {'line': b'-- The C compiler identification is GNU 13.3.0\n'}
+[25.607710] (r2d2_description) StdoutLine: {'line': b'-- The CXX compiler identification is GNU 13.3.0\n'}
+[25.613577] (r2d2_description) StdoutLine: {'line': b'-- Detecting C compiler ABI info\n'}
+[25.616816] (r2d2_bringup) StdoutLine: {'line': b'running develop\n'}
+[25.621722] (r2d2_behavior) StdoutLine: {'line': b'running egg_info\n'}
+[25.623149] (r2d2_behavior) StdoutLine: {'line': b'creating r2d2_behavior.egg-info\n'}
+[25.627702] (r2d2_behavior) StdoutLine: {'line': b'writing r2d2_behavior.egg-info/PKG-INFO\n'}
+[25.629162] (r2d2_behavior) StdoutLine: {'line': b'writing dependency_links to r2d2_behavior.egg-info/dependency_links.txt\n'}
+[25.634025] (r2d2_behavior) StdoutLine: {'line': b'writing requirements to r2d2_behavior.egg-info/requires.txt\n'}
+[25.635393] (r2d2_behavior) StdoutLine: {'line': b'writing top-level names to r2d2_behavior.egg-info/top_level.txt\n'}
+[25.640087] (r2d2_behavior) StdoutLine: {'line': b"writing manifest file 'r2d2_behavior.egg-info/SOURCES.txt'\n"}
+[25.647489] (r2d2_behavior) StdoutLine: {'line': b"reading manifest file 'r2d2_behavior.egg-info/SOURCES.txt'\n"}
+[25.649523] (-) TimerEvent: {}
+[25.649765] (r2d2_behavior) StdoutLine: {'line': b"writing manifest file 'r2d2_behavior.egg-info/SOURCES.txt'\n"}
+[25.749886] (-) TimerEvent: {}
+[25.850524] (-) TimerEvent: {}
+[25.952498] (-) TimerEvent: {}
+[25.961379] (r2d2_behavior) StdoutLine: {'line': b'running build_ext\n'}
+[25.965633] (r2d2_behavior) StdoutLine: {'line': b'Creating /home/r2d2/ros2_ws/install/r2d2_behavior/lib/python3.12/site-packages/r2d2-behavior.egg-link (link to .)\n'}
+[25.970343] (r2d2_behavior) StdoutLine: {'line': b'\n'}
+[25.971648] (r2d2_behavior) StdoutLine: {'line': b'Installed /home/r2d2/ros2_ws/build/r2d2_behavior\n'}
+[25.978143] (r2d2_behavior) StdoutLine: {'line': b'running symlink_data\n'}
+[25.979511] (r2d2_behavior) StdoutLine: {'line': b'creating /home/r2d2/ros2_ws/install/r2d2_behavior/share\n'}
+[25.985171] (r2d2_behavior) StdoutLine: {'line': b'creating /home/r2d2/ros2_ws/install/r2d2_behavior/share/ament_index\n'}
+[25.989465] (r2d2_behavior) StdoutLine: {'line': b'creating /home/r2d2/ros2_ws/install/r2d2_behavior/share/ament_index/resource_index\n'}
+[25.991476] (r2d2_behavior) StdoutLine: {'line': b'creating /home/r2d2/ros2_ws/install/r2d2_behavior/share/ament_index/resource_index/packages\n'}
+[25.996811] (r2d2_behavior) StdoutLine: {'line': b'symbolically linking /home/r2d2/ros2_ws/build/r2d2_behavior/resource/r2d2_behavior -> /home/r2d2/ros2_ws/install/r2d2_behavior/share/ament_index/resource_index/packages\n'}
+[26.001704] (r2d2_behavior) StdoutLine: {'line': b'creating /home/r2d2/ros2_ws/install/r2d2_behavior/share/r2d2_behavior\n'}
+[26.003507] (r2d2_behavior) StdoutLine: {'line': b'symbolically linking /home/r2d2/ros2_ws/build/r2d2_behavior/package.xml -> /home/r2d2/ros2_ws/install/r2d2_behavior/share/r2d2_behavior\n'}
+[26.057610] (-) TimerEvent: {}
+[26.160479] (-) TimerEvent: {}
+[26.261096] (-) TimerEvent: {}
+[26.364538] (-) TimerEvent: {}
+[26.396474] (r2d2_behavior) CommandEnded: {'returncode': 0}
+[26.465096] (-) TimerEvent: {}
+[26.533109] (r2d2_behavior) JobEnded: {'identifier': 'r2d2_behavior', 'rc': 0}
+[26.538708] (r2d2_perception) JobStarted: {'identifier': 'r2d2_perception'}
+[26.566788] (-) TimerEvent: {}
+[26.672500] (-) TimerEvent: {}
+[26.773059] (-) TimerEvent: {}
+[26.873648] (-) TimerEvent: {}
+[26.974350] (-) TimerEvent: {}
+[27.074956] (-) TimerEvent: {}
+[27.178344] (-) TimerEvent: {}
+[27.278926] (-) TimerEvent: {}
+[27.379509] (-) TimerEvent: {}
+[27.480092] (-) TimerEvent: {}
+[27.581857] (-) TimerEvent: {}
+[27.683497] (-) TimerEvent: {}
+[27.784115] (-) TimerEvent: {}
+[27.886509] (-) TimerEvent: {}
+[27.988665] (-) TimerEvent: {}
+[28.091469] (-) TimerEvent: {}
+[28.192065] (-) TimerEvent: {}
+[28.292750] (-) TimerEvent: {}
+[28.395460] (-) TimerEvent: {}
+[28.497835] (-) TimerEvent: {}
+[28.599510] (-) TimerEvent: {}
+[28.700185] (-) TimerEvent: {}
+[28.800882] (-) TimerEvent: {}
+[28.901492] (-) TimerEvent: {}
+[29.002046] (-) TimerEvent: {}
+[29.103598] (-) TimerEvent: {}
+[29.206015] (-) TimerEvent: {}
+[29.306673] (-) TimerEvent: {}
+[29.408351] (-) TimerEvent: {}
+[29.510482] (-) TimerEvent: {}
+[29.613504] (-) TimerEvent: {}
+[29.714430] (-) TimerEvent: {}
+[29.815073] (-) TimerEvent: {}
+[29.915860] (-) TimerEvent: {}
+[29.985037] (r2d2_description) StdoutLine: {'line': b'-- Detecting C compiler ABI info - done\n'}
+[29.986556] (r2d2_description) StdoutLine: {'line': b'-- Check for working C compiler: /usr/bin/cc - skipped\n'}
+[29.992992] (r2d2_description) StdoutLine: {'line': b'-- Detecting C compile features\n'}
+[29.994213] (r2d2_description) StdoutLine: {'line': b'-- Detecting C compile features - done\n'}
+[29.999930] (r2d2_description) StdoutLine: {'line': b'-- Detecting CXX compiler ABI info\n'}
+[30.001319] (r2d2_description) StdoutLine: {'line': b'-- Detecting CXX compiler ABI info - done\n'}
+[30.006797] (r2d2_description) StdoutLine: {'line': b'-- Check for working CXX compiler: /usr/bin/c++ - skipped\n'}
+[30.008036] (r2d2_description) StdoutLine: {'line': b'-- Detecting CXX compile features\n'}
+[30.009214] (r2d2_description) StdoutLine: {'line': b'-- Detecting CXX compile features - done\n'}
+[30.013965] (r2d2_description) StdoutLine: {'line': b'-- Found ament_cmake: 2.5.5 (/opt/ros/jazzy/share/ament_cmake/cmake)\n'}
+[30.015230] (r2d2_bringup) StdoutLine: {'line': b'running egg_info\n'}
+[30.020348] (-) TimerEvent: {}
+[30.020586] (r2d2_bringup) StdoutLine: {'line': b'creating r2d2_bringup.egg-info\n'}
+[30.025812] (r2d2_bringup) StdoutLine: {'line': b'writing r2d2_bringup.egg-info/PKG-INFO\n'}
+[30.027084] (r2d2_bringup) StdoutLine: {'line': b'writing dependency_links to r2d2_bringup.egg-info/dependency_links.txt\n'}
+[30.031679] (r2d2_bringup) StdoutLine: {'line': b'writing requirements to r2d2_bringup.egg-info/requires.txt\n'}
+[30.032955] (r2d2_bringup) StdoutLine: {'line': b'writing top-level names to r2d2_bringup.egg-info/top_level.txt\n'}
+[30.037620] (r2d2_bringup) StdoutLine: {'line': b"writing manifest file 'r2d2_bringup.egg-info/SOURCES.txt'\n"}
+[30.038902] (r2d2_bringup) StdoutLine: {'line': b"reading manifest file 'r2d2_bringup.egg-info/SOURCES.txt'\n"}
+[30.043748] (r2d2_bringup) StdoutLine: {'line': b"writing manifest file 'r2d2_bringup.egg-info/SOURCES.txt'\n"}
+[30.045078] (r2d2_bringup) StdoutLine: {'line': b'running build_ext\n'}
+[30.049135] (r2d2_bringup) StdoutLine: {'line': b'Creating /home/r2d2/ros2_ws/install/r2d2_bringup/lib/python3.12/site-packages/r2d2-bringup.egg-link (link to .)\n'}
+[30.050203] (r2d2_bringup) StdoutLine: {'line': b'\n'}
+[30.054563] (r2d2_bringup) StdoutLine: {'line': b'Installed /home/r2d2/ros2_ws/build/r2d2_bringup\n'}
+[30.059053] (r2d2_bringup) StdoutLine: {'line': b'running symlink_data\n'}
+[30.060329] (r2d2_bringup) StdoutLine: {'line': b'creating /home/r2d2/ros2_ws/install/r2d2_bringup/share\n'}
+[30.067064] (r2d2_bringup) StdoutLine: {'line': b'creating /home/r2d2/ros2_ws/install/r2d2_bringup/share/ament_index\n'}
+[30.068338] (r2d2_bringup) StdoutLine: {'line': b'creating /home/r2d2/ros2_ws/install/r2d2_bringup/share/ament_index/resource_index\n'}
+[30.069587] (r2d2_bringup) StdoutLine: {'line': b'creating /home/r2d2/ros2_ws/install/r2d2_bringup/share/ament_index/resource_index/packages\n'}
+[30.074335] (r2d2_bringup) StdoutLine: {'line': b'symbolically linking /home/r2d2/ros2_ws/build/r2d2_bringup/resource/r2d2_bringup -> /home/r2d2/ros2_ws/install/r2d2_bringup/share/ament_index/resource_index/packages\n'}
+[30.078634] (r2d2_bringup) StdoutLine: {'line': b'creating /home/r2d2/ros2_ws/install/r2d2_bringup/share/r2d2_bringup\n'}
+[30.079919] (r2d2_bringup) StdoutLine: {'line': b'symbolically linking /home/r2d2/ros2_ws/build/r2d2_bringup/package.xml -> /home/r2d2/ros2_ws/install/r2d2_bringup/share/r2d2_bringup\n'}
+[30.081178] (r2d2_bringup) StdoutLine: {'line': b'creating /home/r2d2/ros2_ws/install/r2d2_bringup/share/r2d2_bringup/launch\n'}
+[30.082441] (r2d2_bringup) StdoutLine: {'line': b'symbolically linking /home/r2d2/ros2_ws/build/r2d2_bringup/launch/cameras.launch.py -> /home/r2d2/ros2_ws/install/r2d2_bringup/share/r2d2_bringup/launch\n'}
+[30.089547] (r2d2_bringup) StdoutLine: {'line': b'symbolically linking /home/r2d2/ros2_ws/build/r2d2_bringup/launch/r2d2.launch.py -> /home/r2d2/ros2_ws/install/r2d2_bringup/share/r2d2_bringup/launch\n'}
+[30.090100] (r2d2_bringup) StdoutLine: {'line': b'symbolically linking /home/r2d2/ros2_ws/build/r2d2_bringup/launch/foxglove.launch.py -> /home/r2d2/ros2_ws/install/r2d2_bringup/share/r2d2_bringup/launch\n'}
+[30.090671] (r2d2_bringup) StdoutLine: {'line': b'creating /home/r2d2/ros2_ws/install/r2d2_bringup/share/r2d2_bringup/config\n'}
+[30.091107] (r2d2_bringup) StdoutLine: {'line': b'symbolically linking /home/r2d2/ros2_ws/build/r2d2_bringup/config/foxglove_params.yaml -> /home/r2d2/ros2_ws/install/r2d2_bringup/share/r2d2_bringup/config\n'}
+[30.091720] (r2d2_bringup) StdoutLine: {'line': b'symbolically linking /home/r2d2/ros2_ws/build/r2d2_bringup/config/webcam_params.yaml -> /home/r2d2/ros2_ws/install/r2d2_bringup/share/r2d2_bringup/config\n'}
+[30.092444] (r2d2_bringup) CommandEnded: {'returncode': 0}
+[30.114504] (r2d2_bringup) JobEnded: {'identifier': 'r2d2_bringup', 'rc': 0}
+[30.120595] (-) TimerEvent: {}
+[30.221187] (-) TimerEvent: {}
+[30.322090] (-) TimerEvent: {}
+[30.422766] (-) TimerEvent: {}
+[30.523387] (-) TimerEvent: {}
+[30.625533] (-) TimerEvent: {}
+[30.726158] (-) TimerEvent: {}
+[30.828465] (-) TimerEvent: {}
+[30.929053] (-) TimerEvent: {}
+[31.029756] (-) TimerEvent: {}
+[31.130421] (-) TimerEvent: {}
+[31.233485] (-) TimerEvent: {}
+[31.274929] (r2d2_description) StdoutLine: {'line': b'-- Found Python3: /usr/bin/python3 (found version "3.12.3") found components: Interpreter \n'}
+[31.333747] (-) TimerEvent: {}
+[31.434388] (-) TimerEvent: {}
+[31.536502] (-) TimerEvent: {}
+[31.637130] (-) TimerEvent: {}
+[31.738125] (-) TimerEvent: {}
+[31.838799] (-) TimerEvent: {}
+[31.939460] (-) TimerEvent: {}
+[32.040035] (-) TimerEvent: {}
+[32.140753] (-) TimerEvent: {}
+[32.241417] (-) TimerEvent: {}
+[32.342650] (-) TimerEvent: {}
+[32.443217] (-) TimerEvent: {}
+[32.546499] (-) TimerEvent: {}
+[32.647038] (-) TimerEvent: {}
+[32.747651] (-) TimerEvent: {}
+[32.848215] (-) TimerEvent: {}
+[32.948874] (-) TimerEvent: {}
+[33.051698] (-) TimerEvent: {}
+[33.152331] (-) TimerEvent: {}
+[33.252958] (-) TimerEvent: {}
+[33.353693] (-) TimerEvent: {}
+[33.454474] (-) TimerEvent: {}
+[33.555121] (-) TimerEvent: {}
+[33.619727] (r2d2_head) Command: {'cmd': ['/usr/bin/python3', '-W', 'ignore:setup.py install is deprecated', '-W', 'ignore:easy_install command is deprecated', 'setup.py', 'develop', '--editable', '--build-directory', '/home/r2d2/ros2_ws/build/r2d2_head/build', '--no-deps', 'symlink_data'], 'cwd': '/home/r2d2/ros2_ws/build/r2d2_head', 'env': {'LESSOPEN': '| /usr/bin/lesspipe %s', 'VSCODE_CWD': '/home/r2d2', 'VSCODE_ESM_ENTRYPOINT': 'vs/workbench/api/node/extensionHostProcess', 'USER': 'r2d2', 'SSH_CLIENT': '100.81.166.78 56047 22', 'CLAUDE_CODE_ENTRYPOINT': 'claude-vscode', 'VSCODE_NLS_CONFIG': '{"userLocale":"de","osLocale":"de","resolvedLanguage":"de","defaultMessagesFile":"/home/r2d2/.vscode-server/cli/servers/Stable-ce099c1ed25d9eb3076c11e4a280f3eb52b4fbeb/server/out/nls.messages.json","languagePack":{"translationsConfigFile":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de/tcf.json","messagesFile":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de/ce099c1ed25d9eb3076c11e4a280f3eb52b4fbeb/nls.messages.json","corruptMarkerFile":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de/corrupted.info"},"locale":"de","availableLanguages":{"*":"de"},"_languagePackId":"15d47a4cb34d596b6eca93313ab25a1a.de","_languagePackSupport":true,"_translationsConfigFile":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de/tcf.json","_cacheRoot":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de","_resolvedLanguagePackCoreLocation":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de/ce099c1ed25d9eb3076c11e4a280f3eb52b4fbeb","_corruptedFile":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de/corrupted.info"}', 'GIT_EDITOR': 'true', 'VSCODE_HANDLES_UNCAUGHT_ERRORS': 'true', 'CLAUDE_AGENT_SDK_VERSION': '0.2.79', 'SHLVL': '2', 'LD_LIBRARY_PATH': '/opt/ros/jazzy/lib/aarch64-linux-gnu:/opt/ros/jazzy/lib', 'BROWSER': '/home/r2d2/.vscode-server/cli/servers/Stable-ce099c1ed25d9eb3076c11e4a280f3eb52b4fbeb/server/bin/helpers/browser.sh', 'HOME': '/home/r2d2', 'OLDPWD': '/home/r2d2', 'VSCODE_RECONNECTION_GRACE_TIME': '10800000', 'VSCODE_IPC_HOOK_CLI': '/tmp/vscode-ipc-65cd3e89-ef23-436b-8900-34fb44f71d90.sock', 'ROS_PYTHON_VERSION': '3', 'VSCODE_L10N_BUNDLE_LOCATION': 'vscode-local:/Users/daniel.hopkins/.vscode/extensions/ms-ceintl.vscode-language-pack-de-1.110.2026031919/translations/extensions/vscode.json-language-features.i18n.json', 'APPLICATION_INSIGHTS_NO_STATSBEAT': 'true', 'ROS_DISTRO': 'jazzy', 'VSCODE_HANDLES_SIGPIPE': 'true', '_': '/usr/bin/colcon', 'ROS_VERSION': '2', 'OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE': 'delta', 'VSCODE_CLI_REQUIRE_TOKEN': '63fc68ec-7288-4e30-9cc5-81f218ca1eb8', 'PATH': '/home/r2d2/.opencode/bin:/home/r2d2/.vscode-server/cli/servers/Stable-ce099c1ed25d9eb3076c11e4a280f3eb52b4fbeb/server/bin/remote-cli:/home/r2d2/.opencode/bin:/opt/ros/jazzy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin', 'VSCODE_AGENT_FOLDER': '/home/r2d2/.vscode-server', 'COREPACK_ENABLE_AUTO_PIN': '0', 'NoDefaultCurrentDirectoryInExePath': '1', 'LANG': 'C.UTF-8', 'LS_COLORS': '', 'AMENT_PREFIX_PATH': '/opt/ros/jazzy', 'SHELL': '/bin/bash', 'ELECTRON_RUN_AS_NODE': '1', 'CLAUDE_CODE_ENABLE_SDK_FILE_CHECKPOINTING': 'true', 'LESSCLOSE': '/usr/bin/lesspipe %s %s', 'CLAUDECODE': '1', 'ROS_AUTOMATIC_DISCOVERY_RANGE': 'SUBNET', 'PWD': '/home/r2d2/ros2_ws/build/r2d2_head', 'SSH_CONNECTION': '100.81.166.78 56047 100.81.24.58 22', 'XDG_DATA_DIRS': '/usr/local/share:/usr/share:/var/lib/snapd/desktop', 'PYTHONPATH': '/home/r2d2/ros2_ws/build/r2d2_head/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/r2d2/ros2_ws/install/r2d2_head/lib/python3.12/site-packages:/opt/ros/jazzy/lib/python3.12/site-packages', 'COLCON': '1'}, 'shell': False}
+[33.658393] (-) TimerEvent: {}
+[33.759024] (-) TimerEvent: {}
+[33.859778] (-) TimerEvent: {}
+[33.868347] (r2d2_description) StderrLine: {'line': b"Error parsing '/home/r2d2/ros2_ws/src/r2d2_description/package.xml':\n"}
+[33.960071] (-) TimerEvent: {}
+[34.062569] (-) TimerEvent: {}
+[34.163193] (-) TimerEvent: {}
+[34.263961] (-) TimerEvent: {}
+[34.365539] (-) TimerEvent: {}
+[34.467503] (-) TimerEvent: {}
+[34.568125] (-) TimerEvent: {}
+[34.673502] (-) TimerEvent: {}
+[34.774218] (-) TimerEvent: {}
+[34.874986] (-) TimerEvent: {}
+[34.977522] (-) TimerEvent: {}
+[35.078106] (-) TimerEvent: {}
+[35.178982] (-) TimerEvent: {}
+[35.279674] (-) TimerEvent: {}
+[35.382727] (-) TimerEvent: {}
+[35.483378] (-) TimerEvent: {}
+[35.586484] (-) TimerEvent: {}
+[35.687019] (-) TimerEvent: {}
+[35.787674] (-) TimerEvent: {}
+[35.888381] (-) TimerEvent: {}
+[35.988984] (-) TimerEvent: {}
+[36.091506] (-) TimerEvent: {}
+[36.192106] (-) TimerEvent: {}
+[36.294484] (-) TimerEvent: {}
+[36.395070] (-) TimerEvent: {}
+[36.496320] (-) TimerEvent: {}
+[36.596905] (-) TimerEvent: {}
+[36.697914] (-) TimerEvent: {}
+[36.798617] (-) TimerEvent: {}
+[36.899093] (-) TimerEvent: {}
+[36.999736] (-) TimerEvent: {}
+[37.100549] (-) TimerEvent: {}
+[37.201376] (-) TimerEvent: {}
+[37.259745] (r2d2_perception) Command: {'cmd': ['/usr/bin/python3', '-W', 'ignore:setup.py install is deprecated', '-W', 'ignore:easy_install command is deprecated', 'setup.py', 'develop', '--editable', '--build-directory', '/home/r2d2/ros2_ws/build/r2d2_perception/build', '--no-deps', 'symlink_data'], 'cwd': '/home/r2d2/ros2_ws/build/r2d2_perception', 'env': {'LESSOPEN': '| /usr/bin/lesspipe %s', 'VSCODE_CWD': '/home/r2d2', 'VSCODE_ESM_ENTRYPOINT': 'vs/workbench/api/node/extensionHostProcess', 'USER': 'r2d2', 'SSH_CLIENT': '100.81.166.78 56047 22', 'CLAUDE_CODE_ENTRYPOINT': 'claude-vscode', 'VSCODE_NLS_CONFIG': '{"userLocale":"de","osLocale":"de","resolvedLanguage":"de","defaultMessagesFile":"/home/r2d2/.vscode-server/cli/servers/Stable-ce099c1ed25d9eb3076c11e4a280f3eb52b4fbeb/server/out/nls.messages.json","languagePack":{"translationsConfigFile":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de/tcf.json","messagesFile":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de/ce099c1ed25d9eb3076c11e4a280f3eb52b4fbeb/nls.messages.json","corruptMarkerFile":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de/corrupted.info"},"locale":"de","availableLanguages":{"*":"de"},"_languagePackId":"15d47a4cb34d596b6eca93313ab25a1a.de","_languagePackSupport":true,"_translationsConfigFile":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de/tcf.json","_cacheRoot":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de","_resolvedLanguagePackCoreLocation":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de/ce099c1ed25d9eb3076c11e4a280f3eb52b4fbeb","_corruptedFile":"/home/r2d2/.vscode-server/data/clp/15d47a4cb34d596b6eca93313ab25a1a.de/corrupted.info"}', 'GIT_EDITOR': 'true', 'VSCODE_HANDLES_UNCAUGHT_ERRORS': 'true', 'CLAUDE_AGENT_SDK_VERSION': '0.2.79', 'SHLVL': '2', 'LD_LIBRARY_PATH': '/opt/ros/jazzy/lib/aarch64-linux-gnu:/opt/ros/jazzy/lib', 'BROWSER': '/home/r2d2/.vscode-server/cli/servers/Stable-ce099c1ed25d9eb3076c11e4a280f3eb52b4fbeb/server/bin/helpers/browser.sh', 'HOME': '/home/r2d2', 'OLDPWD': '/home/r2d2', 'VSCODE_RECONNECTION_GRACE_TIME': '10800000', 'VSCODE_IPC_HOOK_CLI': '/tmp/vscode-ipc-65cd3e89-ef23-436b-8900-34fb44f71d90.sock', 'ROS_PYTHON_VERSION': '3', 'VSCODE_L10N_BUNDLE_LOCATION': 'vscode-local:/Users/daniel.hopkins/.vscode/extensions/ms-ceintl.vscode-language-pack-de-1.110.2026031919/translations/extensions/vscode.json-language-features.i18n.json', 'APPLICATION_INSIGHTS_NO_STATSBEAT': 'true', 'ROS_DISTRO': 'jazzy', 'VSCODE_HANDLES_SIGPIPE': 'true', '_': '/usr/bin/colcon', 'ROS_VERSION': '2', 'OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE': 'delta', 'VSCODE_CLI_REQUIRE_TOKEN': '63fc68ec-7288-4e30-9cc5-81f218ca1eb8', 'PATH': '/home/r2d2/.opencode/bin:/home/r2d2/.vscode-server/cli/servers/Stable-ce099c1ed25d9eb3076c11e4a280f3eb52b4fbeb/server/bin/remote-cli:/home/r2d2/.opencode/bin:/opt/ros/jazzy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin', 'VSCODE_AGENT_FOLDER': '/home/r2d2/.vscode-server', 'COREPACK_ENABLE_AUTO_PIN': '0', 'NoDefaultCurrentDirectoryInExePath': '1', 'LANG': 'C.UTF-8', 'LS_COLORS': '', 'AMENT_PREFIX_PATH': '/opt/ros/jazzy', 'SHELL': '/bin/bash', 'ELECTRON_RUN_AS_NODE': '1', 'CLAUDE_CODE_ENABLE_SDK_FILE_CHECKPOINTING': 'true', 'LESSCLOSE': '/usr/bin/lesspipe %s %s', 'CLAUDECODE': '1', 'ROS_AUTOMATIC_DISCOVERY_RANGE': 'SUBNET', 'PWD': '/home/r2d2/ros2_ws/build/r2d2_perception', 'SSH_CONNECTION': '100.81.166.78 56047 100.81.24.58 22', 'XDG_DATA_DIRS': '/usr/local/share:/usr/share:/var/lib/snapd/desktop', 'PYTHONPATH': '/home/r2d2/ros2_ws/build/r2d2_perception/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/r2d2/ros2_ws/install/r2d2_perception/lib/python3.12/site-packages:/opt/ros/jazzy/lib/python3.12/site-packages', 'COLCON': '1'}, 'shell': False}
+[37.301545] (-) TimerEvent: {}
+[37.404479] (-) TimerEvent: {}
+[37.505115] (-) TimerEvent: {}
+[37.605759] (-) TimerEvent: {}
+[37.706430] (-) TimerEvent: {}
+[37.809365] (-) TimerEvent: {}
+[37.909967] (-) TimerEvent: {}
+[38.013489] (-) TimerEvent: {}
+[38.114088] (-) TimerEvent: {}
+[38.117179] (r2d2_head) StdoutLine: {'line': b'running develop\n'}
+[38.216505] (-) TimerEvent: {}
+[38.317116] (-) TimerEvent: {}
+[38.417804] (-) TimerEvent: {}
+[38.518472] (-) TimerEvent: {}
+[38.619536] (-) TimerEvent: {}
+[38.720114] (-) TimerEvent: {}
+[38.820782] (-) TimerEvent: {}
+[38.922533] (-) TimerEvent: {}
+[39.023179] (-) TimerEvent: {}
+[39.123819] (-) TimerEvent: {}
+[39.224468] (-) TimerEvent: {}
+[39.327511] (-) TimerEvent: {}
+[39.428475] (-) TimerEvent: {}
+[39.529374] (-) TimerEvent: {}
+[39.631727] (-) TimerEvent: {}
+[39.732822] (-) TimerEvent: {}
+[39.836649] (-) TimerEvent: {}
+[39.937616] (-) TimerEvent: {}
+[40.038507] (-) TimerEvent: {}
+[40.139123] (-) TimerEvent: {}
+[40.241426] (-) TimerEvent: {}
+[40.341760] (-) TimerEvent: {}
+[40.443667] (-) TimerEvent: {}
+[40.544550] (-) TimerEvent: {}
+[40.645543] (-) TimerEvent: {}
+[40.747638] (-) TimerEvent: {}
+[40.848679] (-) TimerEvent: {}
+[40.949653] (-) TimerEvent: {}
+[41.050600] (-) TimerEvent: {}
+[41.151595] (-) TimerEvent: {}
+[41.254575] (-) TimerEvent: {}
+[41.355529] (-) TimerEvent: {}
+[41.456443] (-) TimerEvent: {}
+[41.559588] (-) TimerEvent: {}
+[41.660511] (-) TimerEvent: {}
+[41.761488] (-) TimerEvent: {}
+[41.862521] (-) TimerEvent: {}
+[41.870180] (r2d2_head) StdoutLine: {'line': b'running egg_info\n'}
+[41.876131] (r2d2_head) StdoutLine: {'line': b'creating r2d2_head.egg-info\n'}
+[41.962980] (-) TimerEvent: {}
+[42.063923] (-) TimerEvent: {}
+[42.164887] (-) TimerEvent: {}
+[42.265884] (-) TimerEvent: {}
+[42.296448] (r2d2_head) StdoutLine: {'line': b'writing r2d2_head.egg-info/PKG-INFO\n'}
+[42.305112] (r2d2_head) StdoutLine: {'line': b'writing dependency_links to r2d2_head.egg-info/dependency_links.txt\n'}
+[42.307197] (r2d2_head) StdoutLine: {'line': b'writing requirements to r2d2_head.egg-info/requires.txt\n'}
+[42.321125] (r2d2_head) StdoutLine: {'line': b'writing top-level names to r2d2_head.egg-info/top_level.txt\n'}
+[42.324665] (r2d2_head) StdoutLine: {'line': b"writing manifest file 'r2d2_head.egg-info/SOURCES.txt'\n"}
+[42.367402] (-) TimerEvent: {}
+[42.468518] (-) TimerEvent: {}
+[42.571555] (-) TimerEvent: {}
+[42.672436] (-) TimerEvent: {}
+[42.773524] (-) TimerEvent: {}
+[42.877621] (-) TimerEvent: {}
+[42.891626] (r2d2_perception) StdoutLine: {'line': b'running develop\n'}
+[42.978046] (-) TimerEvent: {}
+[43.078990] (-) TimerEvent: {}
+[43.180050] (-) TimerEvent: {}
+[43.216583] (r2d2_head) StdoutLine: {'line': b"reading manifest file 'r2d2_head.egg-info/SOURCES.txt'\n"}
+[43.230597] (r2d2_head) StdoutLine: {'line': b"writing manifest file 'r2d2_head.egg-info/SOURCES.txt'\n"}
+[43.280609] (-) TimerEvent: {}
+[43.382704] (-) TimerEvent: {}
+[43.483632] (-) TimerEvent: {}
+[43.584613] (-) TimerEvent: {}
+[43.684454] (r2d2_head) StdoutLine: {'line': b'running build_ext\n'}
+[43.686275] (-) TimerEvent: {}
+[43.693581] (r2d2_head) StdoutLine: {'line': b'Creating /home/r2d2/ros2_ws/install/r2d2_head/lib/python3.12/site-packages/r2d2-head.egg-link (link to .)\n'}
+[43.710534] (r2d2_head) StdoutLine: {'line': b'\n'}
+[43.712525] (r2d2_head) StdoutLine: {'line': b'Installed /home/r2d2/ros2_ws/build/r2d2_head\n'}
+[43.725407] (r2d2_head) StdoutLine: {'line': b'running symlink_data\n'}
+[43.728788] (r2d2_head) StdoutLine: {'line': b'creating /home/r2d2/ros2_ws/install/r2d2_head/share\n'}
+[43.741467] (r2d2_head) StdoutLine: {'line': b'creating /home/r2d2/ros2_ws/install/r2d2_head/share/ament_index\n'}
+[43.747083] (r2d2_head) StdoutLine: {'line': b'creating /home/r2d2/ros2_ws/install/r2d2_head/share/ament_index/resource_index\n'}
+[43.755215] (r2d2_head) StdoutLine: {'line': b'creating /home/r2d2/ros2_ws/install/r2d2_head/share/ament_index/resource_index/packages\n'}
+[43.763855] (r2d2_head) StdoutLine: {'line': b'symbolically linking /home/r2d2/ros2_ws/build/r2d2_head/resource/r2d2_head -> /home/r2d2/ros2_ws/install/r2d2_head/share/ament_index/resource_index/packages\n'}
+[43.773539] (r2d2_head) StdoutLine: {'line': b'creating /home/r2d2/ros2_ws/install/r2d2_head/share/r2d2_head\n'}
+[43.782300] (r2d2_head) StdoutLine: {'line': b'symbolically linking /home/r2d2/ros2_ws/build/r2d2_head/package.xml -> /home/r2d2/ros2_ws/install/r2d2_head/share/r2d2_head\n'}
+[43.790653] (-) TimerEvent: {}
+[43.891536] (-) TimerEvent: {}
+[43.994679] (-) TimerEvent: {}
+[44.095657] (-) TimerEvent: {}
+[44.197584] (-) TimerEvent: {}
+[44.299574] (-) TimerEvent: {}
+[44.408132] (-) TimerEvent: {}
+[44.511690] (-) TimerEvent: {}
+[44.615700] (-) TimerEvent: {}
+[44.646184] (r2d2_head) CommandEnded: {'returncode': 0}
+[44.717208] (-) TimerEvent: {}
+[44.782104] (r2d2_head) JobEnded: {'identifier': 'r2d2_head', 'rc': 0}
+[44.818807] (-) TimerEvent: {}
+[44.919871] (-) TimerEvent: {}
+[45.020853] (-) TimerEvent: {}
+[45.121800] (-) TimerEvent: {}
+[45.224489] (-) TimerEvent: {}
+[45.325579] (-) TimerEvent: {}
+[45.426546] (-) TimerEvent: {}
+[45.527596] (-) TimerEvent: {}
+[45.628577] (-) TimerEvent: {}
+[45.729599] (-) TimerEvent: {}
+[45.830525] (-) TimerEvent: {}
+[45.931498] (-) TimerEvent: {}
+[46.032530] (-) TimerEvent: {}
+[46.133473] (-) TimerEvent: {}
+[46.234548] (-) TimerEvent: {}
+[46.338025] (-) TimerEvent: {}
+[46.439097] (-) TimerEvent: {}
+[46.541702] (-) TimerEvent: {}
+[46.642587] (-) TimerEvent: {}
+[46.743554] (-) TimerEvent: {}
+[46.844582] (-) TimerEvent: {}
+[46.945560] (-) TimerEvent: {}
+[47.046213] (-) TimerEvent: {}
+[47.146883] (-) TimerEvent: {}
+[47.248011] (-) TimerEvent: {}
+[47.348931] (-) TimerEvent: {}
+[47.449489] (-) TimerEvent: {}
+[47.522759] (r2d2_perception) StdoutLine: {'line': b'running egg_info\n'}
+[47.524088] (r2d2_perception) StdoutLine: {'line': b'creating r2d2_perception.egg-info\n'}
+[47.549740] (-) TimerEvent: {}
+[47.650336] (-) TimerEvent: {}
+[47.749362] (r2d2_perception) StdoutLine: {'line': b'writing r2d2_perception.egg-info/PKG-INFO\n'}
+[47.750658] (-) TimerEvent: {}
+[47.753416] (r2d2_perception) StdoutLine: {'line': b'writing dependency_links to r2d2_perception.egg-info/dependency_links.txt\n'}
+[47.754700] (r2d2_perception) StdoutLine: {'line': b'writing requirements to r2d2_perception.egg-info/requires.txt\n'}
+[47.758610] (r2d2_perception) StdoutLine: {'line': b'writing top-level names to r2d2_perception.egg-info/top_level.txt\n'}
+[47.760992] (r2d2_perception) StdoutLine: {'line': b"writing manifest file 'r2d2_perception.egg-info/SOURCES.txt'\n"}
+[47.850944] (-) TimerEvent: {}
+[47.951493] (-) TimerEvent: {}
+[48.052181] (-) TimerEvent: {}
+[48.153128] (-) TimerEvent: {}
+[48.253969] (-) TimerEvent: {}
+[48.349131] (r2d2_perception) StdoutLine: {'line': b"reading manifest file 'r2d2_perception.egg-info/SOURCES.txt'\n"}
+[48.354474] (-) TimerEvent: {}
+[48.359356] (r2d2_perception) StdoutLine: {'line': b"writing manifest file 'r2d2_perception.egg-info/SOURCES.txt'\n"}
+[48.454721] (-) TimerEvent: {}
+[48.555339] (-) TimerEvent: {}
+[48.655881] (-) TimerEvent: {}
+[48.678740] (r2d2_perception) StdoutLine: {'line': b'running build_ext\n'}
+[48.682207] (r2d2_perception) StdoutLine: {'line': b'Creating /home/r2d2/ros2_ws/install/r2d2_perception/lib/python3.12/site-packages/r2d2-perception.egg-link (link to .)\n'}
+[48.691991] (r2d2_perception) StdoutLine: {'line': b'\n'}
+[48.695396] (r2d2_perception) StdoutLine: {'line': b'Installed /home/r2d2/ros2_ws/build/r2d2_perception\n'}
+[48.696662] (r2d2_perception) StdoutLine: {'line': b'running symlink_data\n'}
+[48.699224] (r2d2_perception) StdoutLine: {'line': b'creating /home/r2d2/ros2_ws/install/r2d2_perception/share\n'}
+[48.700489] (r2d2_perception) StdoutLine: {'line': b'creating /home/r2d2/ros2_ws/install/r2d2_perception/share/ament_index\n'}
+[48.702273] (r2d2_perception) StdoutLine: {'line': b'creating /home/r2d2/ros2_ws/install/r2d2_perception/share/ament_index/resource_index\n'}
+[48.705578] (r2d2_perception) StdoutLine: {'line': b'creating /home/r2d2/ros2_ws/install/r2d2_perception/share/ament_index/resource_index/packages\n'}
+[48.707422] (r2d2_perception) StdoutLine: {'line': b'symbolically linking /home/r2d2/ros2_ws/build/r2d2_perception/resource/r2d2_perception -> /home/r2d2/ros2_ws/install/r2d2_perception/share/ament_index/resource_index/packages\n'}
+[48.709303] (r2d2_perception) StdoutLine: {'line': b'creating /home/r2d2/ros2_ws/install/r2d2_perception/share/r2d2_perception\n'}
+[48.710895] (r2d2_perception) StdoutLine: {'line': b'symbolically linking /home/r2d2/ros2_ws/build/r2d2_perception/package.xml -> /home/r2d2/ros2_ws/install/r2d2_perception/share/r2d2_perception\n'}
+[48.756329] (-) TimerEvent: {}
+[48.858186] (-) TimerEvent: {}
+[48.959152] (-) TimerEvent: {}
+[49.034353] (r2d2_perception) CommandEnded: {'returncode': 0}
+[49.060576] (-) TimerEvent: {}
+[49.147028] (r2d2_perception) JobEnded: {'identifier': 'r2d2_perception', 'rc': 0}
+[49.160810] (-) TimerEvent: {}
+[49.261518] (-) TimerEvent: {}
+[49.362640] (-) TimerEvent: {}
+[49.463550] (-) TimerEvent: {}
+[49.564338] (-) TimerEvent: {}
+[49.664947] (-) TimerEvent: {}
+[49.765779] (-) TimerEvent: {}
+[49.866695] (-) TimerEvent: {}
+[49.967648] (-) TimerEvent: {}
+[50.068403] (-) TimerEvent: {}
+[50.169164] (-) TimerEvent: {}
+[50.270030] (-) TimerEvent: {}
+[50.370803] (-) TimerEvent: {}
+[50.471963] (-) TimerEvent: {}
+[50.572983] (-) TimerEvent: {}
+[50.673868] (-) TimerEvent: {}
+[50.774918] (-) TimerEvent: {}
+[50.875772] (-) TimerEvent: {}
+[50.976388] (-) TimerEvent: {}
+[51.077118] (-) TimerEvent: {}
+[51.178022] (-) TimerEvent: {}
+[51.278818] (-) TimerEvent: {}
+[51.379992] (-) TimerEvent: {}
+[51.480955] (-) TimerEvent: {}
+[51.581723] (-) TimerEvent: {}
+[51.682630] (-) TimerEvent: {}
+[51.783621] (-) TimerEvent: {}
+[51.884651] (-) TimerEvent: {}
+[51.985549] (-) TimerEvent: {}
+[52.086354] (-) TimerEvent: {}
+[52.187121] (-) TimerEvent: {}
+[52.288057] (-) TimerEvent: {}
+[52.388837] (-) TimerEvent: {}
+[52.489620] (-) TimerEvent: {}
+[52.590198] (-) TimerEvent: {}
+[52.691062] (-) TimerEvent: {}
+[52.792198] (-) TimerEvent: {}
+[52.893125] (-) TimerEvent: {}
+[52.993811] (-) TimerEvent: {}
+[53.094441] (-) TimerEvent: {}
+[53.195192] (-) TimerEvent: {}
+[53.296045] (-) TimerEvent: {}
+[53.396715] (-) TimerEvent: {}
+[53.497410] (-) TimerEvent: {}
+[53.598147] (-) TimerEvent: {}
+[53.699004] (-) TimerEvent: {}
+[53.799891] (-) TimerEvent: {}
+[53.901002] (-) TimerEvent: {}
+[54.001817] (-) TimerEvent: {}
+[54.102550] (-) TimerEvent: {}
+[54.203470] (-) TimerEvent: {}
+[54.304218] (-) TimerEvent: {}
+[54.405197] (-) TimerEvent: {}
+[54.506013] (-) TimerEvent: {}
+[54.606660] (-) TimerEvent: {}
+[54.707215] (-) TimerEvent: {}
+[54.808011] (-) TimerEvent: {}
+[54.909115] (-) TimerEvent: {}
+[55.010085] (-) TimerEvent: {}
+[55.110711] (-) TimerEvent: {}
+[55.211535] (-) TimerEvent: {}
+[55.312334] (-) TimerEvent: {}
+[55.413011] (-) TimerEvent: {}
+[55.513895] (-) TimerEvent: {}
+[55.614683] (-) TimerEvent: {}
+[55.715332] (-) TimerEvent: {}
+[55.816079] (-) TimerEvent: {}
+[55.916955] (-) TimerEvent: {}
+[56.017511] (-) TimerEvent: {}
+[56.118065] (-) TimerEvent: {}
+[56.218947] (-) TimerEvent: {}
+[56.319897] (-) TimerEvent: {}
+[56.420632] (-) TimerEvent: {}
+[56.521422] (-) TimerEvent: {}
+[56.621984] (-) TimerEvent: {}
+[56.722512] (-) TimerEvent: {}
+[56.823056] (-) TimerEvent: {}
+[56.923873] (-) TimerEvent: {}
+[57.024717] (-) TimerEvent: {}
+[57.125350] (-) TimerEvent: {}
+[57.226166] (-) TimerEvent: {}
+[57.327102] (-) TimerEvent: {}
+[57.427765] (-) TimerEvent: {}
+[57.528415] (-) TimerEvent: {}
+[57.629013] (-) TimerEvent: {}
+[57.729794] (-) TimerEvent: {}
+[57.830533] (-) TimerEvent: {}
+[57.931413] (-) TimerEvent: {}
+[58.031995] (-) TimerEvent: {}
+[58.132406] (-) TimerEvent: {}
+[58.232898] (-) TimerEvent: {}
+[58.333453] (-) TimerEvent: {}
+[58.434019] (-) TimerEvent: {}
+[58.534612] (-) TimerEvent: {}
+[58.635542] (-) TimerEvent: {}
+[58.736673] (-) TimerEvent: {}
+[58.837472] (-) TimerEvent: {}
+[58.938229] (-) TimerEvent: {}
+[59.039404] (-) TimerEvent: {}
+[59.140054] (-) TimerEvent: {}
+[59.145621] (r2d2_description) StderrLine: {'line': b'Traceback (most recent call last):\n'}
+[59.147422] (r2d2_description) StderrLine: {'line': b'  File "/opt/ros/jazzy/share/ament_cmake_core/cmake/core/package_xml_2_cmake.py", line 150, in <module>\n'}
+[59.149785] (r2d2_description) StderrLine: {'line': b'    main()\n'}
+[59.151116] (r2d2_description) StderrLine: {'line': b'  File "/opt/ros/jazzy/share/ament_cmake_core/cmake/core/package_xml_2_cmake.py", line 53, in main\n'}
+[59.152336] (r2d2_description) StderrLine: {'line': b'    raise e\n'}
+[59.153562] (r2d2_description) StderrLine: {'line': b'  File "/opt/ros/jazzy/share/ament_cmake_core/cmake/core/package_xml_2_cmake.py", line 49, in main\n'}
+[59.155648] (r2d2_description) StderrLine: {'line': b'    package = parse_package_string(\n'}
+[59.156709] (r2d2_description) StderrLine: {'line': b'              ^^^^^^^^^^^^^^^^^^^^^\n'}
+[59.157780] (r2d2_description) StderrLine: {'line': b'  File "/usr/lib/python3/dist-packages/catkin_pkg/package.py", line 788, in parse_package_string\n'}
+[59.158813] (r2d2_description) StderrLine: {'line': b'    pkg.validate(warnings=warnings)\n'}
+[59.159803] (r2d2_description) StderrLine: {'line': b'  File "/usr/lib/python3/dist-packages/catkin_pkg/package.py", line 330, in validate\n'}
+[59.160931] (r2d2_description) StderrLine: {'line': b"    raise InvalidPackage('\\n'.join(errors), self.filename)\n"}
+[59.161945] (r2d2_description) StderrLine: {'line': b"catkin_pkg.package.InvalidPackage: Error(s) in package '/home/r2d2/ros2_ws/src/r2d2_description/package.xml':\n"}
+[59.163003] (r2d2_description) StderrLine: {'line': b'Invalid email "r2d2@localhost" for person "r2d2"\n'}
+[59.240484] (-) TimerEvent: {}
+[59.341157] (-) TimerEvent: {}
+[59.441920] (-) TimerEvent: {}
+[59.492865] (r2d2_description) StderrLine: {'line': b'CMake Error at /opt/ros/jazzy/share/ament_cmake_core/cmake/core/ament_package_xml.cmake:95 (message):\n'}
+[59.494481] (r2d2_description) StderrLine: {'line': b'  execute_process(/usr/bin/python3\n'}
+[59.496415] (r2d2_description) StderrLine: {'line': b'  /opt/ros/jazzy/share/ament_cmake_core/cmake/core/package_xml_2_cmake.py\n'}
+[59.497537] (r2d2_description) StderrLine: {'line': b'  /home/r2d2/ros2_ws/src/r2d2_description/package.xml\n'}
+[59.498597] (r2d2_description) StderrLine: {'line': b'  /home/r2d2/ros2_ws/build/r2d2_description/ament_cmake_core/package.cmake)\n'}
+[59.499635] (r2d2_description) StderrLine: {'line': b'  returned error code 1\n'}
+[59.500644] (r2d2_description) StderrLine: {'line': b'Call Stack (most recent call first):\n'}
+[59.501667] (r2d2_description) StderrLine: {'line': b'  /opt/ros/jazzy/share/ament_cmake_core/cmake/core/ament_package_xml.cmake:49 (_ament_package_xml)\n'}
+[59.502694] (r2d2_description) StderrLine: {'line': b'  /opt/ros/jazzy/share/ament_cmake_core/cmake/core/ament_package.cmake:63 (ament_package_xml)\n'}
+[59.503781] (r2d2_description) StderrLine: {'line': b'  CMakeLists.txt:6 (ament_package)\n'}
+[59.504836] (r2d2_description) StderrLine: {'line': b'\n'}
+[59.506072] (r2d2_description) StderrLine: {'line': b'\n'}
+[59.507508] (r2d2_description) StdoutLine: {'line': b'-- Configuring incomplete, errors occurred!\n'}
+[59.541367] (r2d2_description) CommandEnded: {'returncode': 1}
+[59.543972] (-) TimerEvent: {}
+[59.545881] (r2d2_description) JobEnded: {'identifier': 'r2d2_description', 'rc': 1}
+[59.551913] (-) EventReactorShutdown: {}

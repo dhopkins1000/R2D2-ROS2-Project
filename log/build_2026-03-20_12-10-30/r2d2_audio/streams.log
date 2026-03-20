@@ -1,0 +1,15 @@
+[17.166s] Invoking command in '/home/r2d2/ros2_ws/build/r2d2_audio': PYTHONPATH=/home/r2d2/ros2_ws/build/r2d2_audio/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/r2d2/ros2_ws/install/r2d2_audio/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/r2d2/ros2_ws/build/r2d2_audio/build --no-deps symlink_data
+[21.850s] running develop
+[24.774s] running egg_info
+[25.075s] writing r2d2_audio.egg-info/PKG-INFO
+[25.080s] writing dependency_links to r2d2_audio.egg-info/dependency_links.txt
+[25.087s] writing requirements to r2d2_audio.egg-info/requires.txt
+[25.089s] writing top-level names to r2d2_audio.egg-info/top_level.txt
+[25.766s] reading manifest file 'r2d2_audio.egg-info/SOURCES.txt'
+[25.779s] writing manifest file 'r2d2_audio.egg-info/SOURCES.txt'
+[26.089s] running build_ext
+[26.092s] Creating /home/r2d2/ros2_ws/install/r2d2_audio/lib/python3.12/site-packages/r2d2-audio.egg-link (link to .)
+[26.103s] 
+[26.108s] Installed /home/r2d2/ros2_ws/build/r2d2_audio
+[26.113s] running symlink_data
+[26.802s] Invoked command in '/home/r2d2/ros2_ws/build/r2d2_audio' returned '0': PYTHONPATH=/home/r2d2/ros2_ws/build/r2d2_audio/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/r2d2/ros2_ws/install/r2d2_audio/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/r2d2/ros2_ws/build/r2d2_audio/build --no-deps symlink_data

@@ -1,0 +1,22 @@
+running develop
+running egg_info
+creating r2d2_head.egg-info
+writing r2d2_head.egg-info/PKG-INFO
+writing dependency_links to r2d2_head.egg-info/dependency_links.txt
+writing requirements to r2d2_head.egg-info/requires.txt
+writing top-level names to r2d2_head.egg-info/top_level.txt
+writing manifest file 'r2d2_head.egg-info/SOURCES.txt'
+reading manifest file 'r2d2_head.egg-info/SOURCES.txt'
+writing manifest file 'r2d2_head.egg-info/SOURCES.txt'
+running build_ext
+Creating /home/r2d2/ros2_ws/install/r2d2_head/lib/python3.12/site-packages/r2d2-head.egg-link (link to .)
+
+Installed /home/r2d2/ros2_ws/build/r2d2_head
+running symlink_data
+creating /home/r2d2/ros2_ws/install/r2d2_head/share
+creating /home/r2d2/ros2_ws/install/r2d2_head/share/ament_index
+creating /home/r2d2/ros2_ws/install/r2d2_head/share/ament_index/resource_index
+creating /home/r2d2/ros2_ws/install/r2d2_head/share/ament_index/resource_index/packages
+symbolically linking /home/r2d2/ros2_ws/build/r2d2_head/resource/r2d2_head -> /home/r2d2/ros2_ws/install/r2d2_head/share/ament_index/resource_index/packages
+creating /home/r2d2/ros2_ws/install/r2d2_head/share/r2d2_head
+symbolically linking /home/r2d2/ros2_ws/build/r2d2_head/package.xml -> /home/r2d2/ros2_ws/install/r2d2_head/share/r2d2_head
