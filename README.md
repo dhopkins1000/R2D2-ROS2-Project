@@ -16,10 +16,10 @@ A real-world R2D2 build (~75cm) running ROS2 Jazzy Jalisco on a Raspberry Pi 4 (
 
 **Drive System**
 - MD25 motor controller – differential drive, 2x DC motors with encoders
-- Chassis ESP32 – micro-ROS node (motors, odometry, IMU, stair sensor, SSD1306 OLED)
+- Chassis ESP32 (LOLIN D32) – micro-ROS node (motors, odometry, IMU, stair sensor, SSD1306 OLED)
 
 **Head**
-- Head ESP32 – micro-ROS node (stepper motor, HT16K33 RGB 8x8 matrix, SerLCD 40x2, ultrasonic)
+- Head ESP32 (LOLIN D32) – micro-ROS node (stepper motor, HT16K33 RGB 8x8 matrix, SerLCD 40x2, ultrasonic)
 - A4988 stepper driver – head rotation
 
 **Audio**
@@ -32,7 +32,7 @@ A real-world R2D2 build (~75cm) running ROS2 Jazzy Jalisco on a Raspberry Pi 4 (
 | OS | Ubuntu 24.04 Server (ARM64) |
 | ROS2 | Jazzy Jalisco (LTS) |
 | Visualization | Foxglove Studio (Mac) via WebSocket |
-| ESP32 Firmware | micro-ROS (Jazzy) |
+| ESP32 Firmware | micro-ROS (Jazzy) via PlatformIO |
 | Navigation | Nav2 + slam_toolbox |
 | Development | VS Code Remote SSH + OpenCode |
 
@@ -48,6 +48,9 @@ A real-world R2D2 build (~75cm) running ROS2 Jazzy Jalisco on a Raspberry Pi 4 (
   r2d2_navigation/   # Nav2 config + maps
   r2d2_behavior/     # Behaviour trees, state machine
   r2d2_audio/        # Sound output
+
+esp32/
+  r2d2_chassis_esp32/  # PlatformIO project – Chassis ESP32 firmware
 ```
 
 ## Connection Architecture
@@ -72,8 +75,18 @@ Raspberry Pi 4
 - [x] r2d2_bringup: Xtion Pro + Webcam + Foxglove Bridge (systemd service)
 - [x] Foxglove Studio connected from Mac
 - [x] GitHub repo cleaned up, ROS2 workspace pushed
-- [ ] Chassis ESP32 wiring + micro-ROS
+- [x] micro-ROS Agent built from source (~/microros_ws)
+- [x] PlatformIO installed on Pi + ESP32 project skeleton created
+- [ ] micro-ROS firmware build for ESP32 (micro_ros_platformio Jazzy/ARM64 issue - WIP)
+- [ ] Chassis ESP32 wiring + first topic published
 - [ ] MD25 drive node (r2d2_base)
 - [ ] Nav2 + SLAM
 - [ ] Head ESP32
 - [ ] Behaviour trees
+
+## Notes
+
+### micro-ROS on Jazzy/ARM64
+`micro_ros_platformio` has known issues building on Jazzy/ARM64. Next approach:
+extract prebuilt static library from `~/microros_ws` and link directly in PlatformIO,
+bypassing the source build step.
