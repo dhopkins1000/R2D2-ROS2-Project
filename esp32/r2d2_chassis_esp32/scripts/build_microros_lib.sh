@@ -19,26 +19,22 @@ echo "Ziel: ${OUTPUT_DIR}"
 
 # --- Schritt 1: Docker prüfen (einfachster Build-Weg) ---
 if command -v docker &>/dev/null; then
-    echo "[1/3] Docker gefunden – baue via micro-ROS Docker Image..."
-    mkdir -p "${OUTPUT_DIR}/include"
+    echo "[1/2] Docker gefunden – baue via micro-ROS Docker Image..."
+    mkdir -p "${OUTPUT_DIR}"
 
+    # Das Image hat einen eigenen Entrypoint der die Library baut.
+    # Wir mounten einfach unser Zielverzeichnis als /custom_lib.
+    # Der Container legt libmicroros.a + include/ dort ab.
     docker run --rm \
         -v "${OUTPUT_DIR}":/custom_lib \
-        microros/micro_ros_static_library_builder:jazzy \
-        bash -c "
-            cd / && \
-            ros2 run micro_ros_setup create_firmware_ws.sh generate_lib && \
-            ros2 run micro_ros_setup build_firmware.sh && \
-            cp /firmware/build/libmicroros.a /custom_lib/ && \
-            cp -r /firmware/build/include /custom_lib/ \
-        "
-    echo "[OK] Library gebaut via Docker."
+        microros/micro_ros_static_library_builder:jazzy
+
+    echo "[OK] Docker Build abgeschlossen."
 
 # --- Fallback: Native Build mit vorhandenen ROS2-Tools ---
 else
     echo "[1/3] Kein Docker – versuche nativen Build..."
 
-    # ROS2 sourcen
     if [ -f "/opt/ros/jazzy/setup.bash" ]; then
         source /opt/ros/jazzy/setup.bash
     else
@@ -46,12 +42,11 @@ else
         exit 1
     fi
 
-    # micro_ros_platformio temporär klonen
     TMPDIR=$(mktemp -d)
     echo "[2/3] Klone micro_ros_platformio nach ${TMPDIR}..."
     git clone --depth 1 https://github.com/micro-ROS/micro_ros_platformio.git "${TMPDIR}/micro_ros_platformio"
 
-    mkdir -p "${OUTPUT_DIR}/include"
+    mkdir -p "${OUTPUT_DIR}"
 
     echo "[3/3] Baue Library (board=lolin_d32, transport=serial, distro=jazzy)..."
     cd "${TMPDIR}/micro_ros_platformio"
@@ -61,7 +56,6 @@ else
         --distro jazzy \
         --output-dir "${OUTPUT_DIR}"
 
-    # Aufräumen
     rm -rf "${TMPDIR}"
     echo "[OK] Library gebaut (nativer Build)."
 fi
@@ -74,6 +68,8 @@ if [ -f "${OUTPUT_DIR}/libmicroros.a" ]; then
     ls -lh "${OUTPUT_DIR}/libmicroros.a"
 else
     echo "❌ libmicroros.a nicht gefunden – Build fehlgeschlagen."
+    echo "   Inhalt von ${OUTPUT_DIR}:"
+    ls -la "${OUTPUT_DIR}" || true
     exit 1
 fi
 
