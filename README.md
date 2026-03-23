@@ -22,7 +22,11 @@ A real-world R2D2 build (~75cm) running ROS2 Jazzy Jalisco on a Raspberry Pi 4 (
 - Head ESP32 (LOLIN D32) – micro-ROS node (stepper motor, HT16K33 RGB 8x8 matrix, SerLCD 40x2, ultrasonic)
 - A4988 stepper driver – head rotation
 
-**Audio**
+**Audio & Voice**
+- ReSpeaker Mic Array V1.0 (USB, 7 mics + XVSM-2000 DSP)
+  - 8 channels (ch0 = beamformed output), 16kHz max 32kHz
+  - DOA (Direction of Arrival) via USB HID
+  - Hardware noise cancellation + beamforming onboard
 - Speaker + mini amplifier in chassis
 
 ## Software Stack
@@ -34,6 +38,8 @@ A real-world R2D2 build (~75cm) running ROS2 Jazzy Jalisco on a Raspberry Pi 4 (
 | Visualization | Foxglove Studio (Mac) via WebSocket |
 | ESP32 Firmware | micro-ROS (Jazzy) via PlatformIO |
 | Navigation | Nav2 + slam_toolbox |
+| Speech Recognition | Whisper (local, offline) |
+| Wake Word | Porcupine or openWakeWord |
 | Development | VS Code Remote SSH + OpenCode |
 
 ## ROS2 Workspace Structure
@@ -47,7 +53,7 @@ A real-world R2D2 build (~75cm) running ROS2 Jazzy Jalisco on a Raspberry Pi 4 (
   r2d2_perception/   # Camera processing, object detection
   r2d2_navigation/   # Nav2 config + maps
   r2d2_behavior/     # Behaviour trees, state machine
-  r2d2_audio/        # Sound output
+  r2d2_audio/        # Voice input (ReSpeaker), speech recognition, TTS output
 
 esp32/
   r2d2_chassis_esp32/  # PlatformIO project – Chassis ESP32 firmware
@@ -57,16 +63,47 @@ esp32/
 
 ```
 Raspberry Pi 4
-├── Chassis ESP32  (USB Serial – micro-ROS)
-│   ├── MD25 motor controller  (UART)
-│   ├── HMC5883L compass       (I2C Bus 1)
-│   ├── Ultrasonic stair       (I2C Bus 1)
-│   └── SSD1306 OLED status    (SPI)
-└── Head ESP32     (Bluetooth – micro-ROS)
-    ├── A4988 stepper          (GPIO STEP/DIR)
-    ├── HT16K33 RGB 8x8        (I2C Bus 0)
-    ├── SerLCD 40x2            (UART + logic level converter)
-    └── Ultrasonic head        (I2C Bus 1)
+├── Chassis ESP32      (USB Serial – micro-ROS)
+│   ├── MD25           (UART – motors + encoders)
+│   ├── HMC5883L       (I2C Bus 0 – compass/IMU)
+│   ├── Ultrasonic     (I2C Bus 0 – stair sensor)
+│   └── SSD1306 OLED   (SPI – status display)
+├── Head ESP32         (Bluetooth – micro-ROS)
+│   ├── A4988 stepper  (GPIO STEP/DIR – head rotation)
+│   ├── HT16K33        (I2C Bus 0 – RGB 8x8 matrix)
+│   ├── SerLCD 40x2    (UART + 3.3V logic level – display)
+│   └── Ultrasonic     (I2C Bus 1 – distance sensor)
+├── ASUS Xtion Pro     (USB – depth + RGB camera)
+├── USB Webcam         (USB – front camera)
+└── ReSpeaker Mic Array V1.0  (USB – voice input + DOA)
+```
+
+## Voice / Audio Node Architecture (r2d2_audio)
+
+```
+ReSpeaker (USB, ch0 beamformed, 16kHz)
+         │
+         ▼
+  respeaker_node
+    ├── /r2d2/audio/doa          (Int16 – speaking direction 0-359°)
+    └── /r2d2/audio/raw_audio    (Audio stream)
+         │
+         ▼
+  wake_word_node  ("Hey R2D2")
+    └── /r2d2/audio/wake_word    (Bool)
+         │
+         ▼
+  whisper_node  (local STT, offline)
+    └── /r2d2/audio/command      (String – recognized command)
+         │
+         ▼
+  Behaviour Tree
+    ├── DOA → /r2d2/head/cmd     (Head rotates toward speaker)
+    └── Command → action         (Navigate, speak, emote...)
+         │
+         ▼
+  tts_node  (Text-to-Speech)
+    └── /r2d2/audio/speak        (String → audio output via speaker)
 ```
 
 ## Status
@@ -77,11 +114,13 @@ Raspberry Pi 4
 - [x] GitHub repo cleaned up, ROS2 workspace pushed
 - [x] micro-ROS Agent built from source (~/microros_ws)
 - [x] PlatformIO installed on Pi + ESP32 project skeleton created
-- [ ] micro-ROS firmware build for ESP32 (micro_ros_platformio Jazzy/ARM64 issue - WIP)
+- [x] ReSpeaker Mic Array V1.0 recognized (USB, 8ch, 16kHz)
+- [ ] micro-ROS firmware build for ESP32 (micro_ros_platformio Jazzy/ARM64 – WIP)
 - [ ] Chassis ESP32 wiring + first topic published
 - [ ] MD25 drive node (r2d2_base)
 - [ ] Nav2 + SLAM
 - [ ] Head ESP32
+- [ ] r2d2_audio: ReSpeaker node + wake word + Whisper STT
 - [ ] Behaviour trees
 
 ## Notes
@@ -90,3 +129,10 @@ Raspberry Pi 4
 `micro_ros_platformio` has known issues building on Jazzy/ARM64. Next approach:
 extract prebuilt static library from `~/microros_ws` and link directly in PlatformIO,
 bypassing the source build step.
+
+### ReSpeaker Mic Array V1.0
+- 8 channels: 7 raw mics + 1 beamformed processed output (ch0)
+- Use ch0 for speech recognition – hardware DSP already handles noise cancellation
+- DOA readable via USB HID interface – enables head tracking toward speaker
+- Optimal sample rate: 16000 Hz (Whisper compatible)
+- alsamixer gain tuning needed (currently low volume)
