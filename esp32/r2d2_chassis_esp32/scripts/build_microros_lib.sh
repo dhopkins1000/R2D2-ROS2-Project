@@ -1,9 +1,7 @@
 #!/bin/bash
 # ============================================================
 # build_microros_lib.sh
-# Baut die micro-ROS Client Static Library für ESP32 (Jazzy)
-# auf dem Raspberry Pi – umgeht den ARM64-Source-Build-Bug
-# in micro_ros_platformio.
+# Nur als Fallback – normalerweise reicht `pio run`.
 #
 # Aufruf: bash esp32/r2d2_chassis_esp32/scripts/build_microros_lib.sh
 # ============================================================
@@ -18,50 +16,41 @@ PLATFORMIO_REPO="/tmp/micro_ros_platformio"
 echo "==== micro-ROS ESP32 Library Builder ===="
 echo "Ziel: ${OUTPUT_DIR}"
 
-# --- Schritt 1: micro_ros_platformio klonen (braucht der Container als /project) ---
-echo "[1/3] Klone micro_ros_platformio..."
+# --- Submodule korrekt klonen ---
+echo "[1/3] Klone micro_ros_platformio (inkl. Submodule)..."
 if [ -d "${PLATFORMIO_REPO}" ]; then
     echo "      (bereits vorhanden, überspringe)"
 else
-    git clone --depth 1 https://github.com/micro-ROS/micro_ros_platformio.git "${PLATFORMIO_REPO}"
+    # WICHTIG: --recurse-submodules – sonst fehlt microros_static_library/
+    git clone --depth 1 --recurse-submodules \
+        https://github.com/micro-ROS/micro_ros_platformio.git \
+        "${PLATFORMIO_REPO}"
+fi
+
+# Submodul-Pfad prüfen
+if [ ! -f "${PLATFORMIO_REPO}/microros_static_library/library_generation/library_generation.sh" ]; then
+    echo "[ERROR] library_generation.sh nicht gefunden – Submodule fehlen?"
+    echo "Versuche: cd ${PLATFORMIO_REPO} && git submodule update --init --recursive"
+    cd "${PLATFORMIO_REPO}" && git submodule update --init --recursive
 fi
 
 mkdir -p "${OUTPUT_DIR}"
 
-# --- Schritt 2: Docker Build ---
+# --- Docker Build ---
 if command -v docker &>/dev/null; then
     echo "[2/3] Baue via micro-ROS Docker Image..."
-    echo "      (das dauert beim ersten Mal ein paar Minuten)"
+    echo "      /project → ${PLATFORMIO_REPO}"
+    echo "      /custom_lib → ${OUTPUT_DIR}"
 
-    # Der Container-Entrypoint erwartet:
-    #   /project  → micro_ros_platformio Repo
-    #   /custom_lib → Output: libmicroros.a + include/
     docker run --rm \
         -v "${PLATFORMIO_REPO}":/project \
         -v "${OUTPUT_DIR}":/custom_lib \
         microros/micro_ros_static_library_builder:jazzy
 
     echo "[OK] Docker Build abgeschlossen."
-
 else
-    echo "[2/3] Kein Docker – versuche nativen Build..."
-
-    if [ -f "/opt/ros/jazzy/setup.bash" ]; then
-        source /opt/ros/jazzy/setup.bash
-    else
-        echo "[ERROR] ROS2 Jazzy nicht gefunden unter /opt/ros/jazzy"
-        exit 1
-    fi
-
-    echo "[3/3] Baue Library (board=lolin_d32, transport=serial, distro=jazzy)..."
-    cd "${PLATFORMIO_REPO}"
-    python3 library_builder.py \
-        --board lolin_d32 \
-        --transport serial \
-        --distro jazzy \
-        --output-dir "${OUTPUT_DIR}"
-
-    echo "[OK] Library gebaut (nativer Build)."
+    echo "[ERROR] Docker nicht gefunden. Bitte Docker installieren."
+    exit 1
 fi
 
 # --- Ergebnis prüfen ---
@@ -71,7 +60,7 @@ if [ -f "${OUTPUT_DIR}/libmicroros.a" ]; then
     echo "✅ libmicroros.a  →  ${OUTPUT_DIR}/libmicroros.a"
     ls -lh "${OUTPUT_DIR}/libmicroros.a"
 else
-    echo "❌ libmicroros.a nicht gefunden – Build fehlgeschlagen."
+    echo "❌ libmicroros.a nicht gefunden."
     echo "   Inhalt von ${OUTPUT_DIR}:"
     ls -la "${OUTPUT_DIR}" || true
     exit 1
@@ -85,6 +74,4 @@ else
 fi
 
 echo ""
-echo "Jetzt kannst Du in VS Code / PlatformIO bauen:"
-echo "  cd esp32/r2d2_chassis_esp32"
-echo "  pio run"
+echo "Fertig! Jetzt: cd esp32/r2d2_chassis_esp32 && pio run"
