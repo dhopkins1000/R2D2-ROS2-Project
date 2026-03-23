@@ -15,41 +15,19 @@ rclc_executor_t executor;
 rclc_support_t support;
 rcl_allocator_t allocator;
 
+bool microros_initialized = false;
+
 // --- Fehlerbehandlung ---
-#define RCCHECK(fn) { \
-  rcl_ret_t rc = fn; \
-  if (rc != RCL_RET_OK) { error_loop(__LINE__); } \
-}
+#define RCCHECK(fn) { rcl_ret_t rc = fn; if (rc != RCL_RET_OK) return false; }
 #define RCSOFTCHECK(fn) { rcl_ret_t rc = fn; (void)rc; }
 
-void error_loop(int line) {
-  Serial.printf("[ERROR] micro-ROS init fehlgeschlagen (line %d)\n", line);
-  while (1) {
-    digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
-    delay(100);
-  }
-}
-
-// --- Setup ---
-void setup() {
-  Serial.begin(115200);
-  pinMode(LED_BUILTIN, OUTPUT);
-  digitalWrite(LED_BUILTIN, LOW);
-
-  Serial.println("[R2D2 Chassis] Booting...");
-
-  // micro-ROS Serial Transport (USB → Pi micro-ROS Agent)
-  // Hinweis: In micro_ros_arduino v2.0.8-jazzy heißt die Funktion
-  // set_microros_transports() ohne Argumente – Serial + 115200 sind intern hardcoded.
-  set_microros_transports();
-  delay(2000);  // Agent-Verbindung abwarten
-
+// --- micro-ROS initialisieren (retry-fähig) ---
+bool microros_init() {
   allocator = rcl_get_default_allocator();
 
-  RCCHECK(rclc_support_init(&support, 0, NULL, &allocator));
-  RCCHECK(rclc_node_init_default(&node, NODE_NAME, NODE_NAMESPACE, &support));
+  if (rclc_support_init(&support, 0, NULL, &allocator) != RCL_RET_OK) return false;
+  if (rclc_node_init_default(&node, NODE_NAME, NODE_NAMESPACE, &support) != RCL_RET_OK) return false;
 
-  // Publisher: Heartbeat/Status
   RCCHECK(rclc_publisher_init_default(
     &pub_status,
     &node,
@@ -59,22 +37,55 @@ void setup() {
 
   RCCHECK(rclc_executor_init(&executor, &support.context, 1, &allocator));
 
-  // Message-Buffer allozieren
-  msg_status.data.data     = (char*)malloc(64 * sizeof(char));
-  msg_status.data.capacity = 64;
-  msg_status.data.size     = 0;
+  if (!msg_status.data.data) {
+    msg_status.data.data     = (char*)malloc(64 * sizeof(char));
+    msg_status.data.capacity = 64;
+    msg_status.data.size     = 0;
+  }
 
-  Serial.println("[R2D2 Chassis] micro-ROS bereit.");
-  Serial.printf("  Node:  %s\n", NODE_NAME);
-  Serial.printf("  Topic: %s\n", TOPIC_STATUS);
+  return true;
+}
 
-  // TODO: MD25 UART init (MD25_UART.begin(MD25_BAUD, SERIAL_8N1, MD25_RX_PIN, MD25_TX_PIN))
-  // TODO: Wire.begin(I2C0_SDA_PIN, I2C0_SCL_PIN) für HMC5883L + Ultrasonic
+// --- micro-ROS aufräumen vor Retry ---
+void microros_cleanup() {
+  rcl_publisher_fini(&pub_status, &node);
+  rcl_node_fini(&node);
+  rclc_support_fini(&support);
+}
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, LOW);
+
+  Serial.println("[R2D2 Chassis] Booting...");
+
+  set_microros_transports();
+
+  // TODO: MD25 UART init
+  // TODO: Wire.begin(I2C0_SDA_PIN, I2C0_SCL_PIN)
   // TODO: SSD1306 SPI init
 }
 
-// --- Loop ---
 void loop() {
+  // --- Reconnect-Loop: versucht Agent zu erreichen bis es klappt ---
+  if (!microros_initialized) {
+    digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));  // Langsames Blinken = warte auf Agent
+    delay(500);
+
+    Serial.println("[R2D2 Chassis] Warte auf micro-ROS Agent...");
+
+    if (microros_init()) {
+      microros_initialized = true;
+      digitalWrite(LED_BUILTIN, HIGH);
+      Serial.println("[R2D2 Chassis] micro-ROS verbunden!");
+      Serial.printf("  Node:  %s\n", NODE_NAME);
+      Serial.printf("  Topic: %s\n", TOPIC_STATUS);
+    }
+    return;
+  }
+
+  // --- Normaler Betrieb ---
   static unsigned long last_publish = 0;
   unsigned long now = millis();
 
@@ -85,8 +96,15 @@ void loop() {
              "R2D2 Chassis Online | uptime: %lus", now / 1000);
     msg_status.data.size = strlen(msg_status.data.data);
 
-    RCSOFTCHECK(rcl_publish(&pub_status, &msg_status, NULL));
-    digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+    if (rcl_publish(&pub_status, &msg_status, NULL) != RCL_RET_OK) {
+      // Verbindung verloren – neu verbinden
+      Serial.println("[R2D2 Chassis] Verbindung verloren, reconnect...");
+      microros_cleanup();
+      microros_initialized = false;
+      return;
+    }
+
+    digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));  // Heartbeat LED
   }
 
   rclc_executor_spin_some(&executor, RCL_MS_TO_NS(SPIN_TIMEOUT_MS));
