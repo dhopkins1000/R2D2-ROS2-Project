@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include <micro_ros_platformio.h>
+#include <micro_ros_arduino.h>
 #include <rcl/rcl.h>
 #include <rclc/rclc.h>
 #include <rclc/executor.h>
@@ -16,7 +16,6 @@ rclc_support_t support;
 rcl_allocator_t allocator;
 
 // --- Fehlerbehandlung ---
-// Bei hartem Fehler: schnelles LED-Blinken + Stopp
 #define RCCHECK(fn) { \
   rcl_ret_t rc = fn; \
   if (rc != RCL_RET_OK) { error_loop(__LINE__); } \
@@ -77,7 +76,6 @@ void loop() {
   static unsigned long last_publish = 0;
   unsigned long now = millis();
 
-  // Heartbeat-Status publishen
   if (now - last_publish >= HEARTBEAT_MS) {
     last_publish = now;
 
@@ -86,7 +84,7 @@ void loop() {
     msg_status.data.size = strlen(msg_status.data.data);
 
     RCSOFTCHECK(rcl_publish(&pub_status, &msg_status, NULL));
-    digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));  // Heartbeat LED
+    digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
   }
 
   rclc_executor_spin_some(&executor, RCL_MS_TO_NS(SPIN_TIMEOUT_MS));
