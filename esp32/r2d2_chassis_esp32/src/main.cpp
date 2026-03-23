@@ -39,7 +39,9 @@ void setup() {
   Serial.println("[R2D2 Chassis] Booting...");
 
   // micro-ROS Serial Transport (USB → Pi micro-ROS Agent)
-  set_microros_serial_transports(Serial);
+  // Hinweis: In micro_ros_arduino v2.0.8-jazzy heißt die Funktion
+  // set_microros_transports() ohne Argumente – Serial + 115200 sind intern hardcoded.
+  set_microros_transports();
   delay(2000);  // Agent-Verbindung abwarten
 
   allocator = rcl_get_default_allocator();
