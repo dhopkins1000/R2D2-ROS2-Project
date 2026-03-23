@@ -61,15 +61,18 @@ mkdir -p "${OUTPUT_DIR}/include"
 # Library
 cp "${ESP32_LIB}/libmicroros.a" "${OUTPUT_DIR}/"
 
-# Headers: In micro_ros_arduino liegen sie direkt als Unterordner in src/
-# (src/std_msgs/, src/rcl/, src/rmw/ etc.) – nicht in src/include/
-# Wir kopieren alle Unterordner aus src/ außer den Board-spezifischen Ordnern
-echo "      Kopiere Header-Verzeichnisse aus src/..."
+# Root-Level Headers (z.B. micro_ros_arduino.h direkt in src/)
+echo "      Kopiere Root-Level Headers aus src/..."
+for f in "${REPO_DIR}/src"/*.h; do
+    [ -f "${f}" ] && cp "${f}" "${OUTPUT_DIR}/include/"
+done
+
+# Unterordner (std_msgs/, rcl/, rclc/ etc.) – Board-Verzeichnisse überspringen
+echo "      Kopiere Header-Unterverzeichnisse aus src/..."
 for dir in "${REPO_DIR}/src"/*/; do
     dirname=$(basename "${dir}")
-    # Board-Verzeichnisse überspringen (enthalten .a files, keine Headers)
     case "${dirname}" in
-        esp32|cortex_m0|cortex_m3|cortex_m4|cortex_m7|samd|sam|teensy*|portenta*|giga*|opta*|renesas*)
+        esp32|cortex*|samd|sam|teensy*|portenta*|giga*|opta*|renesas*|mk*|imxrt*)
             echo "      Überspringe Board-Verzeichnis: ${dirname}"
             ;;
         *)
@@ -94,14 +97,15 @@ else
     exit 1
 fi
 
-HEADER_COUNT=$(ls "${OUTPUT_DIR}/include" | wc -l)
-if [ "${HEADER_COUNT}" -gt 0 ]; then
-    echo "✅ include/ (${HEADER_COUNT} Pakete)"
-    ls "${OUTPUT_DIR}/include"
+if [ -f "${OUTPUT_DIR}/include/micro_ros_arduino.h" ]; then
+    echo "✅ micro_ros_arduino.h"
 else
-    echo "❌ include/ leer oder nicht gefunden."
+    echo "❌ micro_ros_arduino.h nicht gefunden."
     exit 1
 fi
+
+HEADER_COUNT=$(ls "${OUTPUT_DIR}/include" | wc -l)
+echo "✅ include/ (${HEADER_COUNT} Einträge)"
 
 echo ""
 echo "✅ Fertig! Nächster Schritt:"
