@@ -13,27 +13,38 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 OUTPUT_DIR="${PROJECT_DIR}/lib/microros"
+PLATFORMIO_REPO="/tmp/micro_ros_platformio"
 
 echo "==== micro-ROS ESP32 Library Builder ===="
 echo "Ziel: ${OUTPUT_DIR}"
 
-# --- Schritt 1: Docker prüfen (einfachster Build-Weg) ---
-if command -v docker &>/dev/null; then
-    echo "[1/2] Docker gefunden – baue via micro-ROS Docker Image..."
-    mkdir -p "${OUTPUT_DIR}"
+# --- Schritt 1: micro_ros_platformio klonen (braucht der Container als /project) ---
+echo "[1/3] Klone micro_ros_platformio..."
+if [ -d "${PLATFORMIO_REPO}" ]; then
+    echo "      (bereits vorhanden, überspringe)"
+else
+    git clone --depth 1 https://github.com/micro-ROS/micro_ros_platformio.git "${PLATFORMIO_REPO}"
+fi
 
-    # Das Image hat einen eigenen Entrypoint der die Library baut.
-    # Wir mounten einfach unser Zielverzeichnis als /custom_lib.
-    # Der Container legt libmicroros.a + include/ dort ab.
+mkdir -p "${OUTPUT_DIR}"
+
+# --- Schritt 2: Docker Build ---
+if command -v docker &>/dev/null; then
+    echo "[2/3] Baue via micro-ROS Docker Image..."
+    echo "      (das dauert beim ersten Mal ein paar Minuten)"
+
+    # Der Container-Entrypoint erwartet:
+    #   /project  → micro_ros_platformio Repo
+    #   /custom_lib → Output: libmicroros.a + include/
     docker run --rm \
+        -v "${PLATFORMIO_REPO}":/project \
         -v "${OUTPUT_DIR}":/custom_lib \
         microros/micro_ros_static_library_builder:jazzy
 
     echo "[OK] Docker Build abgeschlossen."
 
-# --- Fallback: Native Build mit vorhandenen ROS2-Tools ---
 else
-    echo "[1/3] Kein Docker – versuche nativen Build..."
+    echo "[2/3] Kein Docker – versuche nativen Build..."
 
     if [ -f "/opt/ros/jazzy/setup.bash" ]; then
         source /opt/ros/jazzy/setup.bash
@@ -42,21 +53,14 @@ else
         exit 1
     fi
 
-    TMPDIR=$(mktemp -d)
-    echo "[2/3] Klone micro_ros_platformio nach ${TMPDIR}..."
-    git clone --depth 1 https://github.com/micro-ROS/micro_ros_platformio.git "${TMPDIR}/micro_ros_platformio"
-
-    mkdir -p "${OUTPUT_DIR}"
-
     echo "[3/3] Baue Library (board=lolin_d32, transport=serial, distro=jazzy)..."
-    cd "${TMPDIR}/micro_ros_platformio"
+    cd "${PLATFORMIO_REPO}"
     python3 library_builder.py \
         --board lolin_d32 \
         --transport serial \
         --distro jazzy \
         --output-dir "${OUTPUT_DIR}"
 
-    rm -rf "${TMPDIR}"
     echo "[OK] Library gebaut (nativer Build)."
 fi
 
