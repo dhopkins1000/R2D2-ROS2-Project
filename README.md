@@ -36,11 +36,11 @@ A real-world R2D2 build (~75cm) running ROS2 Jazzy Jalisco on a Raspberry Pi 4 (
 | OS | Ubuntu 24.04 Server (ARM64) |
 | ROS2 | Jazzy Jalisco (LTS) |
 | Visualization | Foxglove Studio (Mac) via WebSocket |
-| ESP32 Firmware | micro-ROS (Jazzy) via PlatformIO |
+| ESP32 Firmware | micro-ROS (Jazzy) via PlatformIO + prebuilt library |
 | Navigation | Nav2 + slam_toolbox |
 | Speech Recognition | Whisper (local, offline) |
 | Wake Word | Porcupine or openWakeWord |
-| Development | VS Code Remote SSH + OpenCode |
+| Development | VS Code Remote SSH + Claude Code |
 
 ## ROS2 Workspace Structure
 
@@ -57,13 +57,16 @@ A real-world R2D2 build (~75cm) running ROS2 Jazzy Jalisco on a Raspberry Pi 4 (
 
 esp32/
   r2d2_chassis_esp32/  # PlatformIO project – Chassis ESP32 firmware
+    src/main.cpp       # micro-ROS node mit Reconnect-Loop
+    src/config.h       # Pins, Topics, Timing zentral konfiguriert
+    scripts/build_microros_lib.sh  # Prebuilt Library von micro_ros_arduino herunterladen
 ```
 
 ## Connection Architecture
 
 ```
 Raspberry Pi 4
-├── Chassis ESP32      (USB Serial – micro-ROS)
+├── Chassis ESP32      (USB Serial – micro-ROS, /dev/ttyACM0)
 │   ├── MD25           (UART – motors + encoders)
 │   ├── HMC5883L       (I2C Bus 0 – compass/IMU)
 │   ├── Ultrasonic     (I2C Bus 0 – stair sensor)
@@ -115,9 +118,10 @@ ReSpeaker (USB, ch0 beamformed, 16kHz)
 - [x] micro-ROS Agent built from source (~/microros_ws)
 - [x] PlatformIO installed on Pi + ESP32 project skeleton created
 - [x] ReSpeaker Mic Array V1.0 recognized (USB, 8ch, 16kHz)
-- [ ] micro-ROS firmware build for ESP32 (micro_ros_platformio Jazzy/ARM64 – WIP)
-- [ ] Chassis ESP32 wiring + first topic published
-- [ ] MD25 drive node (r2d2_base)
+- [x] micro-ROS firmware für ESP32 kompiliert und geflasht (prebuilt library approach)
+- [x] Chassis ESP32 verbindet sich mit micro-ROS Agent (/r2d2/chassis/status publiziert)
+- [ ] Chassis ESP32 Hardware-Wiring (MD25, HMC5883L, Ultrasonic, OLED)
+- [ ] MD25 drive node (r2d2_base) – ROS2 cmd_vel → Motoren
 - [ ] Nav2 + SLAM
 - [ ] Head ESP32
 - [ ] r2d2_audio: ReSpeaker node + wake word + Whisper STT
@@ -125,10 +129,24 @@ ReSpeaker (USB, ch0 beamformed, 16kHz)
 
 ## Notes
 
-### micro-ROS on Jazzy/ARM64
-`micro_ros_platformio` has known issues building on Jazzy/ARM64. Next approach:
-extract prebuilt static library from `~/microros_ws` and link directly in PlatformIO,
-bypassing the source build step.
+### micro-ROS auf Jazzy/ARM64
+`micro_ros_platformio` kann auf Jazzy/ARM64 nicht nativ gebaut werden (CMake-Abhängigkeiten fehlen).
+**Lösung:** Prebuilt static library aus dem `micro_ros_arduino` Release direkt einbinden.
+
+```bash
+# Einmalig auf dem Pi ausführen:
+bash esp32/r2d2_chassis_esp32/scripts/build_microros_lib.sh
+
+# Dann normal bauen + flashen:
+cd esp32/r2d2_chassis_esp32
+pio run --target upload
+```
+
+micro-ROS Agent starten (nach dem Pi-Boot):
+```bash
+source ~/microros_ws/install/setup.bash
+ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/ttyACM0 -b 115200
+```
 
 ### ReSpeaker Mic Array V1.0
 - 8 channels: 7 raw mics + 1 beamformed processed output (ch0)
