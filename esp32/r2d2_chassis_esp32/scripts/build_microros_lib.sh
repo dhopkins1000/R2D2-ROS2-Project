@@ -4,9 +4,6 @@
 # Lädt die fertig kompilierte micro-ROS Library für ESP32
 # direkt vom micro_ros_arduino GitHub Release herunter.
 #
-# Kein Build, kein Docker, kein CMake.
-# Einfach herunterladen und extrahieren.
-#
 # Aufruf:
 #   bash esp32/r2d2_chassis_esp32/scripts/build_microros_lib.sh
 # ============================================================
@@ -17,10 +14,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 OUTPUT_DIR="${PROJECT_DIR}/lib/microros"
 
-# Release v2.0.8-jazzy (letztes Jazzy Release von micro_ros_arduino)
 RELEASE_URL="https://github.com/micro-ROS/micro_ros_arduino/archive/refs/tags/v2.0.8-jazzy.zip"
 RELEASE_ZIP="/tmp/micro_ros_arduino_jazzy.zip"
 EXTRACT_DIR="/tmp/micro_ros_arduino_jazzy"
+REPO_DIR="${EXTRACT_DIR}/micro_ros_arduino-2.0.8-jazzy"
 
 echo "==== micro-ROS ESP32 Library Downloader ===="
 echo "Release: v2.0.8-jazzy"
@@ -41,48 +38,45 @@ rm -rf "${EXTRACT_DIR}"
 mkdir -p "${EXTRACT_DIR}"
 unzip -q "${RELEASE_ZIP}" -d "${EXTRACT_DIR}"
 
-# Entpackter Ordner heißt micro_ros_arduino-2.0.8-jazzy
-REPO_DIR="${EXTRACT_DIR}/micro_ros_arduino-2.0.8-jazzy"
-
 if [ ! -d "${REPO_DIR}" ]; then
     echo "[ERROR] Erwartetes Verzeichnis nicht gefunden: ${REPO_DIR}"
-    echo "        Inhalt von ${EXTRACT_DIR}:"
     ls -la "${EXTRACT_DIR}"
     exit 1
 fi
 
-# --- Schritt 3: ESP32-Library herausziehen ---
+# --- Schritt 3: Library + Headers kopieren ---
 echo "[3/4] Kopiere ESP32 Library nach ${OUTPUT_DIR}..."
 
-# In micro_ros_arduino liegt die Library unter src/esp32/
 ESP32_LIB="${REPO_DIR}/src/esp32"
 
-if [ ! -d "${ESP32_LIB}" ]; then
-    echo "[ERROR] ESP32 Library-Verzeichnis nicht gefunden: ${ESP32_LIB}"
-    echo "        Verfügbare Targets unter src/:"
-    ls "${REPO_DIR}/src/" || true
-    exit 1
-fi
-
-rm -rf "${OUTPUT_DIR}"
-mkdir -p "${OUTPUT_DIR}"
-
-# libmicroros.a
-if [ -f "${ESP32_LIB}/libmicroros.a" ]; then
-    cp "${ESP32_LIB}/libmicroros.a" "${OUTPUT_DIR}/"
-else
+if [ ! -f "${ESP32_LIB}/libmicroros.a" ]; then
     echo "[ERROR] libmicroros.a nicht gefunden unter ${ESP32_LIB}"
     ls -la "${ESP32_LIB}/" || true
     exit 1
 fi
 
-# include/ Headers (liegen eine Ebene höher unter src/include/)
-if [ -d "${REPO_DIR}/src/include" ]; then
-    cp -r "${REPO_DIR}/src/include" "${OUTPUT_DIR}/"
-else
-    echo "[WARN] src/include nicht gefunden – suche alternativ..."
-    find "${REPO_DIR}/src" -name "*.h" | head -5
-fi
+rm -rf "${OUTPUT_DIR}"
+mkdir -p "${OUTPUT_DIR}/include"
+
+# Library
+cp "${ESP32_LIB}/libmicroros.a" "${OUTPUT_DIR}/"
+
+# Headers: In micro_ros_arduino liegen sie direkt als Unterordner in src/
+# (src/std_msgs/, src/rcl/, src/rmw/ etc.) – nicht in src/include/
+# Wir kopieren alle Unterordner aus src/ außer den Board-spezifischen Ordnern
+echo "      Kopiere Header-Verzeichnisse aus src/..."
+for dir in "${REPO_DIR}/src"/*/; do
+    dirname=$(basename "${dir}")
+    # Board-Verzeichnisse überspringen (enthalten .a files, keine Headers)
+    case "${dirname}" in
+        esp32|cortex_m0|cortex_m3|cortex_m4|cortex_m7|samd|sam|teensy*|portenta*|giga*|opta*|renesas*)
+            echo "      Überspringe Board-Verzeichnis: ${dirname}"
+            ;;
+        *)
+            cp -r "${dir}" "${OUTPUT_DIR}/include/"
+            ;;
+    esac
+done
 
 # --- Schritt 4: Aufräumen ---
 echo "[4/4] Räume auf..."
@@ -100,10 +94,12 @@ else
     exit 1
 fi
 
-if [ -d "${OUTPUT_DIR}/include" ]; then
-    echo "✅ include/ ($(ls ${OUTPUT_DIR}/include | wc -l) Einträge)"
+HEADER_COUNT=$(ls "${OUTPUT_DIR}/include" | wc -l)
+if [ "${HEADER_COUNT}" -gt 0 ]; then
+    echo "✅ include/ (${HEADER_COUNT} Pakete)"
+    ls "${OUTPUT_DIR}/include"
 else
-    echo "❌ include/ nicht gefunden."
+    echo "❌ include/ leer oder nicht gefunden."
     exit 1
 fi
 
