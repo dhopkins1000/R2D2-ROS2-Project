@@ -44,7 +44,7 @@ if [ ! -d "${REPO_DIR}" ]; then
     exit 1
 fi
 
-# --- Schritt 3: Library + Headers kopieren ---
+# --- Schritt 3: Library + Headers + Transport Sources kopieren ---
 echo "[3/4] Kopiere ESP32 Library nach ${OUTPUT_DIR}..."
 
 ESP32_LIB="${REPO_DIR}/src/esp32"
@@ -61,19 +61,25 @@ mkdir -p "${OUTPUT_DIR}/include"
 # Library
 cp "${ESP32_LIB}/libmicroros.a" "${OUTPUT_DIR}/"
 
-# Root-Level Headers (z.B. micro_ros_arduino.h direkt in src/)
-echo "      Kopiere Root-Level Headers aus src/..."
+# Root-Level .h Dateien (micro_ros_arduino.h etc.)
+echo "      Kopiere Root-Level Headers..."
 for f in "${REPO_DIR}/src"/*.h; do
     [ -f "${f}" ] && cp "${f}" "${OUTPUT_DIR}/include/"
 done
 
-# Unterordner (std_msgs/, rcl/, rclc/ etc.) – Board-Verzeichnisse überspringen
-echo "      Kopiere Header-Unterverzeichnisse aus src/..."
+# Root-Level .cpp Dateien (Transport-Implementierungen)
+# Diese müssen mit compiliert werden – PlatformIO findet sie in lib/microros/
+echo "      Kopiere Transport-Sources (.cpp)..."
+for f in "${REPO_DIR}/src"/*.cpp; do
+    [ -f "${f}" ] && cp "${f}" "${OUTPUT_DIR}/"
+done
+
+# Header-Unterordner (std_msgs/, rcl/, rclc/ etc.) – Board-Verzeichnisse überspringen
+echo "      Kopiere Header-Unterverzeichnisse..."
 for dir in "${REPO_DIR}/src"/*/; do
     dirname=$(basename "${dir}")
     case "${dirname}" in
         esp32|cortex*|samd|sam|teensy*|portenta*|giga*|opta*|renesas*|mk*|imxrt*)
-            echo "      Überspringe Board-Verzeichnis: ${dirname}"
             ;;
         *)
             cp -r "${dir}" "${OUTPUT_DIR}/include/"
@@ -90,22 +96,24 @@ echo ""
 echo "==== Ergebnis ===="
 
 if [ -f "${OUTPUT_DIR}/libmicroros.a" ]; then
-    echo "✅ libmicroros.a"
-    ls -lh "${OUTPUT_DIR}/libmicroros.a"
+    echo "✅ libmicroros.a ($(ls -lh ${OUTPUT_DIR}/libmicroros.a | awk '{print $5}'))"
 else
-    echo "❌ libmicroros.a nicht gefunden."
-    exit 1
+    echo "❌ libmicroros.a nicht gefunden."; exit 1
 fi
 
 if [ -f "${OUTPUT_DIR}/include/micro_ros_arduino.h" ]; then
     echo "✅ micro_ros_arduino.h"
 else
-    echo "❌ micro_ros_arduino.h nicht gefunden."
-    exit 1
+    echo "❌ micro_ros_arduino.h nicht gefunden."; exit 1
 fi
 
-HEADER_COUNT=$(ls "${OUTPUT_DIR}/include" | wc -l)
-echo "✅ include/ (${HEADER_COUNT} Einträge)"
+if [ -f "${OUTPUT_DIR}/default_transport.cpp" ]; then
+    echo "✅ default_transport.cpp (Serial Transport)"
+else
+    echo "❌ default_transport.cpp nicht gefunden."; exit 1
+fi
+
+echo "✅ include/ ($(ls ${OUTPUT_DIR}/include | wc -l) Einträge)"
 
 echo ""
 echo "✅ Fertig! Nächster Schritt:"
