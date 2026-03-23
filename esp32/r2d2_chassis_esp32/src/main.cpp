@@ -5,67 +5,89 @@
 #include <rclc/executor.h>
 #include <std_msgs/msg/string.h>
 
-// micro-ROS Objekte
+#include "config.h"
+
+// --- micro-ROS Objekte ---
 rcl_node_t node;
-rcl_publisher_t publisher;
-std_msgs__msg__String msg;
+rcl_publisher_t pub_status;
+std_msgs__msg__String msg_status;
 rclc_executor_t executor;
 rclc_support_t support;
 rcl_allocator_t allocator;
 
-// Fehlerbehandlung
-#define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){error_loop();}}
-#define RCSOFTCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){;}}
+// --- Fehlerbehandlung ---
+// Bei hartem Fehler: schnelles LED-Blinken + Stopp
+#define RCCHECK(fn) { \
+  rcl_ret_t rc = fn; \
+  if (rc != RCL_RET_OK) { error_loop(__LINE__); } \
+}
+#define RCSOFTCHECK(fn) { rcl_ret_t rc = fn; (void)rc; }
 
-void error_loop() {
-  // Bei Fehler: LED blinkt schnell
-  while(1) {
+void error_loop(int line) {
+  Serial.printf("[ERROR] micro-ROS init fehlgeschlagen (line %d)\n", line);
+  while (1) {
     digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
     delay(100);
   }
 }
 
+// --- Setup ---
 void setup() {
   Serial.begin(115200);
   pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, LOW);
 
-  // micro-ROS Serial Transport initialisieren
+  Serial.println("[R2D2 Chassis] Booting...");
+
+  // micro-ROS Serial Transport (USB → Pi micro-ROS Agent)
   set_microros_serial_transports(Serial);
-  delay(2000);  // Warten bis Agent verbunden
+  delay(2000);  // Agent-Verbindung abwarten
 
   allocator = rcl_get_default_allocator();
 
-  // ROS2 Node initialisieren
   RCCHECK(rclc_support_init(&support, 0, NULL, &allocator));
-  RCCHECK(rclc_node_init_default(&node, "r2d2_chassis", "", &support));
+  RCCHECK(rclc_node_init_default(&node, NODE_NAME, NODE_NAMESPACE, &support));
 
-  // Publisher: /r2d2/chassis/status
+  // Publisher: Heartbeat/Status
   RCCHECK(rclc_publisher_init_default(
-    &publisher,
+    &pub_status,
     &node,
     ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, String),
-    "/r2d2/chassis/status"
+    TOPIC_STATUS
   ));
 
-  // Executor
   RCCHECK(rclc_executor_init(&executor, &support.context, 1, &allocator));
 
-  // Nachricht initialisieren
-  msg.data.data = (char*)malloc(50 * sizeof(char));
-  msg.data.capacity = 50;
-  msg.data.size = 0;
+  // Message-Buffer allozieren
+  msg_status.data.data     = (char*)malloc(64 * sizeof(char));
+  msg_status.data.capacity = 64;
+  msg_status.data.size     = 0;
+
+  Serial.println("[R2D2 Chassis] micro-ROS bereit.");
+  Serial.printf("  Node:  %s\n", NODE_NAME);
+  Serial.printf("  Topic: %s\n", TOPIC_STATUS);
+
+  // TODO: MD25 UART init (MD25_UART.begin(MD25_BAUD, SERIAL_8N1, MD25_RX_PIN, MD25_TX_PIN))
+  // TODO: Wire.begin(I2C0_SDA_PIN, I2C0_SCL_PIN) für HMC5883L + Ultrasonic
+  // TODO: SSD1306 SPI init
 }
 
+// --- Loop ---
 void loop() {
-  // Status publishen
-  snprintf(msg.data.data, msg.data.capacity, "R2D2 Chassis Online");
-  msg.data.size = strlen(msg.data.data);
+  static unsigned long last_publish = 0;
+  unsigned long now = millis();
 
-  RCSOFTCHECK(rcl_publish(&publisher, &msg, NULL));
+  // Heartbeat-Status publishen
+  if (now - last_publish >= HEARTBEAT_MS) {
+    last_publish = now;
 
-  // LED blinken als Heartbeat
-  digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+    snprintf(msg_status.data.data, msg_status.data.capacity,
+             "R2D2 Chassis Online | uptime: %lus", now / 1000);
+    msg_status.data.size = strlen(msg_status.data.data);
 
-  rclc_executor_spin_some(&executor, RCL_MS_TO_NS(100));
-  delay(1000);
+    RCSOFTCHECK(rcl_publish(&pub_status, &msg_status, NULL));
+    digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));  // Heartbeat LED
+  }
+
+  rclc_executor_spin_some(&executor, RCL_MS_TO_NS(SPIN_TIMEOUT_MS));
 }
