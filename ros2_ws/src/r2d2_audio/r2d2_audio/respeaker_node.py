@@ -4,11 +4,12 @@ ReSpeaker Mic Array V1.0 Node
 
 Publishes:
   /r2d2/audio/doa          (std_msgs/Int16)   - Direction of Arrival 0-359 degrees
-  /r2d2/audio/raw_audio    (audio_common_msgs/AudioData) - Processed audio (ch0)
 
 Requires:
   pip install pyusb sounddevice
   udev rule for ReSpeaker HID access
+
+USB ID verified: 2886:0007 Seeed Technology Co., Ltd. ReSpeaker Microphone Array
 """
 
 import rclpy
@@ -20,9 +21,9 @@ import sounddevice as sd
 import numpy as np
 import threading
 
-# ReSpeaker V1.0 USB IDs
+# ReSpeaker V1.0 USB IDs - verified via lsusb: 2886:0007
 RESPEAKER_VENDOR_ID  = 0x2886
-RESPEAKER_PRODUCT_ID = 0x0018  # Mic Array V1.0
+RESPEAKER_PRODUCT_ID = 0x0007  # Mic Array V1.0 (NOT 0x0018 which is V2.0)
 
 # Audio config
 SAMPLE_RATE   = 16000
@@ -59,11 +60,17 @@ class ReSpeakerNode(Node):
             idProduct=RESPEAKER_PRODUCT_ID
         )
         if self.dev is None:
-            self.get_logger().warn('ReSpeaker USB device not found - DOA unavailable')
+            self.get_logger().warn(
+                f'ReSpeaker USB device not found (VID=0x{RESPEAKER_VENDOR_ID:04x} '
+                f'PID=0x{RESPEAKER_PRODUCT_ID:04x}) - DOA unavailable'
+            )
             return
-        if self.dev.is_kernel_driver_active(0):
-            self.dev.detach_kernel_driver(0)
-        self.get_logger().info('ReSpeaker USB device found')
+        try:
+            if self.dev.is_kernel_driver_active(0):
+                self.dev.detach_kernel_driver(0)
+        except usb.core.USBError as e:
+            self.get_logger().warn(f'Could not detach kernel driver: {e}')
+        self.get_logger().info('ReSpeaker USB device found - DOA active')
 
     def _poll_doa(self):
         """Read Direction of Arrival from ReSpeaker HID interface."""
@@ -106,7 +113,6 @@ class ReSpeakerNode(Node):
             dtype='int16',
             callback=self._audio_callback
         ):
-            # Keep thread alive while node is running
             while rclpy.ok():
                 pass
 
@@ -117,9 +123,8 @@ class ReSpeakerNode(Node):
         """
         if status:
             self.get_logger().warn(f'Audio callback status: {status}')
-
-        # Extract beamformed channel 0
-        # processed_audio = indata[:, PROCESSED_CH]  # shape: (BLOCK_SIZE,)
+        # Channel 0 = beamformed DSP output
+        # processed_audio = indata[:, PROCESSED_CH]
         # TODO: publish as audio topic when audio_common is available
         pass
 
