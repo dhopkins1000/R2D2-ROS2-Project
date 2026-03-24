@@ -5,11 +5,8 @@ ReSpeaker Mic Array V1.0 Node
 Publishes:
   /r2d2/audio/doa          (std_msgs/Int16)   - Direction of Arrival 0-359 degrees
 
-Requires:
-  pip install pyusb sounddevice
-  udev rule for ReSpeaker HID access
-
 USB ID verified: 2886:0007 Seeed Technology Co., Ltd. ReSpeaker Microphone Array
+Endpoint verified: Interface 2, Endpoint 0x82 (IN)
 """
 
 import rclpy
@@ -23,7 +20,11 @@ import threading
 
 # ReSpeaker V1.0 USB IDs - verified via lsusb: 2886:0007
 RESPEAKER_VENDOR_ID  = 0x2886
-RESPEAKER_PRODUCT_ID = 0x0007  # Mic Array V1.0 (NOT 0x0018 which is V2.0)
+RESPEAKER_PRODUCT_ID = 0x0007  # Mic Array V1.0
+
+# USB Interface + Endpoint - verified via usb.core endpoint scan
+DOA_INTERFACE  = 2
+DOA_ENDPOINT   = 0x82  # Interface 2, IN endpoint (not 0x84 which doesn't exist)
 
 # Audio config
 SAMPLE_RATE   = 16000
@@ -61,32 +62,46 @@ class ReSpeakerNode(Node):
         )
         if self.dev is None:
             self.get_logger().warn(
-                f'ReSpeaker USB device not found (VID=0x{RESPEAKER_VENDOR_ID:04x} '
-                f'PID=0x{RESPEAKER_PRODUCT_ID:04x}) - DOA unavailable'
+                f'ReSpeaker USB device not found '
+                f'(VID=0x{RESPEAKER_VENDOR_ID:04x} PID=0x{RESPEAKER_PRODUCT_ID:04x})'
             )
             return
+
+        # Detach kernel driver from DOA interface if active
         try:
-            if self.dev.is_kernel_driver_active(0):
-                self.dev.detach_kernel_driver(0)
+            if self.dev.is_kernel_driver_active(DOA_INTERFACE):
+                self.dev.detach_kernel_driver(DOA_INTERFACE)
+                self.get_logger().info(f'Detached kernel driver from interface {DOA_INTERFACE}')
         except usb.core.USBError as e:
             self.get_logger().warn(f'Could not detach kernel driver: {e}')
-        self.get_logger().info('ReSpeaker USB device found - DOA active')
+
+        # Set configuration
+        try:
+            self.dev.set_configuration()
+        except usb.core.USBError:
+            pass  # Already configured
+
+        self.get_logger().info(
+            f'ReSpeaker USB device found - DOA active '
+            f'(interface={DOA_INTERFACE}, endpoint=0x{DOA_ENDPOINT:02x})'
+        )
 
     def _poll_doa(self):
-        """Read Direction of Arrival from ReSpeaker HID interface."""
+        """Read Direction of Arrival from ReSpeaker endpoint 0x82."""
         if self.dev is None:
             return
         try:
-            # DOA is in HID report, bytes 4-5 = angle in degrees
-            data = self.dev.read(0x84, 64, timeout=100)
-            angle = data[4] | (data[5] << 8)
-            msg = Int16()
-            msg.data = int(angle)
-            self.doa_pub.publish(msg)
+            data = self.dev.read(DOA_ENDPOINT, 64, timeout=100)
+            if len(data) >= 6:
+                angle = data[4] | (data[5] << 8)
+                if 0 <= angle <= 359:
+                    msg = Int16()
+                    msg.data = int(angle)
+                    self.doa_pub.publish(msg)
         except usb.core.USBTimeoutError:
             pass
         except Exception as e:
-            self.get_logger().warn(f'DOA read error: {e}')
+            self.get_logger().warn(f'DOA read error: {e}', throttle_duration_sec=5.0)
 
     def _find_respeaker_device(self):
         """Find the correct sounddevice index for ReSpeaker."""
@@ -122,7 +137,10 @@ class ReSpeakerNode(Node):
         indata shape: (BLOCK_SIZE, CHANNELS)
         """
         if status:
-            self.get_logger().warn(f'Audio callback status: {status}')
+            self.get_logger().warn(
+                f'Audio callback status: {status}',
+                throttle_duration_sec=5.0
+            )
         # Channel 0 = beamformed DSP output
         # processed_audio = indata[:, PROCESSED_CH]
         # TODO: publish as audio topic when audio_common is available
