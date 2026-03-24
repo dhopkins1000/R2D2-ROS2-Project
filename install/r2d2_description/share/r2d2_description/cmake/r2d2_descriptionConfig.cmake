@@ -1,1 +1,0 @@
-/home/r2d2/ros2_ws/build/r2d2_description/ament_cmake_core/r2d2_descriptionConfig.cmake

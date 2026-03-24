@@ -1,1 +1,0 @@
-/home/r2d2/ros2_ws/src/r2d2_head/setup.py

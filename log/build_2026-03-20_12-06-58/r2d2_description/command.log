@@ -1,2 +1,0 @@
-Invoking command in '/home/r2d2/ros2_ws/build/r2d2_description': /usr/bin/cmake /home/r2d2/ros2_ws/src/r2d2_description -DCMAKE_INSTALL_PREFIX=/home/r2d2/ros2_ws/install/r2d2_description
-Invoked command in '/home/r2d2/ros2_ws/build/r2d2_description' returned '1': /usr/bin/cmake /home/r2d2/ros2_ws/src/r2d2_description -DCMAKE_INSTALL_PREFIX=/home/r2d2/ros2_ws/install/r2d2_description

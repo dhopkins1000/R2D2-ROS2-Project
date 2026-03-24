@@ -1,7 +1,0 @@
-Metadata-Version: 2.1
-Name: r2d2-bringup
-Version: 0.1.0
-Summary: Top-level Bringup für R2D2: Xtion, Webcam, Foxglove Bridge
-Maintainer: r2d2
-Maintainer-email: r2d2@localhost
-License: Apache-2.0
