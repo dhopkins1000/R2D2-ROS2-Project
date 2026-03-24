@@ -19,14 +19,15 @@ A real-world R2D2 build (~75cm) running ROS2 Jazzy Jalisco on a Raspberry Pi 4 (
 - Chassis ESP32 (LOLIN D32) – micro-ROS node (motors, odometry, IMU, stair sensor, SSD1306 OLED)
 
 **Head**
-- Head ESP32 (LOLIN D32) – micro-ROS node (stepper motor, HT16K33 RGB 8x8 matrix, SerLCD 40x2, ultrasonic)
+- Head ESP32 (LOLIN D32) – micro-ROS node (stepper motor, SerLCD 40x2, ultrasonic)
+- Cortex ESP32 (LOLIN D32) – power controller + HT16K33 RGB 8x8 status matrix (always on)
 - A4988 stepper driver – head rotation
 
 **Audio & Voice**
-- ReSpeaker Mic Array V1.0 (USB, 7 mics + XVSM-2000 DSP)
-  - 8 channels (ch0 = beamformed output), 16kHz max 32kHz
-  - DOA (Direction of Arrival) via USB HID
-  - Hardware noise cancellation + beamforming onboard
+- ReSpeaker Mic Array V1.0 (USB, 7 mics, XVSM-2000, raw firmware)
+  - 8 raw channels, 16kHz
+  - DOA via GCC-PHAT software beamforming (6 outer mics, 65mm diameter)
+  - VAD via RMS energy threshold (calibrated: silence=74, speech=361, threshold=218)
 - Speaker + mini amplifier in chassis
 
 ## Software Stack
@@ -38,8 +39,10 @@ A real-world R2D2 build (~75cm) running ROS2 Jazzy Jalisco on a Raspberry Pi 4 (
 | Visualization | Foxglove Studio (Mac) via WebSocket |
 | ESP32 Firmware | micro-ROS (Jazzy) via PlatformIO + prebuilt library |
 | Navigation | Nav2 + slam_toolbox |
+| DOA | GCC-PHAT software beamforming |
+| VAD | RMS energy threshold |
 | Speech Recognition | Whisper (local, offline) |
-| Wake Word | Porcupine or openWakeWord |
+| Wake Word | openWakeWord |
 | Development | VS Code Remote SSH + Claude Code |
 
 ## ROS2 Workspace Structure
@@ -49,17 +52,14 @@ A real-world R2D2 build (~75cm) running ROS2 Jazzy Jalisco on a Raspberry Pi 4 (
   r2d2_bringup/      # Launch files + config (cameras, foxglove)
   r2d2_description/  # URDF/XACRO robot model
   r2d2_base/         # Chassis ESP32 interface (MD25, odometry)
-  r2d2_head/         # Head ESP32 interface (stepper, display, LEDs)
+  r2d2_head/         # Head ESP32 interface (stepper, display)
   r2d2_perception/   # Camera processing, object detection
   r2d2_navigation/   # Nav2 config + maps
   r2d2_behavior/     # Behaviour trees, state machine
-  r2d2_audio/        # Voice input (ReSpeaker), speech recognition, TTS output
+  r2d2_audio/        # ReSpeaker DOA/VAD, wake word, Whisper STT, TTS
 
 esp32/
-  r2d2_chassis_esp32/  # PlatformIO project – Chassis ESP32 firmware
-    src/main.cpp       # micro-ROS node mit Reconnect-Loop
-    src/config.h       # Pins, Topics, Timing zentral konfiguriert
-    scripts/build_microros_lib.sh  # Prebuilt Library von micro_ros_arduino herunterladen
+  r2d2_chassis_esp32/  # PlatformIO – Chassis ESP32 firmware
 ```
 
 ## Connection Architecture
@@ -73,40 +73,43 @@ Raspberry Pi 4
 │   └── SSD1306 OLED   (SPI – status display)
 ├── Head ESP32         (Bluetooth – micro-ROS)
 │   ├── A4988 stepper  (GPIO STEP/DIR – head rotation)
-│   ├── HT16K33        (I2C Bus 0 – RGB 8x8 matrix)
 │   ├── SerLCD 40x2    (UART + 3.3V logic level – display)
 │   └── Ultrasonic     (I2C Bus 1 – distance sensor)
+├── Cortex ESP32       (always on – power controller)
+│   ├── HT16K33        (I2C – RGB 8x8 status matrix)
+│   ├── Relay 1        (GPIO – 12V MD25)
+│   └── Relay 2        (GPIO – 5V USB Hub)
 ├── ASUS Xtion Pro     (USB – depth + RGB camera)
 ├── USB Webcam         (USB – front camera)
-└── ReSpeaker Mic Array V1.0  (USB – voice input + DOA)
+└── ReSpeaker Mic Array V1.0  (USB via spiral cable through head axis)
 ```
 
 ## Voice / Audio Node Architecture (r2d2_audio)
 
 ```
-ReSpeaker (USB, ch0 beamformed, 16kHz)
+ReSpeaker (USB, 8 raw channels, 16kHz)
          │
          ▼
   respeaker_node
-    ├── /r2d2/audio/doa          (Int16 – speaking direction 0-359°)
-    └── /r2d2/audio/raw_audio    (Audio stream)
-         │
+    ├── /r2d2/audio/doa   (Int16 – direction 0-359°, GCC-PHAT)
+    └── /r2d2/audio/vad   (Bool  – voice activity detected)
+         │  (only when VAD=True)
          ▼
-  wake_word_node  ("Hey R2D2")
+  wake_word_node  ("Hey R2D2" – openWakeWord)
     └── /r2d2/audio/wake_word    (Bool)
          │
          ▼
-  whisper_node  (local STT, offline)
-    └── /r2d2/audio/command      (String – recognized command)
+  whisper_node  (local STT, offline, tiny model)
+    └── /r2d2/audio/command      (String)
          │
          ▼
   Behaviour Tree
-    ├── DOA → /r2d2/head/cmd     (Head rotates toward speaker)
-    └── Command → action         (Navigate, speak, emote...)
+    ├── DOA → /r2d2/head/cmd     (head rotates toward speaker)
+    └── command → action
          │
          ▼
-  tts_node  (Text-to-Speech)
-    └── /r2d2/audio/speak        (String → audio output via speaker)
+  tts_node
+    └── /r2d2/audio/speak        (String → speaker output)
 ```
 
 ## Status
@@ -117,40 +120,40 @@ ReSpeaker (USB, ch0 beamformed, 16kHz)
 - [x] GitHub repo cleaned up, ROS2 workspace pushed
 - [x] micro-ROS Agent built from source (~/microros_ws)
 - [x] PlatformIO installed on Pi + ESP32 project skeleton created
-- [x] ReSpeaker Mic Array V1.0 recognized (USB, 8ch, 16kHz)
-- [x] micro-ROS firmware für ESP32 kompiliert und geflasht (prebuilt library approach)
-- [x] Chassis ESP32 verbindet sich mit micro-ROS Agent (/r2d2/chassis/status publiziert)
-- [ ] Chassis ESP32 Hardware-Wiring (MD25, HMC5883L, Ultrasonic, OLED)
-- [ ] MD25 drive node (r2d2_base) – ROS2 cmd_vel → Motoren
+- [x] ReSpeaker Mic Array V1.0 recognized (USB, 8ch raw, 16kHz)
+- [x] micro-ROS firmware compiled + flashed (prebuilt library approach)
+- [x] Chassis ESP32 connected to micro-ROS Agent (/r2d2/chassis/status publishing)
+- [x] ReSpeaker VAD working (/r2d2/audio/vad)
+- [x] ReSpeaker DOA working (/r2d2/audio/doa – GCC-PHAT, calibrated)
+- [ ] Wake word node (openWakeWord – "Hey R2D2")
+- [ ] Whisper STT node
+- [ ] Chassis ESP32 hardware wiring (MD25, HMC5883L, Ultrasonic, OLED)
+- [ ] MD25 drive node (r2d2_base)
 - [ ] Nav2 + SLAM
 - [ ] Head ESP32
-- [ ] r2d2_audio: ReSpeaker node + wake word + Whisper STT
+- [ ] Cortex ESP32 (power controller + RGB matrix)
 - [ ] Behaviour trees
 
 ## Notes
 
 ### micro-ROS auf Jazzy/ARM64
-`micro_ros_platformio` kann auf Jazzy/ARM64 nicht nativ gebaut werden (CMake-Abhängigkeiten fehlen).
-**Lösung:** Prebuilt static library aus dem `micro_ros_arduino` Release direkt einbinden.
+`micro_ros_platformio` kann auf Jazzy/ARM64 nicht nativ gebaut werden.
+**Lösung:** Prebuilt static library aus `micro_ros_arduino` Release einbinden.
 
 ```bash
-# Einmalig auf dem Pi ausführen:
 bash esp32/r2d2_chassis_esp32/scripts/build_microros_lib.sh
-
-# Dann normal bauen + flashen:
-cd esp32/r2d2_chassis_esp32
-pio run --target upload
+cd esp32/r2d2_chassis_esp32 && pio run --target upload
 ```
 
-micro-ROS Agent starten (nach dem Pi-Boot):
+micro-ROS Agent:
 ```bash
 source ~/microros_ws/install/setup.bash
 ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/ttyACM0 -b 115200
 ```
 
-### ReSpeaker Mic Array V1.0
-- 8 channels: 7 raw mics + 1 beamformed processed output (ch0)
-- Use ch0 for speech recognition – hardware DSP already handles noise cancellation
-- DOA readable via USB HID interface – enables head tracking toward speaker
-- Optimal sample rate: 16000 Hz (Whisper compatible)
-- alsamixer gain tuning needed (currently low volume)
+### ReSpeaker Mic Array V1.0 – DOA
+- Raw firmware: 8 channels, no hardware DSP, no hardware DOA register
+- DOA computed in software via GCC-PHAT beamforming (15 mic pairs)
+- Mic layout: 6 outer mics on 65mm diameter circle, 60° spacing + 1 center
+- VAD calibration: silence RMS ~74, speech RMS ~361, threshold=218
+- VAD threshold tunable via ROS2 parameter: `--ros-args -p vad_threshold:=200`
