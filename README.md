@@ -142,12 +142,14 @@ ReSpeaker (USB, 8 raw channels, 16kHz)
 - [x] PlatformIO installed + ESP32 project skeleton created
 - [x] micro-ROS firmware compiled + flashed (prebuilt library approach)
 - [x] Chassis ESP32 verbunden mit micro-ROS Agent (/r2d2/chassis/status publishing)
-- [x] SSD1306 OLED verdrahtet (Adafruit v2.1, SPI, GPIO18/23/5/4/26)
+- [x] SSD1306 OLED verdrahtet + verifiziert (Adafruit v2.1, SPI, GPIO18/23/5/4/26)
 - [x] OLED Firmware: Verbindungsstatus + /rosout subscriber (scrolling log)
+- [x] HMC5883L verdrahtet + verifiziert (I2C 0x1E, GPIO21/22, direkt 3.3V)
 - [x] ReSpeaker Mic Array V1.0 recognized (USB, 8ch raw, 16kHz)
 - [x] ReSpeaker VAD working (/r2d2/audio/vad)
 - [x] ReSpeaker DOA working (/r2d2/audio/doa – GCC-PHAT, calibrated)
-- [ ] Chassis ESP32: MD25 + HMC5883L + SRF02 löten
+- [ ] SRF02 verdrahten + verifizieren (I2C 0x70, BSS138 Level Shifter)
+- [ ] MD25 verdrahten + verifizieren (UART2, Spannungsteiler)
 - [ ] MD25 drive node (r2d2_base)
 - [ ] Wake word node (openWakeWord – "Hey R2D2")
 - [ ] Whisper STT node
