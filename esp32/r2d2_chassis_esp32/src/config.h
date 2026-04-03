@@ -30,9 +30,8 @@
 // --- HMC5883L Kompass ---
 #define HMC5883L_ADDR    0x1E
 
-// --- Ultrasonic Stair Sensor (I2C) ---
-// Adresse je nach Modul – placeholder
-#define ULTRASONIC_ADDR  0x57
+// --- Ultrasonic Stair Sensor SRF02 (I2C) ---
+#define ULTRASONIC_ADDR  0x71
 
 // --- SSD1306 OLED (SPI) ---
 #define OLED_CLK_PIN     18    // SPI CLK
