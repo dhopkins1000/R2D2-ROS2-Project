@@ -38,8 +38,8 @@
 #define OLED_CLK_PIN     18    // SPI CLK
 #define OLED_MOSI_PIN    23    // SPI MOSI
 #define OLED_CS_PIN       5    // Chip Select
-#define OLED_DC_PIN       2    // Data/Command
-#define OLED_RST_PIN      4    // Reset
+#define OLED_DC_PIN       4    // Data/Command
+#define OLED_RST_PIN     26    // Reset
 
 // --- Timing ---
 #define HEARTBEAT_MS     1000  // Status-Topic publish interval
