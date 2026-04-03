@@ -11,16 +11,16 @@ A real-world R2D2 build (~75cm) running ROS2 Jazzy Jalisco on a Raspberry Pi 4 (
 - ASUS Xtion Pro – USB 3D depth camera (openni2)
 - USB Webcam – front camera
 - HMC5883L (GY-273) – I2C 3-axis compass / IMU
-- Ultrasonic sensor (chassis) – I2C, downward-angled for stair detection
+- SRF02 ultrasonic – I2C, downward-angled for stair detection
 - Ultrasonic sensor (head) – I2C, forward distance
 
 **Drive System**
-- MD25 motor controller – differential drive, 2x DC motors with encoders
-- Chassis ESP32 (LOLIN D32) – micro-ROS node (motors, odometry, IMU, stair sensor, SSD1306 OLED)
+- MD25 motor controller – differential drive, 2x DC motors with encoders (UART mode)
+- Chassis ESP32 (LOLIN D1 Mini) – micro-ROS node (motors, odometry, IMU, stair sensor, SSD1306 OLED)
 
 **Head**
-- Head ESP32 (LOLIN D32) – micro-ROS node (stepper motor, SerLCD 40x2, ultrasonic)
-- Cortex ESP32 (LOLIN D32) – power controller + HT16K33 RGB 8x8 status matrix (always on)
+- Head ESP32 (LOLIN D1 Mini) – micro-ROS node (stepper motor, SerLCD 40x2, ultrasonic)
+- Cortex ESP32 (LOLIN D1 Mini) – power controller + HT16K33 RGB 8x8 status matrix (always on)
 - A4988 stepper driver – head rotation
 
 **Audio & Voice**
@@ -60,21 +60,26 @@ A real-world R2D2 build (~75cm) running ROS2 Jazzy Jalisco on a Raspberry Pi 4 (
 
 esp32/
   r2d2_chassis_esp32/  # PlatformIO – Chassis ESP32 firmware
+    src/
+      config.h           # Pin- und Topic-Definitionen
+      main.cpp           # micro-ROS Reconnect-Loop + Publisher/Subscriber
+      oled_display.h     # OLED API
+      oled_display.cpp   # OLED Implementierung (Adafruit SSD1306 SPI)
 ```
 
 ## Connection Architecture
 
 ```
 Raspberry Pi 4
-├── Chassis ESP32      (USB Serial – micro-ROS, /dev/ttyACM0)
-│   ├── MD25           (UART – motors + encoders)
-│   ├── HMC5883L       (I2C Bus 0 – compass/IMU)
-│   ├── Ultrasonic     (I2C Bus 0 – stair sensor)
-│   └── SSD1306 OLED   (SPI – status display)
+├── Chassis ESP32      (USB-C Serial – micro-ROS, /dev/ttyACM0)
+│   ├── MD25           (UART2 GPIO16/17 – motors + encoders, Serial mode)
+│   ├── HMC5883L       (I2C GPIO21/22 – compass/IMU, 0x1E, direkt 3.3V)
+│   ├── SRF02          (I2C GPIO21/22 – stair sensor, 0x70, BSS138 level shifter)
+│   └── SSD1306 OLED   (SPI GPIO18/23/5/4/26 – status display, Adafruit v2.1 onboard shifter)
 ├── Head ESP32         (Bluetooth – micro-ROS)
 │   ├── A4988 stepper  (GPIO STEP/DIR – head rotation)
 │   ├── SerLCD 40x2    (UART + 3.3V logic level – display)
-│   └── Ultrasonic     (I2C Bus 1 – distance sensor)
+│   └── Ultrasonic     (I2C – distance sensor)
 ├── Cortex ESP32       (always on – power controller)
 │   ├── HT16K33        (I2C – RGB 8x8 status matrix)
 │   ├── Relay 1        (GPIO – 12V MD25)
@@ -83,6 +88,21 @@ Raspberry Pi 4
 ├── USB Webcam         (USB – front camera)
 └── ReSpeaker Mic Array V1.0  (USB via spiral cable through head axis)
 ```
+
+## Chassis ESP32 Wiring Details
+
+| Signal | ESP32 Pin | Gerät | Hinweis |
+|--------|-----------|-------|---------|
+| UART2 TX | GPIO17 | MD25 Rx | 3.3V direkt (MD25 toleriert) |
+| UART2 RX | GPIO16 | MD25 Tx | Spannungsteiler 1kΩ+2kΩ (5V→3.3V) |
+| I2C SDA | GPIO21 | HMC5883L + SRF02 | SRF02 via BSS138 Level Shifter |
+| I2C SCL | GPIO22 | HMC5883L + SRF02 | SRF02 via BSS138 Level Shifter |
+| SPI SCK | GPIO18 | OLED Clk | direkt (Adafruit onboard Shifter) |
+| SPI MOSI | GPIO23 | OLED Data | direkt |
+| SPI CS | GPIO5 | OLED CS | direkt |
+| DC | GPIO4 | OLED DC | direkt |
+| RST | GPIO26 | OLED Rst | GPIO26 (nicht GPIO2 – Boot-Pin!) |
+| VCC | VCC (5V) | OLED Vin | 5V vom USB-Durchschleif-Pin |
 
 ## Voice / Audio Node Architecture (r2d2_audio)
 
@@ -119,16 +139,18 @@ ReSpeaker (USB, 8 raw channels, 16kHz)
 - [x] Foxglove Studio connected from Mac
 - [x] GitHub repo cleaned up, ROS2 workspace pushed
 - [x] micro-ROS Agent built from source (~/microros_ws)
-- [x] PlatformIO installed on Pi + ESP32 project skeleton created
-- [x] ReSpeaker Mic Array V1.0 recognized (USB, 8ch raw, 16kHz)
+- [x] PlatformIO installed + ESP32 project skeleton created
 - [x] micro-ROS firmware compiled + flashed (prebuilt library approach)
-- [x] Chassis ESP32 connected to micro-ROS Agent (/r2d2/chassis/status publishing)
+- [x] Chassis ESP32 verbunden mit micro-ROS Agent (/r2d2/chassis/status publishing)
+- [x] SSD1306 OLED verdrahtet (Adafruit v2.1, SPI, GPIO18/23/5/4/26)
+- [x] OLED Firmware: Verbindungsstatus + /rosout subscriber (scrolling log)
+- [x] ReSpeaker Mic Array V1.0 recognized (USB, 8ch raw, 16kHz)
 - [x] ReSpeaker VAD working (/r2d2/audio/vad)
 - [x] ReSpeaker DOA working (/r2d2/audio/doa – GCC-PHAT, calibrated)
+- [ ] Chassis ESP32: MD25 + HMC5883L + SRF02 löten
+- [ ] MD25 drive node (r2d2_base)
 - [ ] Wake word node (openWakeWord – "Hey R2D2")
 - [ ] Whisper STT node
-- [ ] Chassis ESP32 hardware wiring (MD25, HMC5883L, Ultrasonic, OLED)
-- [ ] MD25 drive node (r2d2_base)
 - [ ] Nav2 + SLAM
 - [ ] Head ESP32
 - [ ] Cortex ESP32 (power controller + RGB matrix)
