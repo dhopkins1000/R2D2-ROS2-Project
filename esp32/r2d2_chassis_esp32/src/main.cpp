@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <Wire.h>
 #include <micro_ros_arduino.h>
 #include <rcl/rcl.h>
 #include <rclc/rclc.h>
@@ -106,7 +107,9 @@ void setup() {
     set_microros_transports();
 
     // TODO: MD25 UART init
-    // TODO: Wire.begin(I2C0_SDA_PIN, I2C0_SCL_PIN)
+
+    // I2C Bus 0 (SDA=21, SCL=22) – HMC5883L auf 0x1E verifiziert
+    Wire.begin(21, 22);
 }
 
 void loop() {
