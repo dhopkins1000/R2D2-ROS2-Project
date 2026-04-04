@@ -134,21 +134,17 @@ Only output values from the lists above.
 Generate the `.wav` library on the Pi (one-time, after any synth.py change):
 
 ```bash
-cd ~/r2d2_ws/src/r2d2_audio
+cd ~/ros2_ws/src/r2d2_audio
 pip install numpy
 python3 scripts/synth.py
 ```
 
-The `sounds/` directory is git-ignored (binary files). Add it to `.gitignore`:
-
-```
-src/r2d2_audio/sounds/
-```
+The `sounds/` directory is git-ignored (binary files, regenerated on each Pi setup).
 
 Build and run:
 
 ```bash
-cd ~/r2d2_ws && colcon build --packages-select r2d2_audio
+cd ~/ros2_ws && colcon build --packages-select r2d2_audio
 source install/setup.bash
 ros2 run r2d2_audio voice_node
 ```
