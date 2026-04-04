@@ -3,3 +3,6 @@ install/
 log/
 **/__pycache__/
 *.egg-info/
+
+# Generated sound library (binary .wav files, regenerate with scripts/synth.py)
+src/r2d2_audio/sounds/
