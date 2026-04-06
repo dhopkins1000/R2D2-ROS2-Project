@@ -12,6 +12,11 @@ void md25_init() {
     MD25_UART.write((uint8_t)0x00);
     MD25_UART.write((uint8_t)0x38);
     MD25_UART.flush();
+    delay(10);
+    // RESET ENCODERS: bei jedem Boot bei 0 starten
+    MD25_UART.write((uint8_t)0x00);
+    MD25_UART.write((uint8_t)0x35);
+    MD25_UART.flush();
 }
 
 void md25_set_speeds(uint8_t speed1, uint8_t speed2) {
@@ -24,6 +29,27 @@ void md25_set_speeds(uint8_t speed1, uint8_t speed2) {
     MD25_UART.write((uint8_t)0x32);
     MD25_UART.write(speed2);
     MD25_UART.flush();
+}
+
+bool md25_get_encoders(int32_t* enc1, int32_t* enc2) {
+    while (MD25_UART.available()) MD25_UART.read();  // Puffer leeren
+    MD25_UART.write((uint8_t)0x00);
+    MD25_UART.write((uint8_t)0x25);
+    MD25_UART.flush();
+
+    // 8 Bytes warten (bis zu 100ms)
+    unsigned long t0 = millis();
+    while (MD25_UART.available() < 8 && millis() - t0 < 100);
+    if (MD25_UART.available() < 8) return false;
+
+    uint8_t buf[8];
+    for (uint8_t i = 0; i < 8; i++) buf[i] = MD25_UART.read();
+
+    *enc1 = (int32_t)((uint32_t)buf[0] << 24 | (uint32_t)buf[1] << 16 |
+                      (uint32_t)buf[2] <<  8 | (uint32_t)buf[3]);
+    *enc2 = (int32_t)((uint32_t)buf[4] << 24 | (uint32_t)buf[5] << 16 |
+                      (uint32_t)buf[6] <<  8 | (uint32_t)buf[7]);
+    return true;
 }
 
 uint8_t md25_get_version() {

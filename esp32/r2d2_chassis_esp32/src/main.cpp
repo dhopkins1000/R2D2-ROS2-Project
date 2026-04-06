@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <Wire.h>
+#include <math.h>
 #include <micro_ros_arduino.h>
 #include <rcl/rcl.h>
 #include <rclc/rclc.h>
@@ -8,6 +9,7 @@
 #include <sensor_msgs/msg/magnetic_field.h>
 #include <sensor_msgs/msg/range.h>
 #include <geometry_msgs/msg/twist.h>
+#include <nav_msgs/msg/odometry.h>
 #include <rcl_interfaces/msg/log.h>
 
 #include "config.h"
@@ -22,6 +24,7 @@ rcl_node_t        node;
 rcl_publisher_t   pub_status;
 rcl_publisher_t   pub_compass;
 rcl_publisher_t   pub_range;
+rcl_publisher_t   pub_odom;
 
 rcl_subscription_t sub_rosout;
 rcl_subscription_t sub_cmd_vel;
@@ -29,8 +32,18 @@ rcl_subscription_t sub_cmd_vel;
 std_msgs__msg__String            msg_status;
 sensor_msgs__msg__MagneticField  msg_compass;
 sensor_msgs__msg__Range          msg_range;
+nav_msgs__msg__Odometry          msg_odom;
 rcl_interfaces__msg__Log         msg_rosout;
 geometry_msgs__msg__Twist        msg_cmd_vel;
+
+// --- Odometrie-Zustand ---
+static constexpr double METERS_PER_TICK = 0.3142 / 360.0;  // EMG30: 360 ticks, 100mm Rad
+static constexpr double ODOM_WHEEL_BASE = 0.30;             // Spurbreite [m]
+static int32_t odom_prev_enc1 = 0;
+static int32_t odom_prev_enc2 = 0;
+static double  odom_x     = 0.0;
+static double  odom_y     = 0.0;
+static double  odom_theta = 0.0;
 
 rclc_executor_t  executor;
 rclc_support_t   support;
@@ -93,23 +106,28 @@ bool microros_init() {
         ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, Range),
         TOPIC_STAIR), 5, "pub_range");
 
+    RCCHECK_STEP(rclc_publisher_init_default(
+        &pub_odom, &node,
+        ROSIDL_GET_MSG_TYPE_SUPPORT(nav_msgs, msg, Odometry),
+        TOPIC_ODOM), 6, "pub_odom");
+
     // Subscriber
     RCCHECK_STEP(rclc_subscription_init_default(
         &sub_rosout, &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(rcl_interfaces, msg, Log),
-        "/rosout"), 6, "sub_rosout");
+        "/rosout"), 7, "sub_rosout");
 
     RCCHECK_STEP(rclc_subscription_init_default(
         &sub_cmd_vel, &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist),
-        TOPIC_CMD_VEL), 7, "sub_cmd_vel");
+        TOPIC_CMD_VEL), 8, "sub_cmd_vel");
 
-    // Executor: 2 Subscriptions (rosout + cmd_vel)
-    RCCHECK_STEP(rclc_executor_init(&executor, &support.context, 2, &allocator), 8, "executor_init");
+    // Executor: 2 Subscriptions (rosout + cmd_vel) – Publisher brauchen keinen Handle
+    RCCHECK_STEP(rclc_executor_init(&executor, &support.context, 2, &allocator), 9, "executor_init");
     RCCHECK_STEP(rclc_executor_add_subscription(
-        &executor, &sub_rosout, &msg_rosout, &rosout_cb, ON_NEW_DATA), 9, "exec_add_rosout");
+        &executor, &sub_rosout, &msg_rosout, &rosout_cb, ON_NEW_DATA), 10, "exec_add_rosout");
     RCCHECK_STEP(rclc_executor_add_subscription(
-        &executor, &sub_cmd_vel, &msg_cmd_vel, &cmd_vel_cb, ON_NEW_DATA), 10, "exec_add_cmdvel");
+        &executor, &sub_cmd_vel, &msg_cmd_vel, &cmd_vel_cb, ON_NEW_DATA), 11, "exec_add_cmdvel");
 
     // --- Puffer allocieren (nur beim ersten Init) ---
 
@@ -130,11 +148,23 @@ bool microros_init() {
         msg_rosout.name.size     = 0;
     }
 
+    // Odometry frame_ids (statisch, ändern sich nicht)
+    static char frame_odom[]       = "odom";
+    static char frame_base_link[]  = "base_link";
+    msg_odom.header.frame_id.data        = frame_odom;
+    msg_odom.header.frame_id.size        = strlen(frame_odom);
+    msg_odom.header.frame_id.capacity    = sizeof(frame_odom);
+    msg_odom.child_frame_id.data         = frame_base_link;
+    msg_odom.child_frame_id.size         = strlen(frame_base_link);
+    msg_odom.child_frame_id.capacity     = sizeof(frame_base_link);
+    // Kovarianzen auf 0 (unbekannt)
+    memset(msg_odom.pose.covariance,  0, sizeof(msg_odom.pose.covariance));
+    memset(msg_odom.twist.covariance, 0, sizeof(msg_odom.twist.covariance));
+
     // Compass frame_id (statisch, ändert sich nicht)
-    static char frame_compass[] = "base_link";
-    msg_compass.header.frame_id.data     = frame_compass;
-    msg_compass.header.frame_id.size     = strlen(frame_compass);
-    msg_compass.header.frame_id.capacity = sizeof(frame_compass);
+    msg_compass.header.frame_id.data     = frame_base_link;
+    msg_compass.header.frame_id.size     = strlen(frame_base_link);
+    msg_compass.header.frame_id.capacity = sizeof(frame_base_link);
 
     // Range: Konstante Felder einmalig setzen
     static char frame_range[] = "stair_sensor";
@@ -154,6 +184,7 @@ bool microros_init() {
 void microros_cleanup() {
     rcl_subscription_fini(&sub_cmd_vel, &node);
     rcl_subscription_fini(&sub_rosout, &node);
+    rcl_publisher_fini(&pub_odom, &node);
     rcl_publisher_fini(&pub_range, &node);
     rcl_publisher_fini(&pub_compass, &node);
     rcl_publisher_fini(&pub_status, &node);
@@ -270,6 +301,46 @@ void loop() {
             RCSOFTCHECK(rcl_publish(&pub_range, &msg_range, NULL));
         }
         srf02_pending = false;
+    }
+
+    // --- Odometrie @ 10 Hz ---
+    static unsigned long last_odom = 0;
+    if (now - last_odom >= 100) {
+        unsigned long dt_ms = now - last_odom;
+        last_odom = now;
+
+        int32_t enc1, enc2;
+        if (md25_get_encoders(&enc1, &enc2)) {
+            double delta_left  = (enc1 - odom_prev_enc1) * METERS_PER_TICK;
+            double delta_right = (enc2 - odom_prev_enc2) * METERS_PER_TICK;
+            odom_prev_enc1 = enc1;
+            odom_prev_enc2 = enc2;
+
+            double delta_dist  = (delta_left + delta_right) / 2.0;
+            double delta_theta = (delta_right - delta_left) / ODOM_WHEEL_BASE;
+
+            odom_x     += delta_dist * cos(odom_theta + delta_theta / 2.0);
+            odom_y     += delta_dist * sin(odom_theta + delta_theta / 2.0);
+            odom_theta += delta_theta;
+
+            double dt_s = dt_ms / 1000.0;
+
+            // Pose
+            msg_odom.pose.pose.position.x = odom_x;
+            msg_odom.pose.pose.position.y = odom_y;
+            msg_odom.pose.pose.position.z = 0.0;
+            // Quaternion aus theta (Rotation um Z)
+            msg_odom.pose.pose.orientation.x = 0.0;
+            msg_odom.pose.pose.orientation.y = 0.0;
+            msg_odom.pose.pose.orientation.z = sin(odom_theta / 2.0);
+            msg_odom.pose.pose.orientation.w = cos(odom_theta / 2.0);
+
+            // Twist (Geschwindigkeit im base_link Frame)
+            msg_odom.twist.twist.linear.x  = delta_dist  / dt_s;
+            msg_odom.twist.twist.angular.z = delta_theta / dt_s;
+
+            RCSOFTCHECK(rcl_publish(&pub_odom, &msg_odom, NULL));
+        }
     }
 
     // --- Executor: Subscriptions abarbeiten ---
