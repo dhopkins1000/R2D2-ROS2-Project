@@ -74,7 +74,7 @@ Raspberry Pi 4
 ├── Chassis ESP32      (USB-C Serial – micro-ROS, /dev/ttyACM0)
 │   ├── MD25           (UART2 GPIO16/17 – motors + encoders, Serial mode)
 │   ├── HMC5883L       (I2C GPIO21/22 – compass/IMU, 0x1E, direkt 3.3V)
-│   ├── SRF02          (I2C GPIO21/22 – stair sensor, 0x70, BSS138 level shifter)
+│   ├── SRF02          (I2C GPIO21/22 – stair sensor, 0x71, BSS138 level shifter)
 │   └── SSD1306 OLED   (SPI GPIO18/23/5/4/26 – status display, Adafruit v2.1 onboard shifter)
 ├── Head ESP32         (Bluetooth – micro-ROS)
 │   ├── A4988 stepper  (GPIO STEP/DIR – head rotation)
@@ -94,7 +94,7 @@ Raspberry Pi 4
 | Signal | ESP32 Pin | Gerät | Hinweis |
 |--------|-----------|-------|---------|
 | UART2 TX | GPIO17 | MD25 Rx | 3.3V direkt (MD25 toleriert) |
-| UART2 RX | GPIO16 | MD25 Tx | Spannungsteiler 1kΩ+2kΩ (5V→3.3V) |
+| UART2 RX | GPIO16 | MD25 Tx | Spannungsteiler 1kΩ+2.2kΩ (5V→3.44V) |
 | I2C SDA | GPIO21 | HMC5883L + SRF02 | SRF02 via BSS138 Level Shifter |
 | I2C SCL | GPIO22 | HMC5883L + SRF02 | SRF02 via BSS138 Level Shifter |
 | SPI SCK | GPIO18 | OLED Clk | direkt (Adafruit onboard Shifter) |
@@ -145,12 +145,13 @@ ReSpeaker (USB, 8 raw channels, 16kHz)
 - [x] SSD1306 OLED verdrahtet + verifiziert (Adafruit v2.1, SPI, GPIO18/23/5/4/26)
 - [x] OLED Firmware: Verbindungsstatus + /rosout subscriber (scrolling log)
 - [x] HMC5883L verdrahtet + verifiziert (I2C 0x1E, GPIO21/22, direkt 3.3V)
+- [x] SRF02 verdrahtet + verifiziert (I2C 0x71, GPIO21/22, BSS138 Level Shifter) ← Adresse 0x71, nicht 0x70
+- [x] MD25 verdrahtet + verifiziert (UART2 GPIO16/17, Serial mode, SW-Version 0)
 - [x] ReSpeaker Mic Array V1.0 recognized (USB, 8ch raw, 16kHz)
 - [x] ReSpeaker VAD working (/r2d2/audio/vad)
 - [x] ReSpeaker DOA working (/r2d2/audio/doa – GCC-PHAT, calibrated)
-- [ ] SRF02 verdrahten + verifizieren (I2C 0x70, BSS138 Level Shifter)
-- [ ] MD25 verdrahten + verifizieren (UART2, Spannungsteiler)
-- [ ] MD25 drive node (r2d2_base)
+- [ ] Chassis ESP32 Firmware: HMC5883L + SRF02 + MD25 als micro-ROS Topics publishen
+- [ ] MD25 drive node (r2d2_base) – Motoren ansteuern, Odometrie
 - [ ] Wake word node (openWakeWord – "Hey R2D2")
 - [ ] Whisper STT node
 - [ ] Nav2 + SLAM
@@ -174,6 +175,10 @@ micro-ROS Agent:
 source ~/microros_ws/install/setup.bash
 ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/ttyACM0 -b 115200
 ```
+
+### SRF02 I2C Adresse
+Der SRF02 meldet sich auf **0x71** (nicht 0x70 wie im Datenblatt als Default angegeben).
+Der Sensor war vermutlich bereits umprogrammiert. ULTRASONIC_ADDR in config.h entsprechend gesetzt.
 
 ### ReSpeaker Mic Array V1.0 – DOA
 - Raw firmware: 8 channels, no hardware DSP, no hardware DOA register
