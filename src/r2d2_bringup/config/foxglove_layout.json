@@ -1,0 +1,162 @@
+{
+  "configById": {
+    "Plot!compass": {
+      "title": "Kompass (HMC5883L)",
+      "paths": [
+        {
+          "value": "/r2d2/chassis/compass.magnetic_field.x",
+          "enabled": true,
+          "color": "#e05252",
+          "label": "X",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/r2d2/chassis/compass.magnetic_field.y",
+          "enabled": true,
+          "color": "#52a9e0",
+          "label": "Y",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/r2d2/chassis/compass.magnetic_field.z",
+          "enabled": true,
+          "color": "#52e07a",
+          "label": "Z",
+          "timestampMethod": "receiveTime"
+        }
+      ],
+      "xAxisVal": "timestamp",
+      "showLegend": true,
+      "legendDisplay": "floating",
+      "showPlotValuesInLegend": true,
+      "isSynced": true,
+      "followingViewWidth": 30
+    },
+    "Plot!stair": {
+      "title": "Ultraschall Treppe (SRF02)",
+      "paths": [
+        {
+          "value": "/r2d2/chassis/stair_alert.range",
+          "enabled": true,
+          "color": "#e0a952",
+          "label": "Entfernung (m)",
+          "timestampMethod": "receiveTime"
+        }
+      ],
+      "xAxisVal": "timestamp",
+      "showLegend": true,
+      "legendDisplay": "floating",
+      "showPlotValuesInLegend": true,
+      "isSynced": true,
+      "followingViewWidth": 30,
+      "minYValue": 0,
+      "maxYValue": 6
+    },
+    "Plot!odom": {
+      "title": "Odometrie (Position)",
+      "paths": [
+        {
+          "value": "/r2d2/chassis/odom.pose.pose.position.x",
+          "enabled": true,
+          "color": "#e05252",
+          "label": "X (m)",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/r2d2/chassis/odom.pose.pose.position.y",
+          "enabled": true,
+          "color": "#52a9e0",
+          "label": "Y (m)",
+          "timestampMethod": "receiveTime"
+        }
+      ],
+      "xAxisVal": "timestamp",
+      "showLegend": true,
+      "legendDisplay": "floating",
+      "showPlotValuesInLegend": true,
+      "isSynced": true,
+      "followingViewWidth": 60
+    },
+    "RawMessages!status": {
+      "topicPath": "/r2d2/chassis/status"
+    },
+    "3D!main": {
+      "title": "3D View",
+      "followTf": "base_link",
+      "scene": {
+        "enableStats": false,
+        "transforms": {
+          "editable": false
+        }
+      },
+      "topics": {
+        "/r2d2/chassis/odom": {
+          "visible": true
+        },
+        "/camera/rgb/image_raw": {
+          "visible": false
+        }
+      },
+      "layers": {
+        "grid": {
+          "layerId": "foxglove.Grid",
+          "visible": true
+        }
+      },
+      "cameraState": {
+        "distance": 5,
+        "perspective": true,
+        "phi": 45,
+        "thetaOffset": 0,
+        "targetOffset": [0, 0, 0],
+        "target": [0, 0, 0],
+        "targetOrientation": [0, 0, 0, 1],
+        "fovy": 45,
+        "near": 0.01,
+        "far": 5000
+      }
+    },
+    "Image!camera": {
+      "title": "Kamera (RGB)",
+      "cameraTopic": "/camera/rgb/image_raw",
+      "flipHorizontal": false,
+      "flipVertical": false,
+      "maxZoom": 1,
+      "mode": "fit",
+      "rotation": 0,
+      "smooth": true,
+      "zoomMode": "other"
+    }
+  },
+  "globalVariables": {},
+  "userNodes": {},
+  "playbackConfig": {
+    "speed": 1
+  },
+  "layout": {
+    "direction": "row",
+    "first": {
+      "direction": "column",
+      "first": {
+        "direction": "column",
+        "first": "Plot!compass",
+        "second": "Plot!stair",
+        "splitPercentage": 50
+      },
+      "second": {
+        "direction": "column",
+        "first": "Plot!odom",
+        "second": "RawMessages!status",
+        "splitPercentage": 70
+      },
+      "splitPercentage": 50
+    },
+    "second": {
+      "direction": "column",
+      "first": "3D!main",
+      "second": "Image!camera",
+      "splitPercentage": 60
+    },
+    "splitPercentage": 50
+  }
+}
