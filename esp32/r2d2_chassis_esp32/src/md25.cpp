@@ -7,13 +7,33 @@ static constexpr double MAX_SPEED_MS = 0.50;  // Maximale Radgeschwindigkeit [m/
 
 void md25_init() {
     MD25_UART.begin(MD25_BAUD, SERIAL_8N2, MD25_RX_PIN, MD25_TX_PIN);
+    delay(100);
+    // DISABLE TIMEOUT: MD25 stoppt sonst nach 2s ohne Kommando
+    MD25_UART.write((uint8_t)0x00);
+    MD25_UART.write((uint8_t)0x38);
+    MD25_UART.flush();
 }
 
 void md25_set_speeds(uint8_t speed1, uint8_t speed2) {
+    // SET SPEED1: [0x00, 0x31, value]
     MD25_UART.write((uint8_t)0x00);
+    MD25_UART.write((uint8_t)0x31);
     MD25_UART.write(speed1);
-    MD25_UART.write((uint8_t)0x01);
+    // SET SPEED2: [0x00, 0x32, value]
+    MD25_UART.write((uint8_t)0x00);
+    MD25_UART.write((uint8_t)0x32);
     MD25_UART.write(speed2);
+    MD25_UART.flush();
+}
+
+uint8_t md25_get_version() {
+    while (MD25_UART.available()) MD25_UART.read();  // Puffer leeren
+    MD25_UART.write((uint8_t)0x00);
+    MD25_UART.write((uint8_t)0x29);
+    MD25_UART.flush();
+    unsigned long t0 = millis();
+    while (!MD25_UART.available() && millis() - t0 < 100);
+    return MD25_UART.available() ? MD25_UART.read() : 0;
 }
 
 void md25_stop() {

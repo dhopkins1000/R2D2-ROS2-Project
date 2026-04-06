@@ -168,6 +168,12 @@ void setup() {
 
     md25_init();
     md25_stop();
+    uint8_t md25_ver = md25_get_version();
+    if (md25_ver) {
+        Serial.printf("[R2D2] MD25 gefunden, SW-Version: %u\n", md25_ver);
+    } else {
+        Serial.println(F("[R2D2] WARN: MD25 nicht erreichbar (Timeout)"));
+    }
 
     oled_init();
     set_microros_transports();
