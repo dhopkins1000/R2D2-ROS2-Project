@@ -19,7 +19,7 @@
 
 // --- MD25 Motor Controller (UART) ---
 #define MD25_UART        Serial2
-#define MD25_BAUD        9600
+#define MD25_BAUD        38400
 #define MD25_TX_PIN      17    // ESP32 TX2 → MD25 RX
 #define MD25_RX_PIN      16    // ESP32 RX2 ← MD25 TX
 
