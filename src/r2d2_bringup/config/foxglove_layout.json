@@ -82,12 +82,8 @@
     },
     "3D!main": {
       "title": "3D View",
-      "followTf": "base_link",
       "scene": {
-        "enableStats": false,
-        "transforms": {
-          "editable": false
-        }
+        "enableStats": false
       },
       "topics": {
         "/r2d2/chassis/odom": {
@@ -126,6 +122,14 @@
       "rotation": 0,
       "smooth": true,
       "zoomMode": "other"
+    },
+    "Teleop!drive": {
+      "topic": "/r2d2/chassis/cmd_vel",
+      "publishRate": 10,
+      "upButton": { "label": "↑", "field": "linear.x", "value": 0.3 },
+      "downButton": { "label": "↓", "field": "linear.x", "value": -0.3 },
+      "leftButton": { "label": "←", "field": "angular.z", "value": 1.0 },
+      "rightButton": { "label": "→", "field": "angular.z", "value": -1.0 }
     }
   },
   "globalVariables": {},
@@ -153,10 +157,15 @@
     },
     "second": {
       "direction": "column",
-      "first": "3D!main",
+      "first": {
+        "direction": "row",
+        "first": "3D!main",
+        "second": "Teleop!drive",
+        "splitPercentage": 75
+      },
       "second": "Image!camera",
-      "splitPercentage": 60
+      "splitPercentage": 55
     },
-    "splitPercentage": 50
+    "splitPercentage": 40
   }
 }
