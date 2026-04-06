@@ -159,14 +159,13 @@ ReSpeaker (USB, 8 raw channels, 16kHz)
 - [x] HMC5883L verdrahtet + verifiziert (I2C 0x1E, GPIO21/22, direkt 3.3V)
 - [x] SRF02 verdrahtet + verifiziert (I2C 0x71, GPIO21/22, BSS138 Level Shifter)
 - [x] MD25 verdrahtet + verifiziert (UART2 GPIO16/17, 38400 baud, 2 stop bits, SW-Version 4)
-- [x] Chassis ESP32 Firmware: alle Sensoren als micro-ROS Topics live
-  - /r2d2/chassis/compass (sensor_msgs/MagneticField, 10 Hz)
-  - /r2d2/chassis/stair_alert (sensor_msgs/Range, 5 Hz)
-  - /r2d2/chassis/cmd_vel (geometry_msgs/Twist, subscriber)
+- [x] Chassis ESP32 Firmware: alle Sensoren + Motoren vollständig funktionsfähig
+  - /r2d2/chassis/compass (sensor_msgs/MagneticField, 10 Hz) ✓
+  - /r2d2/chassis/stair_alert (sensor_msgs/Range, 5 Hz) ✓
+  - /r2d2/chassis/cmd_vel (geometry_msgs/Twist, subscriber) ✓ Räder drehen!
 - [x] ReSpeaker Mic Array V1.0 recognized (USB, 8ch raw, 16kHz)
 - [x] ReSpeaker VAD working (/r2d2/audio/vad)
 - [x] ReSpeaker DOA working (/r2d2/audio/doa – GCC-PHAT, calibrated)
-- [ ] MD25 Motorsteuerung testen (cmd_vel → Räder drehen)
 - [ ] Odometrie aus MD25 Encoder-Daten
 - [ ] Wake word node (openWakeWord – "Hey R2D2")
 - [ ] Whisper STT node
@@ -192,11 +191,22 @@ source ~/microros_ws/install/setup.bash
 ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/ttyACM0 -b 115200
 ```
 
+Motoren testen (kontinuierlich, Ctrl+C zum Stoppen):
+```bash
+ros2 topic pub /r2d2/chassis/cmd_vel geometry_msgs/msg/Twist \
+  "{linear: {x: 0.1, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}" --rate 10
+```
+
 ### ⚠️ Port-Konflikt: /dev/ttyACM0
 `/dev/ttyACM0` kann immer nur von **einem** Prozess gleichzeitig genutzt werden.
 - `pio device monitor` UND `micro_ros_agent` gleichzeitig → beide schlagen fehl
 - Symptom: Garbage im Serial Monitor, Topics erscheinen nicht, `support_init` schlägt fehl
 - Lösung: immer erst Serial Monitor beenden, dann Agent starten (oder umgekehrt)
+
+### DDS Discovery Latenz
+Beim ersten `ros2 topic pub --once` nach Agent-Start erscheint kurz "Waiting for subscription".
+Das ist normales DDS-Verhalten – Discovery braucht 1-2 Sekunden beim ersten Kontakt.
+Im normalen Betrieb (Nav2, Teleop) mit `--rate 10` kein Problem.
 
 ### MD25 Serial Protokoll
 Jumper: Serial mode, 38400 bps, 1 start bit, 2 stop bits, no parity.
@@ -207,7 +217,7 @@ Kommando-Format:
 - SET: `[0x00, CMD, VALUE]` → 0 Bytes zurück
 - SET SPEED 1: `[0x00, 0x31, speed]` (0=rückwärts, 128=stop, 255=vorwärts)
 - SET SPEED 2: `[0x00, 0x32, speed]`
-- DISABLE TIMEOUT: `[0x00, 0x38]` (sonst stoppt MD25 nach 2s)
+- DISABLE TIMEOUT: `[0x00, 0x38]` (sonst stoppt MD25 nach 2s ohne Kommando)
 
 ### SRF02 I2C Adresse
 Der SRF02 meldet sich auf **0x71** (nicht 0x70 wie im Datenblatt als Default angegeben).
