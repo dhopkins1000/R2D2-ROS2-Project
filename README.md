@@ -65,6 +65,9 @@ esp32/
       main.cpp           # micro-ROS Reconnect-Loop + Publisher/Subscriber
       oled_display.h     # OLED API
       oled_display.cpp   # OLED Implementierung (Adafruit SSD1306 SPI)
+      hmc5883l.h/.cpp    # Kompass-Treiber
+      srf02.h/.cpp       # Ultraschall-Treiber
+      md25.h/.cpp        # Motor-Treiber
 ```
 
 ## Connection Architecture
@@ -72,7 +75,7 @@ esp32/
 ```
 Raspberry Pi 4
 ├── Chassis ESP32      (USB-C Serial – micro-ROS, /dev/ttyACM0)
-│   ├── MD25           (UART2 GPIO16/17 – motors + encoders, Serial mode)
+│   ├── MD25           (UART2 GPIO16/17 – motors + encoders, 38400 baud, 2 stop bits)
 │   ├── HMC5883L       (I2C GPIO21/22 – compass/IMU, 0x1E, direkt 3.3V)
 │   ├── SRF02          (I2C GPIO21/22 – stair sensor, 0x71, BSS138 level shifter)
 │   └── SSD1306 OLED   (SPI GPIO18/23/5/4/26 – status display, Adafruit v2.1 onboard shifter)
@@ -88,6 +91,15 @@ Raspberry Pi 4
 ├── USB Webcam         (USB – front camera)
 └── ReSpeaker Mic Array V1.0  (USB via spiral cable through head axis)
 ```
+
+## Chassis ESP32 – ROS2 Topics
+
+| Topic | Typ | Rate | Inhalt |
+|-------|-----|------|--------|
+| `/r2d2/chassis/status` | std_msgs/String | 1 Hz | Heartbeat + Uptime |
+| `/r2d2/chassis/compass` | sensor_msgs/MagneticField | 10 Hz | HMC5883L X/Y/Z Rohdaten |
+| `/r2d2/chassis/stair_alert` | sensor_msgs/Range | 5 Hz | SRF02 Entfernung in cm |
+| `/r2d2/chassis/cmd_vel` | geometry_msgs/Twist | (subscriber) | Motorsteuerung |
 
 ## Chassis ESP32 Wiring Details
 
@@ -145,13 +157,17 @@ ReSpeaker (USB, 8 raw channels, 16kHz)
 - [x] SSD1306 OLED verdrahtet + verifiziert (Adafruit v2.1, SPI, GPIO18/23/5/4/26)
 - [x] OLED Firmware: Verbindungsstatus + /rosout subscriber (scrolling log)
 - [x] HMC5883L verdrahtet + verifiziert (I2C 0x1E, GPIO21/22, direkt 3.3V)
-- [x] SRF02 verdrahtet + verifiziert (I2C 0x71, GPIO21/22, BSS138 Level Shifter) ← Adresse 0x71, nicht 0x70
-- [x] MD25 verdrahtet + verifiziert (UART2 GPIO16/17, Serial mode, SW-Version 0)
+- [x] SRF02 verdrahtet + verifiziert (I2C 0x71, GPIO21/22, BSS138 Level Shifter)
+- [x] MD25 verdrahtet + verifiziert (UART2 GPIO16/17, 38400 baud, 2 stop bits)
+- [x] Chassis ESP32 Firmware: alle Sensoren als micro-ROS Topics live
+  - /r2d2/chassis/compass (sensor_msgs/MagneticField, 10 Hz)
+  - /r2d2/chassis/stair_alert (sensor_msgs/Range, 5 Hz)
+  - /r2d2/chassis/cmd_vel (geometry_msgs/Twist, subscriber)
 - [x] ReSpeaker Mic Array V1.0 recognized (USB, 8ch raw, 16kHz)
 - [x] ReSpeaker VAD working (/r2d2/audio/vad)
 - [x] ReSpeaker DOA working (/r2d2/audio/doa – GCC-PHAT, calibrated)
-- [ ] Chassis ESP32 Firmware: HMC5883L + SRF02 + MD25 als micro-ROS Topics publishen
-- [ ] MD25 drive node (r2d2_base) – Motoren ansteuern, Odometrie
+- [ ] MD25 Motorsteuerung testen (cmd_vel → Räder drehen)
+- [ ] Odometrie aus MD25 Encoder-Daten
 - [ ] Wake word node (openWakeWord – "Hey R2D2")
 - [ ] Whisper STT node
 - [ ] Nav2 + SLAM
@@ -175,6 +191,10 @@ micro-ROS Agent:
 source ~/microros_ws/install/setup.bash
 ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/ttyACM0 -b 115200
 ```
+
+### MD25 UART Konfiguration
+Jumper-Einstellung: Serial mode, 38400 bps, 1 start bit, 2 stop bits, no parity.
+Arduino: `Serial2.begin(38400, SERIAL_8N2, 16, 17)`
 
 ### SRF02 I2C Adresse
 Der SRF02 meldet sich auf **0x71** (nicht 0x70 wie im Datenblatt als Default angegeben).
