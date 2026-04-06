@@ -71,6 +71,39 @@ esp32/
       md25.h/.cpp        # Motor-Treiber + Encoder-Auslesen
 ```
 
+## systemd Services
+
+Beide Services starten automatisch beim Boot:
+
+| Service | Funktion | Abhängigkeit |
+|---------|----------|--------------|
+| `r2d2.service` | Foxglove Bridge + Kameras | network.target |
+| `microros-agent.service` | micro-ROS Agent (ESP32) | r2d2.service |
+
+```bash
+# Installation (einmalig):
+sudo cp ~/ros2_ws/src/r2d2_bringup/r2d2.service /etc/systemd/system/
+sudo cp ~/ros2_ws/src/r2d2_bringup/microros-agent.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable r2d2.service microros-agent.service
+
+# Steuerung:
+sudo systemctl start|stop|restart r2d2.service
+sudo systemctl start|stop|restart microros-agent.service
+journalctl -u r2d2.service -f
+journalctl -u microros-agent.service -f
+```
+
+## Foxglove Studio
+
+Verbindung: `ws://r2d2.local:8765` (oder IP des Pi)
+
+Wichtige Topics in Foxglove:
+- `/r2d2/chassis/compass` → Raw Message oder Plot Panel (X/Y/Z Magnetfeld)
+- `/r2d2/chassis/stair_alert` → Gauge Panel (Entfernung in Metern)
+- `/r2d2/chassis/odom` → 3D Panel (Position + Heading)
+- `/r2d2/chassis/status` → Log Panel (Heartbeat)
+
 ## Connection Architecture
 
 ```
@@ -149,8 +182,9 @@ ReSpeaker (USB, 8 raw channels, 16kHz)
 ## Status
 
 - [x] Ubuntu 24.04 + ROS2 Jazzy installed
-- [x] r2d2_bringup: Xtion Pro + Webcam + Foxglove Bridge (systemd service)
-- [x] Foxglove Studio connected from Mac
+- [x] r2d2.service: Foxglove Bridge + Kameras (systemd, autostart)
+- [x] microros-agent.service: micro-ROS Agent ESP32 (systemd, autostart)
+- [x] Foxglove Studio verbunden via ws://r2d2.local:8765
 - [x] GitHub repo cleaned up, ROS2 workspace pushed
 - [x] micro-ROS Agent built from source (~/microros_ws)
 - [x] PlatformIO installed + ESP32 project skeleton created
@@ -169,6 +203,8 @@ ReSpeaker (USB, 8 raw channels, 16kHz)
 - [x] ReSpeaker Mic Array V1.0 recognized (USB, 8ch raw, 16kHz)
 - [x] ReSpeaker VAD working (/r2d2/audio/vad)
 - [x] ReSpeaker DOA working (/r2d2/audio/doa – GCC-PHAT, calibrated)
+- [ ] Foxglove Layout konfigurieren (Sensor-Panels + 3D View)
+- [ ] URDF R2D2 Basismodell + robot_state_publisher
 - [ ] Zeitsynchronisation ESP32 ↔ Pi (stamp.sec=0 in Odometrie)
 - [ ] Wake word node (openWakeWord – "Hey R2D2")
 - [ ] Whisper STT node
@@ -179,44 +215,25 @@ ReSpeaker (USB, 8 raw channels, 16kHz)
 
 ## Notes
 
-### micro-ROS auf Jazzy/ARM64
-`micro_ros_platformio` kann auf Jazzy/ARM64 nicht nativ gebaut werden.
-**Lösung:** Prebuilt static library aus `micro_ros_arduino` Release einbinden.
-
+### systemd Services einrichten
 ```bash
-bash esp32/r2d2_chassis_esp32/scripts/build_microros_lib.sh
-cd esp32/r2d2_chassis_esp32 && pio run --target upload
-```
-
-micro-ROS Agent starten (⚠️ nie gleichzeitig mit `pio device monitor`!):
-```bash
-source ~/microros_ws/install/setup.bash
-ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/ttyACM0 -b 115200
-```
-
-Motoren testen (kontinuierlich, Ctrl+C zum Stoppen):
-```bash
-ros2 topic pub /r2d2/chassis/cmd_vel geometry_msgs/msg/Twist \
-  "{linear: {x: 0.1, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}" --rate 10
+sudo cp ~/ros2_ws/src/r2d2_bringup/r2d2.service /etc/systemd/system/
+sudo cp ~/ros2_ws/src/r2d2_bringup/microros-agent.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable r2d2.service microros-agent.service
 ```
 
 ### ⚠️ Port-Konflikt: /dev/ttyACM0
 `/dev/ttyACM0` kann immer nur von **einem** Prozess gleichzeitig genutzt werden.
 - `pio device monitor` UND `micro_ros_agent` gleichzeitig → beide schlagen fehl
-- Symptom: Garbage im Serial Monitor, Topics erscheinen nicht, `support_init` schlägt fehl
-- Lösung: immer erst Serial Monitor beenden, dann Agent starten (oder umgekehrt)
-
-### DDS Discovery Latenz
-Beim ersten `ros2 topic pub --once` nach Agent-Start erscheint kurz "Waiting for subscription".
-Das ist normales DDS-Verhalten – Discovery braucht 1-2 Sekunden beim ersten Kontakt.
-Im normalen Betrieb (Nav2, Teleop) mit `--rate 10` kein Problem.
+- Prüfen mit: `fuser /dev/ttyACM0`
+- Lösung: `sudo kill <PID>` dann Agent neu starten
 
 ### EMG30 Encoder / Odometrie
 - Encoder: 360 Ticks pro Radumdrehung (output shaft, nach 30:1 Getriebe)
 - Rad-Durchmesser: 100mm → Umfang: 0.3142m
 - Meter pro Tick: 0.3142 / 360 = 0.000873m
 - Spurbreite: 0.30m (Anpassung in md25.cpp bei Bedarf)
-- Odometrie-Topic: /r2d2/chassis/odom (nav_msgs/Odometry)
 - Bekannte Limitation: stamp.sec=0 (keine Zeitsynchronisation ESP32↔Pi, für Nav2 später relevant)
 
 ### MD25 Serial Protokoll
@@ -232,9 +249,18 @@ Kommando-Format:
 - RESET ENCODERS: `[0x00, 0x35]`
 - DISABLE TIMEOUT: `[0x00, 0x38]` (sonst stoppt MD25 nach 2s ohne Kommando)
 
+### micro-ROS auf Jazzy/ARM64
+`micro_ros_platformio` kann auf Jazzy/ARM64 nicht nativ gebaut werden.
+**Lösung:** Prebuilt static library aus `micro_ros_arduino` Release einbinden.
+
+```bash
+bash esp32/r2d2_chassis_esp32/scripts/build_microros_lib.sh
+cd esp32/r2d2_chassis_esp32 && pio run --target upload
+```
+
 ### SRF02 I2C Adresse
-Der SRF02 meldet sich auf **0x71** (nicht 0x70 wie im Datenblatt als Default angegeben).
-Der Sensor war vermutlich bereits umprogrammiert. ULTRASONIC_ADDR in config.h entsprechend gesetzt.
+Der SRF02 meldet sich auf **0x71** (nicht 0x70 wie im Datenblatt).
+ULTRASONIC_ADDR in config.h entsprechend gesetzt.
 
 ### ReSpeaker Mic Array V1.0 – DOA
 - Raw firmware: 8 channels, no hardware DSP, no hardware DOA register
