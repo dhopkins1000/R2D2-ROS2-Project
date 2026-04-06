@@ -62,45 +62,54 @@ static void cmd_vel_cb(const void* msgin) {
 }
 
 // --- micro-ROS initialisieren (retry-fähig) ---
+// Lokales Makro: zeigt Schritt auf OLED, gibt false zurück bei Fehler
+#define RCCHECK_STEP(fn, step, name) { \
+    oled_show_init_step(step, name); \
+    if ((fn) != RCL_RET_OK) { \
+        oled_show_init_step(-(step), name); \
+        return false; \
+    } \
+}
+
 bool microros_init() {
     allocator = rcl_get_default_allocator();
 
-    if (rclc_support_init(&support, 0, NULL, &allocator) != RCL_RET_OK) return false;
-    if (rclc_node_init_default(&node, NODE_NAME, NODE_NAMESPACE, &support) != RCL_RET_OK) return false;
+    RCCHECK_STEP(rclc_support_init(&support, 0, NULL, &allocator), 1, "support_init");
+    RCCHECK_STEP(rclc_node_init_default(&node, NODE_NAME, NODE_NAMESPACE, &support), 2, "node_init");
 
     // Publisher
-    RCCHECK(rclc_publisher_init_default(
+    RCCHECK_STEP(rclc_publisher_init_default(
         &pub_status, &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, String),
-        TOPIC_STATUS));
+        TOPIC_STATUS), 3, "pub_status");
 
-    RCCHECK(rclc_publisher_init_default(
+    RCCHECK_STEP(rclc_publisher_init_default(
         &pub_compass, &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, MagneticField),
-        TOPIC_COMPASS));
+        TOPIC_COMPASS), 4, "pub_compass");
 
-    RCCHECK(rclc_publisher_init_default(
+    RCCHECK_STEP(rclc_publisher_init_default(
         &pub_range, &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, Range),
-        TOPIC_STAIR));
+        TOPIC_STAIR), 5, "pub_range");
 
     // Subscriber
-    RCCHECK(rclc_subscription_init_default(
+    RCCHECK_STEP(rclc_subscription_init_default(
         &sub_rosout, &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(rcl_interfaces, msg, Log),
-        "/rosout"));
+        "/rosout"), 6, "sub_rosout");
 
-    RCCHECK(rclc_subscription_init_default(
+    RCCHECK_STEP(rclc_subscription_init_default(
         &sub_cmd_vel, &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist),
-        TOPIC_CMD_VEL));
+        TOPIC_CMD_VEL), 7, "sub_cmd_vel");
 
     // Executor: 2 Subscriptions (rosout + cmd_vel)
-    RCCHECK(rclc_executor_init(&executor, &support.context, 2, &allocator));
-    RCCHECK(rclc_executor_add_subscription(
-        &executor, &sub_rosout, &msg_rosout, &rosout_cb, ON_NEW_DATA));
-    RCCHECK(rclc_executor_add_subscription(
-        &executor, &sub_cmd_vel, &msg_cmd_vel, &cmd_vel_cb, ON_NEW_DATA));
+    RCCHECK_STEP(rclc_executor_init(&executor, &support.context, 2, &allocator), 8, "executor_init");
+    RCCHECK_STEP(rclc_executor_add_subscription(
+        &executor, &sub_rosout, &msg_rosout, &rosout_cb, ON_NEW_DATA), 9, "exec_add_rosout");
+    RCCHECK_STEP(rclc_executor_add_subscription(
+        &executor, &sub_cmd_vel, &msg_cmd_vel, &cmd_vel_cb, ON_NEW_DATA), 10, "exec_add_cmdvel");
 
     // --- Puffer allocieren (nur beim ersten Init) ---
 

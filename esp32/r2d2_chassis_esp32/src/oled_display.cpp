@@ -110,6 +110,32 @@ void oled_push_log(const char* text) {
     g_log_dirty = true;
 }
 
+void oled_show_init_step(int step, const char* name) {
+    if (!g_oled_ok) return;
+    char line1[22], line2[22];
+    display.clearDisplay();
+    display.setTextSize(1);
+    display.setTextColor(SSD1306_WHITE);
+    if (step >= 0) {
+        snprintf(line1, sizeof(line1), "Init step: %d/10", step);
+        snprintf(line2, sizeof(line2), "%.21s", name);
+        display.setCursor(0, 0);
+        display.println(line1);
+        display.drawFastHLine(0, 9, OLED_W, SSD1306_WHITE);
+        display.setCursor(0, 14);
+        display.println(line2);
+    } else {
+        // step < 0 → -step ist die Schrittnummer des Fehlers
+        snprintf(line1, sizeof(line1), "FAIL at step %d", -step);
+        snprintf(line2, sizeof(line2), "%.21s", name);
+        display.setCursor(0, 16);
+        display.println(line1);
+        display.setCursor(0, 30);
+        display.println(line2);
+    }
+    display.display();
+}
+
 void oled_update(bool connected, unsigned long uptime_s) {
     if (!g_oled_ok) return;
 

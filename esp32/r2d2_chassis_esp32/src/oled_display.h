@@ -13,3 +13,7 @@ void oled_update(bool connected, unsigned long uptime_s);
 // Neue Log-Zeile ans Ende des Scroll-Puffers anfügen.
 // Wird aus dem /rosout Subscriber-Callback aufgerufen.
 void oled_push_log(const char* text);
+
+// Init-Fortschritt anzeigen: "Init step: X / name"
+// Bei step < 0: Fehlerscreen "FAIL at step X" (blockiert nicht).
+void oled_show_init_step(int step, const char* name);
