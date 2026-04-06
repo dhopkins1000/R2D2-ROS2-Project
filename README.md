@@ -11,7 +11,7 @@ A real-world R2D2 build (~75cm) running ROS2 Jazzy Jalisco on a Raspberry Pi 4 (
 - ASUS Xtion Pro – USB 3D depth camera (openni2)
 - USB Webcam – front camera
 - HMC5883L (GY-273) – I2C 3-axis compass / IMU
-- SRF02 ultrasonic – I2C, downward-angled for stair detection
+- SRF02 ultrasonic – I2C, downward-angled for stair detection (addr 0x71)
 - Ultrasonic sensor (head) – I2C, forward distance
 
 **Drive System**
@@ -67,7 +67,7 @@ esp32/
       oled_display.cpp   # OLED Implementierung (Adafruit SSD1306 SPI)
       hmc5883l.h/.cpp    # Kompass-Treiber
       srf02.h/.cpp       # Ultraschall-Treiber
-      md25.h/.cpp        # Motor-Treiber
+      md25.h/.cpp        # Motor-Treiber (SET SPEED: [0x00, 0x31/0x32, value])
 ```
 
 ## Connection Architecture
@@ -98,7 +98,7 @@ Raspberry Pi 4
 |-------|-----|------|--------|
 | `/r2d2/chassis/status` | std_msgs/String | 1 Hz | Heartbeat + Uptime |
 | `/r2d2/chassis/compass` | sensor_msgs/MagneticField | 10 Hz | HMC5883L X/Y/Z Rohdaten |
-| `/r2d2/chassis/stair_alert` | sensor_msgs/Range | 5 Hz | SRF02 Entfernung in cm |
+| `/r2d2/chassis/stair_alert` | sensor_msgs/Range | 5 Hz | SRF02 Entfernung in Metern |
 | `/r2d2/chassis/cmd_vel` | geometry_msgs/Twist | (subscriber) | Motorsteuerung |
 
 ## Chassis ESP32 Wiring Details
@@ -158,7 +158,7 @@ ReSpeaker (USB, 8 raw channels, 16kHz)
 - [x] OLED Firmware: Verbindungsstatus + /rosout subscriber (scrolling log)
 - [x] HMC5883L verdrahtet + verifiziert (I2C 0x1E, GPIO21/22, direkt 3.3V)
 - [x] SRF02 verdrahtet + verifiziert (I2C 0x71, GPIO21/22, BSS138 Level Shifter)
-- [x] MD25 verdrahtet + verifiziert (UART2 GPIO16/17, 38400 baud, 2 stop bits)
+- [x] MD25 verdrahtet + verifiziert (UART2 GPIO16/17, 38400 baud, 2 stop bits, SW-Version 4)
 - [x] Chassis ESP32 Firmware: alle Sensoren als micro-ROS Topics live
   - /r2d2/chassis/compass (sensor_msgs/MagneticField, 10 Hz)
   - /r2d2/chassis/stair_alert (sensor_msgs/Range, 5 Hz)
@@ -186,15 +186,28 @@ bash esp32/r2d2_chassis_esp32/scripts/build_microros_lib.sh
 cd esp32/r2d2_chassis_esp32 && pio run --target upload
 ```
 
-micro-ROS Agent:
+micro-ROS Agent starten (⚠️ nie gleichzeitig mit `pio device monitor`!):
 ```bash
 source ~/microros_ws/install/setup.bash
 ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/ttyACM0 -b 115200
 ```
 
-### MD25 UART Konfiguration
-Jumper-Einstellung: Serial mode, 38400 bps, 1 start bit, 2 stop bits, no parity.
-Arduino: `Serial2.begin(38400, SERIAL_8N2, 16, 17)`
+### ⚠️ Port-Konflikt: /dev/ttyACM0
+`/dev/ttyACM0` kann immer nur von **einem** Prozess gleichzeitig genutzt werden.
+- `pio device monitor` UND `micro_ros_agent` gleichzeitig → beide schlagen fehl
+- Symptom: Garbage im Serial Monitor, Topics erscheinen nicht, `support_init` schlägt fehl
+- Lösung: immer erst Serial Monitor beenden, dann Agent starten (oder umgekehrt)
+
+### MD25 Serial Protokoll
+Jumper: Serial mode, 38400 bps, 1 start bit, 2 stop bits, no parity.
+Arduino init: `Serial2.begin(38400, SERIAL_8N2, 16, 17)`
+
+Kommando-Format:
+- GET: `[0x00, CMD]` → n Bytes zurück
+- SET: `[0x00, CMD, VALUE]` → 0 Bytes zurück
+- SET SPEED 1: `[0x00, 0x31, speed]` (0=rückwärts, 128=stop, 255=vorwärts)
+- SET SPEED 2: `[0x00, 0x32, speed]`
+- DISABLE TIMEOUT: `[0x00, 0x38]` (sonst stoppt MD25 nach 2s)
 
 ### SRF02 I2C Adresse
 Der SRF02 meldet sich auf **0x71** (nicht 0x70 wie im Datenblatt als Default angegeben).
