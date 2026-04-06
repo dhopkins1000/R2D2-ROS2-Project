@@ -16,6 +16,7 @@ A real-world R2D2 build (~75cm) running ROS2 Jazzy Jalisco on a Raspberry Pi 4 (
 
 **Drive System**
 - MD25 motor controller – differential drive, 2x DC motors with encoders (UART mode)
+- EMG30 motors – 12V, 30:1 gearbox, 360 encoder ticks/revolution, 100mm wheels
 - Chassis ESP32 (LOLIN D1 Mini) – micro-ROS node (motors, odometry, IMU, stair sensor, SSD1306 OLED)
 
 **Head**
@@ -67,7 +68,7 @@ esp32/
       oled_display.cpp   # OLED Implementierung (Adafruit SSD1306 SPI)
       hmc5883l.h/.cpp    # Kompass-Treiber
       srf02.h/.cpp       # Ultraschall-Treiber
-      md25.h/.cpp        # Motor-Treiber (SET SPEED: [0x00, 0x31/0x32, value])
+      md25.h/.cpp        # Motor-Treiber + Encoder-Auslesen
 ```
 
 ## Connection Architecture
@@ -100,6 +101,7 @@ Raspberry Pi 4
 | `/r2d2/chassis/compass` | sensor_msgs/MagneticField | 10 Hz | HMC5883L X/Y/Z Rohdaten |
 | `/r2d2/chassis/stair_alert` | sensor_msgs/Range | 5 Hz | SRF02 Entfernung in Metern |
 | `/r2d2/chassis/cmd_vel` | geometry_msgs/Twist | (subscriber) | Motorsteuerung |
+| `/r2d2/chassis/odom` | nav_msgs/Odometry | 10 Hz | Position + Heading aus Encoder-Daten |
 
 ## Chassis ESP32 Wiring Details
 
@@ -159,14 +161,15 @@ ReSpeaker (USB, 8 raw channels, 16kHz)
 - [x] HMC5883L verdrahtet + verifiziert (I2C 0x1E, GPIO21/22, direkt 3.3V)
 - [x] SRF02 verdrahtet + verifiziert (I2C 0x71, GPIO21/22, BSS138 Level Shifter)
 - [x] MD25 verdrahtet + verifiziert (UART2 GPIO16/17, 38400 baud, 2 stop bits, SW-Version 4)
-- [x] Chassis ESP32 Firmware: alle Sensoren + Motoren vollständig funktionsfähig
+- [x] Chassis ESP32 Firmware vollständig:
   - /r2d2/chassis/compass (sensor_msgs/MagneticField, 10 Hz) ✓
   - /r2d2/chassis/stair_alert (sensor_msgs/Range, 5 Hz) ✓
-  - /r2d2/chassis/cmd_vel (geometry_msgs/Twist, subscriber) ✓ Räder drehen!
+  - /r2d2/chassis/cmd_vel (geometry_msgs/Twist, subscriber) ✓ Räder drehen
+  - /r2d2/chassis/odom (nav_msgs/Odometry, 10 Hz) ✓ Encoder-Odometrie live
 - [x] ReSpeaker Mic Array V1.0 recognized (USB, 8ch raw, 16kHz)
 - [x] ReSpeaker VAD working (/r2d2/audio/vad)
 - [x] ReSpeaker DOA working (/r2d2/audio/doa – GCC-PHAT, calibrated)
-- [ ] Odometrie aus MD25 Encoder-Daten
+- [ ] Zeitsynchronisation ESP32 ↔ Pi (stamp.sec=0 in Odometrie)
 - [ ] Wake word node (openWakeWord – "Hey R2D2")
 - [ ] Whisper STT node
 - [ ] Nav2 + SLAM
@@ -208,6 +211,14 @@ Beim ersten `ros2 topic pub --once` nach Agent-Start erscheint kurz "Waiting for
 Das ist normales DDS-Verhalten – Discovery braucht 1-2 Sekunden beim ersten Kontakt.
 Im normalen Betrieb (Nav2, Teleop) mit `--rate 10` kein Problem.
 
+### EMG30 Encoder / Odometrie
+- Encoder: 360 Ticks pro Radumdrehung (output shaft, nach 30:1 Getriebe)
+- Rad-Durchmesser: 100mm → Umfang: 0.3142m
+- Meter pro Tick: 0.3142 / 360 = 0.000873m
+- Spurbreite: 0.30m (Anpassung in md25.cpp bei Bedarf)
+- Odometrie-Topic: /r2d2/chassis/odom (nav_msgs/Odometry)
+- Bekannte Limitation: stamp.sec=0 (keine Zeitsynchronisation ESP32↔Pi, für Nav2 später relevant)
+
 ### MD25 Serial Protokoll
 Jumper: Serial mode, 38400 bps, 1 start bit, 2 stop bits, no parity.
 Arduino init: `Serial2.begin(38400, SERIAL_8N2, 16, 17)`
@@ -217,6 +228,8 @@ Kommando-Format:
 - SET: `[0x00, CMD, VALUE]` → 0 Bytes zurück
 - SET SPEED 1: `[0x00, 0x31, speed]` (0=rückwärts, 128=stop, 255=vorwärts)
 - SET SPEED 2: `[0x00, 0x32, speed]`
+- GET ENCODERS: `[0x00, 0x25]` → 8 Bytes (2× int32, high byte first)
+- RESET ENCODERS: `[0x00, 0x35]`
 - DISABLE TIMEOUT: `[0x00, 0x38]` (sonst stoppt MD25 nach 2s ohne Kommando)
 
 ### SRF02 I2C Adresse
