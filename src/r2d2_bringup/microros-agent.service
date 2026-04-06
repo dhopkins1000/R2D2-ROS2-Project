@@ -1,0 +1,29 @@
+[Unit]
+Description=micro-ROS Agent (Chassis ESP32 via /dev/ttyACM0)
+After=r2d2.service
+Requires=r2d2.service
+
+[Service]
+Type=simple
+User=r2d2
+Group=r2d2
+Environment="HOME=/home/r2d2"
+Environment="ROS_DOMAIN_ID=0"
+Environment="RMW_IMPLEMENTATION=rmw_fastrtps_cpp"
+ExecStartPre=/bin/sleep 5
+ExecStart=/bin/bash -c "\
+  source /opt/ros/jazzy/setup.bash && \
+  source /home/r2d2/microros_ws/install/setup.bash && \
+  exec ros2 run micro_ros_agent micro_ros_agent serial \
+    --dev /dev/ttyACM0 -b 115200"
+Restart=on-failure
+RestartSec=5
+StartLimitIntervalSec=60
+StartLimitBurst=5
+TimeoutStopSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=microros-agent
+
+[Install]
+WantedBy=multi-user.target
