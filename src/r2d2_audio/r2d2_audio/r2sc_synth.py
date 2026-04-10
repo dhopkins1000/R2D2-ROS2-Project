@@ -17,10 +17,10 @@ An utterance is a sequence of segments separated by " | ":
     ~<dur>                         Silence
 
 Parameter ranges (calibrated from real R2D2 reference sounds):
-    fc / f0 / f1  : 150 – 3200  Hz
-    fm            : 3 – 8       Hz  (wobble)  |  35 – 65 Hz  (trill)
-    beta          : 20 – 150         (FM modulation depth)
-    dur           : 0.05 – 4.0  s
+    fc / f0 / f1  : 150 - 3200  Hz
+    fm            : 3 - 8       Hz  (wobble)  |  35 - 65 Hz  (trill)
+    beta          : 20 - 150         (FM modulation depth)
+    dur           : 0.05 - 4.0  s
 
 Examples:
     "W1190-1364:8:21:0.42 | C681:0.07"         # acknowledged
@@ -31,16 +31,32 @@ Examples:
     "S520-1750:0.20 | C1600:0.08"               # affirmative
 """
 
+import io
+import os
 import re
+import subprocess
+import sys
 import tempfile
 import wave
 from dataclasses import dataclass
-from typing import List, Optional, Tuple
+from typing import List
 
 import numpy as np
 
 SAMPLE_RATE = 44100
 AMPLITUDE   = 0.75   # global output level (0..1)
+
+
+# ---------------------------------------------------------------------------
+# Cross-platform audio playback
+# ---------------------------------------------------------------------------
+
+def _play_wav_file(path: str, alsa_device: str = "plughw:1,0") -> None:
+    """Play a .wav file. Uses aplay on Linux, afplay on macOS."""
+    if sys.platform == "darwin":
+        subprocess.run(["afplay", path], check=False)
+    else:
+        subprocess.run(["aplay", "-q", "-D", alsa_device, path], check=False)
 
 
 # ---------------------------------------------------------------------------
@@ -94,7 +110,7 @@ _RE_SIL = re.compile(r'^~(\d+(?:\.\d+)?)$')
 
 
 def parse(codec: str) -> List:
-    """Parse R2SC string → list of segment objects."""
+    """Parse R2SC string -> list of segment objects."""
     segments = []
     for tok in codec.split("|"):
         tok = tok.strip()
@@ -164,7 +180,6 @@ def _synth_segment(seg, sr: int) -> np.ndarray:
         carrier_phase = 2.0 * np.pi * np.cumsum(fc_t) / sr
         fm_phase = seg.beta * np.sin(2.0 * np.pi * seg.fm * t)
         signal = np.sin(carrier_phase + fm_phase)
-        # Attack calibrated to duration: short sounds have sharp attack
         attack = min(0.015, seg.dur * 0.05)
         release = min(0.040, seg.dur * 0.10)
         signal *= _envelope(n, attack, release, sr)
@@ -205,12 +220,10 @@ def synthesize(codec: str, sr: int = SAMPLE_RATE) -> np.ndarray:
 
 
 def to_wav_bytes(codec: str, sr: int = SAMPLE_RATE) -> bytes:
-    """Synthesize and return raw WAV bytes (for piping to aplay)."""
+    """Synthesize and return raw WAV bytes."""
     samples = synthesize(codec, sr)
     pcm = np.clip(samples, -1.0, 1.0)
     pcm_int16 = (pcm * 32767).astype(np.int16)
-
-    import io
     buf = io.BytesIO()
     with wave.open(buf, "w") as wf:
         wf.setnchannels(1)
@@ -222,29 +235,34 @@ def to_wav_bytes(codec: str, sr: int = SAMPLE_RATE) -> bytes:
 
 def save_wav(codec: str, path: str, sr: int = SAMPLE_RATE) -> None:
     """Synthesize and save to a .wav file."""
-    samples = synthesize(codec, sr)
-    pcm = np.clip(samples, -1.0, 1.0)
-    pcm_int16 = (pcm * 32767).astype(np.int16)
-    with wave.open(path, "w") as wf:
-        wf.setnchannels(1)
-        wf.setsampwidth(2)
-        wf.setframerate(sr)
-        wf.writeframes(pcm_int16.tobytes())
+    with open(path, "wb") as f:
+        f.write(to_wav_bytes(codec, sr))
+
+
+def play(codec: str, alsa_device: str = "plughw:1,0") -> None:
+    """Synthesize and play immediately. Cross-platform."""
+    wav = to_wav_bytes(codec)
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
+        f.write(wav)
+        tmp = f.name
+    try:
+        _play_wav_file(tmp, alsa_device)
+    finally:
+        os.unlink(tmp)
 
 
 # ---------------------------------------------------------------------------
-# CLI demo
+# CLI
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
     import argparse
-    import subprocess
-    import os
+    import time
 
     parser = argparse.ArgumentParser(description="R2SC Synthesizer")
-    parser.add_argument("codec", nargs="?", help="R2SC string to synthesize")
+    parser.add_argument("codec", nargs="?", help="R2SC string to synthesize and play")
     parser.add_argument("--out", help="Save to .wav file instead of playing")
-    parser.add_argument("--device", default="plughw:1,0", help="ALSA device")
+    parser.add_argument("--device", default="plughw:1,0", help="ALSA device (Linux only)")
     parser.add_argument("--demo", action="store_true", help="Play all reference examples")
     args = parser.parse_args()
 
@@ -259,24 +277,20 @@ if __name__ == "__main__":
         ("excited (big)", "W1300-1531:4:126:1.99"),
     ]
 
-    def play(codec_str, device):
-        wav = to_wav_bytes(codec_str)
-        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
-            f.write(wav)
-            tmp = f.name
-        subprocess.run(["aplay", "-q", "-D", device, tmp], check=False)
-        os.unlink(tmp)
-
     if args.demo:
+        platform = "macOS (afplay)" if sys.platform == "darwin" else "Linux (aplay)"
+        print(f"R2SC Demo  [{platform}]\n")
         for label, codec_str in EXAMPLES:
             print(f"  {label:<20}  {codec_str}")
             play(codec_str, args.device)
-            import time; time.sleep(0.3)
+            time.sleep(0.3)
+
     elif args.codec:
         if args.out:
             save_wav(args.codec, args.out)
             print(f"Saved: {args.out}")
         else:
             play(args.codec, args.device)
+
     else:
         parser.print_help()
