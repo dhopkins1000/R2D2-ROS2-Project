@@ -50,9 +50,9 @@ A real-world R2D2 build (~75cm) running ROS2 Jazzy Jalisco on a Raspberry Pi 4 (
 
 ```
 ~/ros2_ws/src/
-  r2d2_bringup/      # Launch files + config (cameras, foxglove)
-  r2d2_description/  # URDF/XACRO robot model
-  r2d2_base/         # Chassis ESP32 interface (MD25, odometry)
+  r2d2_bringup/      # Launch files + config (cameras, foxglove, systemd services)
+  r2d2_description/  # URDF/XACRO robot model + robot_state_publisher launch
+  r2d2_base/         # odom→base_link TF broadcaster
   r2d2_head/         # Head ESP32 interface (stepper, display)
   r2d2_perception/   # Camera processing, object detection
   r2d2_navigation/   # Nav2 config + maps
@@ -64,8 +64,7 @@ esp32/
     src/
       config.h           # Pin- und Topic-Definitionen
       main.cpp           # micro-ROS Reconnect-Loop + Publisher/Subscriber
-      oled_display.h     # OLED API
-      oled_display.cpp   # OLED Implementierung (Adafruit SSD1306 SPI)
+      oled_display.h/cpp # OLED Implementierung (Adafruit SSD1306 SPI)
       hmc5883l.h/.cpp    # Kompass-Treiber
       srf02.h/.cpp       # Ultraschall-Treiber
       md25.h/.cpp        # Motor-Treiber + Encoder-Auslesen
@@ -98,11 +97,15 @@ journalctl -u microros-agent.service -f
 
 Verbindung: `ws://r2d2.local:8765` (oder IP des Pi)
 
-Wichtige Topics in Foxglove:
-- `/r2d2/chassis/compass` → Raw Message oder Plot Panel (X/Y/Z Magnetfeld)
-- `/r2d2/chassis/stair_alert` → Gauge Panel (Entfernung in Metern)
-- `/r2d2/chassis/odom` → 3D Panel (Position + Heading)
-- `/r2d2/chassis/status` → Log Panel (Heartbeat)
+Layout importieren: `src/r2d2_bringup/config/foxglove_layout.json`
+
+Panels: Kompass Plot | Ultraschall Plot | Odometrie Plot | Status | 3D View + Teleop | Kamera RGB
+
+Für 3D View mit URDF:
+1. `ros2 launch r2d2_description description.launch.py` starten
+2. `ros2 launch r2d2_base base.launch.py` starten (odom→base_link TF)
+3. Fixed frame → `odom`
+4. `/robot_description` Topic aktivieren
 
 ## Connection Architecture
 
@@ -184,28 +187,21 @@ ReSpeaker (USB, 8 raw channels, 16kHz)
 - [x] Ubuntu 24.04 + ROS2 Jazzy installed
 - [x] r2d2.service: Foxglove Bridge + Kameras (systemd, autostart)
 - [x] microros-agent.service: micro-ROS Agent ESP32 (systemd, autostart)
-- [x] Foxglove Studio verbunden via ws://r2d2.local:8765
+- [x] Foxglove Studio verbunden + Layout konfiguriert (Sensor-Panels + Teleop + 3D)
 - [x] GitHub repo cleaned up, ROS2 workspace pushed
 - [x] micro-ROS Agent built from source (~/microros_ws)
-- [x] PlatformIO installed + ESP32 project skeleton created
-- [x] micro-ROS firmware compiled + flashed (prebuilt library approach)
-- [x] Chassis ESP32 verbunden mit micro-ROS Agent (/r2d2/chassis/status publishing)
-- [x] SSD1306 OLED verdrahtet + verifiziert (Adafruit v2.1, SPI, GPIO18/23/5/4/26)
-- [x] OLED Firmware: Verbindungsstatus + /rosout subscriber (scrolling log)
-- [x] HMC5883L verdrahtet + verifiziert (I2C 0x1E, GPIO21/22, direkt 3.3V)
-- [x] SRF02 verdrahtet + verifiziert (I2C 0x71, GPIO21/22, BSS138 Level Shifter)
-- [x] MD25 verdrahtet + verifiziert (UART2 GPIO16/17, 38400 baud, 2 stop bits, SW-Version 4)
 - [x] Chassis ESP32 Firmware vollständig:
   - /r2d2/chassis/compass (sensor_msgs/MagneticField, 10 Hz) ✓
   - /r2d2/chassis/stair_alert (sensor_msgs/Range, 5 Hz) ✓
   - /r2d2/chassis/cmd_vel (geometry_msgs/Twist, subscriber) ✓ Räder drehen
   - /r2d2/chassis/odom (nav_msgs/Odometry, 10 Hz) ✓ Encoder-Odometrie live
-- [x] ReSpeaker Mic Array V1.0 recognized (USB, 8ch raw, 16kHz)
-- [x] ReSpeaker VAD working (/r2d2/audio/vad)
-- [x] ReSpeaker DOA working (/r2d2/audio/doa – GCC-PHAT, calibrated)
-- [ ] Foxglove Layout konfigurieren (Sensor-Panels + 3D View)
-- [ ] URDF R2D2 Basismodell + robot_state_publisher
-- [ ] Zeitsynchronisation ESP32 ↔ Pi (stamp.sec=0 in Odometrie)
+- [x] Remote-Steuerung via Foxglove Teleop Panel ✓
+- [x] r2d2_description: URDF Basismodell (Zylinder-Chassis, Räder, Kopf, Sensor-Frames)
+- [x] r2d2_base: odom→base_link TF broadcaster (Pi-Systemzeit, löst stamp.sec=0 Problem)
+- [x] Foxglove 3D View: Roboter sichtbar, bewegt sich live mit Odometrie
+- [x] ReSpeaker VAD + DOA working
+- [ ] URDF verfeinern (realistischere R2D2-Geometrie)
+- [ ] description.launch.py + base.launch.py in r2d2.service integrieren
 - [ ] Wake word node (openWakeWord – "Hey R2D2")
 - [ ] Whisper STT node
 - [ ] Nav2 + SLAM
@@ -214,6 +210,17 @@ ReSpeaker (USB, 8 raw channels, 16kHz)
 - [ ] Behaviour trees
 
 ## Notes
+
+### Starten (manuell, für Entwicklung)
+```bash
+# Terminal 1 – URDF + TF
+source ~/ros2_ws/install/setup.bash
+ros2 launch r2d2_description description.launch.py &
+ros2 launch r2d2_base base.launch.py
+
+# TF prüfen:
+ros2 run tf2_ros tf2_echo odom base_link
+```
 
 ### systemd Services einrichten
 ```bash
@@ -225,46 +232,30 @@ sudo systemctl enable r2d2.service microros-agent.service
 
 ### ⚠️ Port-Konflikt: /dev/ttyACM0
 `/dev/ttyACM0` kann immer nur von **einem** Prozess gleichzeitig genutzt werden.
-- `pio device monitor` UND `micro_ros_agent` gleichzeitig → beide schlagen fehl
 - Prüfen mit: `fuser /dev/ttyACM0`
 - Lösung: `sudo kill <PID>` dann Agent neu starten
 
 ### EMG30 Encoder / Odometrie
 - Encoder: 360 Ticks pro Radumdrehung (output shaft, nach 30:1 Getriebe)
-- Rad-Durchmesser: 100mm → Umfang: 0.3142m
-- Meter pro Tick: 0.3142 / 360 = 0.000873m
-- Spurbreite: 0.30m (Anpassung in md25.cpp bei Bedarf)
-- Bekannte Limitation: stamp.sec=0 (keine Zeitsynchronisation ESP32↔Pi, für Nav2 später relevant)
+- Rad-Durchmesser: 100mm → Umfang: 0.3142m → 0.000873m pro Tick
+- Spurbreite: 0.30m (in md25.cpp anpassbar)
 
 ### MD25 Serial Protokoll
 Jumper: Serial mode, 38400 bps, 1 start bit, 2 stop bits, no parity.
-Arduino init: `Serial2.begin(38400, SERIAL_8N2, 16, 17)`
+`Serial2.begin(38400, SERIAL_8N2, 16, 17)`
 
-Kommando-Format:
-- GET: `[0x00, CMD]` → n Bytes zurück
-- SET: `[0x00, CMD, VALUE]` → 0 Bytes zurück
-- SET SPEED 1: `[0x00, 0x31, speed]` (0=rückwärts, 128=stop, 255=vorwärts)
-- SET SPEED 2: `[0x00, 0x32, speed]`
-- GET ENCODERS: `[0x00, 0x25]` → 8 Bytes (2× int32, high byte first)
-- RESET ENCODERS: `[0x00, 0x35]`
-- DISABLE TIMEOUT: `[0x00, 0x38]` (sonst stoppt MD25 nach 2s ohne Kommando)
-
-### micro-ROS auf Jazzy/ARM64
-`micro_ros_platformio` kann auf Jazzy/ARM64 nicht nativ gebaut werden.
-**Lösung:** Prebuilt static library aus `micro_ros_arduino` Release einbinden.
-
-```bash
-bash esp32/r2d2_chassis_esp32/scripts/build_microros_lib.sh
-cd esp32/r2d2_chassis_esp32 && pio run --target upload
-```
+| Kommando | Bytes | Beschreibung |
+|----------|-------|--------------|
+| SET SPEED 1 | `[0x00, 0x31, speed]` | 0=rückwärts, 128=stop, 255=vorwärts |
+| SET SPEED 2 | `[0x00, 0x32, speed]` | wie oben |
+| GET ENCODERS | `[0x00, 0x25]` → 8 Bytes | 2× int32, high byte first |
+| RESET ENCODERS | `[0x00, 0x35]` | Zähler auf 0 |
+| DISABLE TIMEOUT | `[0x00, 0x38]` | Kein Auto-Stop nach 2s |
 
 ### SRF02 I2C Adresse
-Der SRF02 meldet sich auf **0x71** (nicht 0x70 wie im Datenblatt).
-ULTRASONIC_ADDR in config.h entsprechend gesetzt.
+Meldet sich auf **0x71** (nicht 0x70 wie im Datenblatt). Bereits in config.h gesetzt.
 
 ### ReSpeaker Mic Array V1.0 – DOA
-- Raw firmware: 8 channels, no hardware DSP, no hardware DOA register
-- DOA computed in software via GCC-PHAT beamforming (15 mic pairs)
-- Mic layout: 6 outer mics on 65mm diameter circle, 60° spacing + 1 center
-- VAD calibration: silence RMS ~74, speech RMS ~361, threshold=218
-- VAD threshold tunable via ROS2 parameter: `--ros-args -p vad_threshold:=200`
+- DOA via GCC-PHAT, 6 Außenmics, 65mm Durchmesser
+- VAD: silence=74, speech=361, threshold=218
+- Tuning: `--ros-args -p vad_threshold:=200`
