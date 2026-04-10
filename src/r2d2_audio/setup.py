@@ -18,13 +18,14 @@ setup(
     zip_safe=True,
     maintainer='r2d2',
     maintainer_email='r2d2@localhost',
-    description='R2D2 Audio: ReSpeaker, Wake Word, Whisper STT, TTS',
+    description='R2D2 Audio: ReSpeaker, Wake Word, Whisper STT, Voice Output',
     license='Apache-2.0',
     entry_points={
         'console_scripts': [
             'respeaker_node  = r2d2_audio.respeaker_node:main',
             'wake_word_node  = r2d2_audio.wake_word_node:main',
             'whisper_node    = r2d2_audio.whisper_node:main',
+            'voice_node      = r2d2_audio.voice_node:main',
         ],
     },
 )
