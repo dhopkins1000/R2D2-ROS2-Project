@@ -17,10 +17,13 @@ Publisher:  /r2d2/voice_playing  std_msgs/String
 
 Busy policy: incoming intents are dropped while audio is playing.
 Set the ROS parameter 'queue_while_busy' to True to queue instead.
+
+Audio device: plughw:1,0 (hifiberry-dac / MAX98357A via I2S).
+Using plughw instead of hw allows ALSA's plug layer to handle
+mono->stereo conversion automatically for our synthesized .wav files.
 """
 
 import json
-import os
 import subprocess
 import threading
 from pathlib import Path
@@ -35,6 +38,9 @@ from r2d2_audio.intent_mapper import resolve_from_json
 _PKG_DIR = Path(__file__).parent.parent
 DEFAULT_SOUNDS_DIR = str(_PKG_DIR / "sounds")
 
+# ALSA device: plughw handles mono->stereo and sample rate conversion
+ALSA_DEVICE = "plughw:1,0"
+
 
 class VoiceNode(Node):
 
@@ -43,9 +49,11 @@ class VoiceNode(Node):
 
         self.declare_parameter("sounds_dir", DEFAULT_SOUNDS_DIR)
         self.declare_parameter("queue_while_busy", False)
+        self.declare_parameter("alsa_device", ALSA_DEVICE)
 
         self._sounds_dir = Path(self.get_parameter("sounds_dir").value)
         self._queue_mode = self.get_parameter("queue_while_busy").value
+        self._alsa_device = self.get_parameter("alsa_device").value
 
         self._playing = False
         self._lock = threading.Lock()
@@ -56,11 +64,14 @@ class VoiceNode(Node):
         self._pub = self.create_publisher(String, "/r2d2/voice_playing", 10)
 
         self.get_logger().info(
-            f"VoiceNode ready. sounds_dir={self._sounds_dir}  queue={self._queue_mode}"
+            f"VoiceNode ready. sounds_dir={self._sounds_dir}  "
+            f"alsa_device={self._alsa_device}  queue={self._queue_mode}"
         )
 
         # Startup sound
-        threading.Thread(target=self._play_phrases, args=(["phrase_startup"],), daemon=True).start()
+        threading.Thread(
+            target=self._play_phrases, args=(["phrase_startup"],), daemon=True
+        ).start()
 
     def _on_intent(self, msg: String) -> None:
         try:
@@ -98,7 +109,11 @@ class VoiceNode(Node):
                     self.get_logger().warn(f"Missing sound file: {wav}")
                     continue
                 try:
-                    subprocess.run(["aplay", "-q", str(wav)], check=True, timeout=5.0)
+                    subprocess.run(
+                        ["aplay", "-q", "-D", self._alsa_device, str(wav)],
+                        check=True,
+                        timeout=5.0,
+                    )
                 except subprocess.TimeoutExpired:
                     self.get_logger().error(f"aplay timeout: {wav.name}")
                 except subprocess.CalledProcessError as exc:
