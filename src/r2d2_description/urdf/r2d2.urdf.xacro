@@ -1,0 +1,248 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="r2d2">
+
+  <!-- ============================================================
+       R2D2 URDF – ~75cm Roboter, Differentialantrieb (EMG30)
+       Koordinatensystem: REP-103 (x=vorne, y=links, z=oben)
+       ============================================================ -->
+
+  <!-- Parameter -->
+  <xacro:property name="chassis_radius"   value="0.19"/>   <!-- 38cm Durchmesser -->
+  <xacro:property name="chassis_height"   value="0.28"/>   <!-- Chassis-Körper -->
+  <xacro:property name="wheel_radius"     value="0.05"/>   <!-- 100mm Räder -->
+  <xacro:property name="wheel_width"      value="0.026"/>  <!-- 26mm breit -->
+  <xacro:property name="wheelbase"        value="0.30"/>   <!-- Spurbreite -->
+  <xacro:property name="head_radius"      value="0.14"/>   <!-- Kopf-Kuppel -->
+  <xacro:property name="head_height"      value="0.18"/>   <!-- Kopfhöhe -->
+  <xacro:property name="neck_height"      value="0.04"/>   <!-- Übergang Chassis→Kopf -->
+
+  <!-- Materialien -->
+  <material name="white">
+    <color rgba="0.95 0.95 0.95 1.0"/>
+  </material>
+  <material name="blue">
+    <color rgba="0.1 0.3 0.7 1.0"/>
+  </material>
+  <material name="silver">
+    <color rgba="0.75 0.75 0.75 1.0"/>
+  </material>
+  <material name="black">
+    <color rgba="0.1 0.1 0.1 1.0"/>
+  </material>
+  <material name="red">
+    <color rgba="0.8 0.1 0.1 1.0"/>
+  </material>
+
+  <!-- ============================================================
+       BASE LINK – Referenzpunkt Mitte zwischen den Rädern, Bodenhöhe
+       ============================================================ -->
+  <link name="base_link"/>
+
+  <!-- ============================================================
+       CHASSIS
+       ============================================================ -->
+  <link name="base_chassis">
+    <visual>
+      <origin xyz="0 0 ${chassis_height/2}" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="${chassis_radius}" length="${chassis_height}"/>
+      </geometry>
+      <material name="white"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 ${chassis_height/2}" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="${chassis_radius}" length="${chassis_height}"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="3.0"/>
+      <origin xyz="0 0 ${chassis_height/2}"/>
+      <inertia ixx="0.05" ixy="0" ixz="0" iyy="0.05" iyz="0" izz="0.08"/>
+    </inertial>
+  </link>
+
+  <joint name="base_chassis_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="base_chassis"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ============================================================
+       RÄDER
+       ============================================================ -->
+  <!-- Linkes Rad -->
+  <link name="left_wheel">
+    <visual>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      <geometry>
+        <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      <geometry>
+        <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.2"/>
+      <inertia ixx="0.0002" ixy="0" ixz="0" iyy="0.0002" iyz="0" izz="0.0004"/>
+    </inertial>
+  </link>
+
+  <joint name="left_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="left_wheel"/>
+    <origin xyz="0 ${wheelbase/2} ${wheel_radius}" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+  </joint>
+
+  <!-- Rechtes Rad -->
+  <link name="right_wheel">
+    <visual>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      <geometry>
+        <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      <geometry>
+        <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.2"/>
+      <inertia ixx="0.0002" ixy="0" ixz="0" iyy="0.0002" iyz="0" izz="0.0004"/>
+    </inertial>
+  </link>
+
+  <joint name="right_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="right_wheel"/>
+    <origin xyz="0 ${-wheelbase/2} ${wheel_radius}" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+  </joint>
+
+  <!-- Stützrad vorne -->
+  <link name="caster_wheel">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <sphere radius="0.025"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <geometry><sphere radius="0.025"/></geometry>
+    </collision>
+    <inertial>
+      <mass value="0.05"/>
+      <inertia ixx="0.00001" ixy="0" ixz="0" iyy="0.00001" iyz="0" izz="0.00001"/>
+    </inertial>
+  </link>
+
+  <joint name="caster_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="caster_wheel"/>
+    <origin xyz="0.15 0 0.025" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ============================================================
+       KOPF
+       ============================================================ -->
+  <link name="head_base">
+    <visual>
+      <origin xyz="0 0 ${head_height/2}" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="${head_radius}" length="${head_height*0.6}"/>
+      </geometry>
+      <material name="white"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 ${head_height/2}" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="${head_radius}" length="${head_height*0.6}"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.5"/>
+      <origin xyz="0 0 ${head_height/2}"/>
+      <inertia ixx="0.005" ixy="0" ixz="0" iyy="0.005" iyz="0" izz="0.008"/>
+    </inertial>
+  </link>
+
+  <joint name="head_joint" type="revolute">
+    <parent link="base_chassis"/>
+    <child link="head_base"/>
+    <origin xyz="0 0 ${chassis_height + neck_height}" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-3.14" upper="3.14" effort="1.0" velocity="1.0"/>
+  </joint>
+
+  <!-- ============================================================
+       SENSOR FRAMES
+       ============================================================ -->
+
+  <!-- HMC5883L Kompass (oben im Chassis, I2C) -->
+  <link name="compass_link"/>
+  <joint name="compass_joint" type="fixed">
+    <parent link="base_chassis"/>
+    <child link="compass_link"/>
+    <origin xyz="0.05 0 ${chassis_height - 0.02}" rpy="0 0 0"/>
+  </joint>
+
+  <!-- SRF02 Ultraschall Treppe (unten vorne, nach unten gerichtet) -->
+  <link name="stair_sensor_link"/>
+  <joint name="stair_sensor_joint" type="fixed">
+    <parent link="base_chassis"/>
+    <child link="stair_sensor_link"/>
+    <origin xyz="0.17 0 0.03" rpy="0 1.5708 0"/>  <!-- nach unten zeigend -->
+  </joint>
+
+  <!-- SSD1306 OLED Display (vorne am Chassis) -->
+  <link name="oled_link"/>
+  <joint name="oled_joint" type="fixed">
+    <parent link="base_chassis"/>
+    <child link="oled_link"/>
+    <origin xyz="${chassis_radius} 0 ${chassis_height*0.6}" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ============================================================
+       KAMERA FRAMES (ASUS Xtion Pro + USB Webcam)
+       ============================================================ -->
+
+  <!-- Xtion Pro (Tiefenkamera, vorne oben am Kopf) -->
+  <link name="camera_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.18 0.04 0.03"/></geometry>
+      <material name="black"/>
+    </visual>
+  </link>
+
+  <joint name="camera_joint" type="fixed">
+    <parent link="head_base"/>
+    <child link="camera_link"/>
+    <origin xyz="${head_radius - 0.01} 0 ${head_height*0.4}" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Webcam (vorne am Chassis) -->
+  <link name="webcam_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.03 0.06 0.03"/></geometry>
+      <material name="black"/>
+    </visual>
+  </link>
+
+  <joint name="webcam_joint" type="fixed">
+    <parent link="base_chassis"/>
+    <child link="webcam_link"/>
+    <origin xyz="${chassis_radius - 0.01} 0 ${chassis_height*0.75}" rpy="0 0 0"/>
+  </joint>
+
+</robot>

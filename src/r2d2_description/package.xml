@@ -3,13 +3,17 @@
 <package format="3">
   <name>r2d2_description</name>
   <version>0.1.0</version>
-  <description>Roboter-Beschreibung (URDF/Meshes) für R2D2.</description>
-  <maintainer email="r2d2@r2d2.local">r2d2</maintainer>
-  <license>Apache-2.0</license>
+  <description>R2D2 URDF robot description (~75cm differential drive)</description>
+  <maintainer email="daniel@example.com">Daniel</maintainer>
+  <license>MIT</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <export>
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>joint_state_publisher</exec_depend>
+  <exec_depend>xacro</exec_depend>
+
+  <ament_cmake>
     <build_type>ament_cmake</build_type>
-  </export>
+  </ament_cmake>
 </package>
