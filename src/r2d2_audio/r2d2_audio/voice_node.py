@@ -8,20 +8,23 @@ authentically R2D2-like sounds using real sample playback.
 Topic contract
 --------------
 Subscriber: /r2d2/voice_intent   std_msgs/String
-    {"speak": true, "intent": "task_complete", "emotion": "excited", "intensity": "high"}
+    {
+        "speak":     true,
+        "intent":    "comment",
+        "emotion":   "excited",
+        "intensity": "high",
+        "verbosity": 7
+    }
+
+    verbosity (1-10): proportional to LLM response length.
+        1-2  = very short answer  -> 1-2 phonemes
+        3-4  = one sentence       -> 2 phonemes
+        5-6  = a few sentences    -> 3 phonemes
+        7-8  = paragraph          -> 4 phonemes + phrase tail
+        9-10 = long explanation   -> 5-6 phonemes + phrase tail
 
 Publisher:  /r2d2/voice_playing  std_msgs/String
-    {"playing": true, "intent": "task_complete", "emotion": "excited"}
-
-Sample library layout (relative to ROS package install dir):
-    sounds/                 <- emotional phrase MP3s (r2d2_sounds/ copied here)
-        excited.mp3
-        worried.mp3
-        ...
-    sounds/phonemes/        <- micro phoneme WAVs (from McGill R2D2 Simulator)
-        boop.wav
-        berp.wav
-        ...
+    {"playing": true, "intent": "comment", "emotion": "excited", "verbosity": 7}
 """
 
 import json
@@ -66,7 +69,6 @@ class VoiceNode(Node):
         self._device = self.get_parameter("alsa_device").value
         self._queue_mode = self.get_parameter("queue_while_busy").value
 
-        # Load samples (blocking, ~1-3s depending on library size)
         self.get_logger().info(f"Loading sample library from {sounds_dir} ...")
         self._library = SampleLibrary(sounds_dir)
         self._builder = UtteranceBuilder(self._library)
@@ -84,10 +86,9 @@ class VoiceNode(Node):
         )
         self._pub = self.create_publisher(String, "/r2d2/voice_playing", 10)
 
-        # Startup sound
         threading.Thread(
             target=self._play_audio,
-            args=(self._builder.build_startup(), "greeting", "excited"),
+            args=(self._builder.build_startup(), "greeting", "excited", 7),
             daemon=True,
         ).start()
 
@@ -111,33 +112,37 @@ class VoiceNode(Node):
         intent    = data.get("intent",    "comment")
         emotion   = data.get("emotion",   "neutral")
         intensity = data.get("intensity", "medium")
+        verbosity = int(data.get("verbosity", 5))
 
-        # Clamp to valid values
-        if intent    not in VALID_INTENTS:    intent    = "comment"
-        if emotion   not in VALID_EMOTIONS:   emotion   = "neutral"
+        if intent    not in VALID_INTENTS:     intent    = "comment"
+        if emotion   not in VALID_EMOTIONS:    emotion   = "neutral"
         if intensity not in VALID_INTENSITIES: intensity = "medium"
+        verbosity = max(1, min(10, verbosity))
 
         self.get_logger().info(
-            f"voice: intent={intent} emotion={emotion} intensity={intensity}"
+            f"voice: intent={intent} emotion={emotion} "
+            f"intensity={intensity} verbosity={verbosity}"
         )
 
-        audio = self._builder.build(intent, emotion, intensity)
+        audio = self._builder.build(intent, emotion, intensity, verbosity)
         if audio is None:
             self.get_logger().warn("No audio produced (missing samples?)")
             return
 
         threading.Thread(
             target=self._play_audio,
-            args=(audio, intent, emotion),
+            args=(audio, intent, emotion, verbosity),
             daemon=True,
         ).start()
 
     # ------------------------------------------------------------------
 
-    def _play_audio(self, audio, intent: str, emotion: str) -> None:
+    def _play_audio(
+        self, audio, intent: str, emotion: str, verbosity: int
+    ) -> None:
         with self._lock:
             self._playing = True
-        self._publish_status(True, intent, emotion)
+        self._publish_status(True, intent, emotion, verbosity)
 
         try:
             wav_bytes = self._library.render_to_wav_bytes(audio)
@@ -160,11 +165,18 @@ class VoiceNode(Node):
         finally:
             with self._lock:
                 self._playing = False
-            self._publish_status(False, "", "")
+            self._publish_status(False, "", "", 0)
 
-    def _publish_status(self, playing: bool, intent: str, emotion: str) -> None:
+    def _publish_status(
+        self, playing: bool, intent: str, emotion: str, verbosity: int
+    ) -> None:
         msg = String()
-        msg.data = json.dumps({"playing": playing, "intent": intent, "emotion": emotion})
+        msg.data = json.dumps({
+            "playing":   playing,
+            "intent":    intent,
+            "emotion":   emotion,
+            "verbosity": verbosity,
+        })
         self._pub.publish(msg)
 
 
