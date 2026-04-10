@@ -82,6 +82,9 @@
     },
     "3D!main": {
       "title": "3D View",
+      "fixedFrame": "base_link",
+      "followTf": "odom",
+      "followMode": "no-follow",
       "scene": {
         "enableStats": false
       },
@@ -91,6 +94,9 @@
         },
         "/camera/rgb/image_raw": {
           "visible": false
+        },
+        "/robot_description": {
+          "visible": true
         }
       },
       "layers": {
@@ -100,9 +106,9 @@
         }
       },
       "cameraState": {
-        "distance": 5,
+        "distance": 3,
         "perspective": true,
-        "phi": 45,
+        "phi": 60,
         "thetaOffset": 0,
         "targetOffset": [0, 0, 0],
         "target": [0, 0, 0],
