@@ -6,13 +6,10 @@ import os
 
 
 def generate_launch_description():
-    config = os.path.join(
-        get_package_share_directory('r2d2_audio'),
-        'config', 'audio_params.yaml'
-    )
+    sounds_dir = os.path.expanduser('~/ros2_ws/src/r2d2_audio/sounds')
 
     return LaunchDescription([
-        LogInfo(msg='Starting R2D2 Audio nodes...'),
+        LogInfo(msg='[r2d2_audio] Starte Audio-Nodes...'),
 
         # ReSpeaker: DOA + audio stream
         Node(
@@ -47,4 +44,21 @@ def generate_launch_description():
                 'record_seconds': 5.0,
             }],
         ),
+
+        # Voice Output (sample-based R2D2 voice)
+        # Plays startup sound automatically on init.
+        # Subscribes to /r2d2/voice_intent, publishes /r2d2/voice_playing.
+        Node(
+            package='r2d2_audio',
+            executable='voice_node',
+            name='voice',
+            output='screen',
+            parameters=[{
+                'sounds_dir':       sounds_dir,
+                'alsa_device':      'plughw:1,0',
+                'queue_while_busy': False,
+            }],
+        ),
+
+        LogInfo(msg='[r2d2_audio] Alle Audio-Nodes gestartet.'),
     ])
