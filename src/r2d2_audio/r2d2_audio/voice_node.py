@@ -41,7 +41,7 @@ from std_msgs.msg import String
 from r2d2_audio.sample_library import SampleLibrary
 from r2d2_audio.utterance_builder import UtteranceBuilder
 
-_PKG_DIR = Path(__file__).parent.parent
+_PKG_DIR = Path(__file__).parent
 DEFAULT_SOUNDS_DIR = str(_PKG_DIR / "sounds")
 DEFAULT_ALSA_DEVICE = "plughw:1,0"
 
@@ -140,6 +140,10 @@ class VoiceNode(Node):
     def _play_audio(
         self, audio, intent: str, emotion: str, verbosity: int
     ) -> None:
+        if audio is None:
+            self.get_logger().warn("No audio produced (missing samples?)")
+            return
+
         with self._lock:
             self._playing = True
         self._publish_status(True, intent, emotion, verbosity)

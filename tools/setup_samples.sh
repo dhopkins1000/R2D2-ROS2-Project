@@ -14,7 +14,7 @@
 set -e
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-SOUNDS_DIR="$REPO_ROOT/src/r2d2_audio/sounds"
+SOUNDS_DIR="$REPO_ROOT/src/r2d2_audio/r2d2_audio/sounds"
 PHONEMES_DIR="$SOUNDS_DIR/phonemes"
 SOURCE_MP3S="$REPO_ROOT/r2d2_sounds"
 
