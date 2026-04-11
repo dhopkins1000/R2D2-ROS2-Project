@@ -15,7 +15,7 @@ ExecStart=/bin/bash -c "\
   source /opt/ros/jazzy/setup.bash && \
   source /home/r2d2/microros_ws/install/setup.bash && \
   exec ros2 run micro_ros_agent micro_ros_agent serial \
-    --dev /dev/serial/by-id/usb-1a86_USB_Single_Serial_5AA7003331-if00 -b 115200"
+    --dev /dev/serial/by-id/usb-1a86_USB_Single_Serial_5AA7004892-if00 -b 115200"
 Restart=on-failure
 RestartSec=5
 StartLimitIntervalSec=60
