@@ -1,5 +1,5 @@
 [Unit]
-Description=micro-ROS Agent (Chassis ESP32)
+Description=micro-ROS Agent (Head ESP32)
 After=r2d2.service
 Requires=r2d2.service
 
@@ -10,12 +10,12 @@ Group=r2d2
 Environment="HOME=/home/r2d2"
 Environment="ROS_DOMAIN_ID=0"
 Environment="RMW_IMPLEMENTATION=rmw_fastrtps_cpp"
-ExecStartPre=/bin/sleep 5
+ExecStartPre=/bin/sleep 8
 ExecStart=/bin/bash -c "\
   source /opt/ros/jazzy/setup.bash && \
   source /home/r2d2/microros_ws/install/setup.bash && \
   exec ros2 run micro_ros_agent micro_ros_agent serial \
-    --dev /dev/serial/by-id/usb-1a86_USB_Single_Serial_5AA7003331-if00 -b 115200"
+    --dev /dev/serial/by-id/usb-1a86_USB_Single_Serial_5AA7004892-if00 -b 115200"
 Restart=on-failure
 RestartSec=5
 StartLimitIntervalSec=60
@@ -23,7 +23,7 @@ StartLimitBurst=5
 TimeoutStopSec=10
 StandardOutput=journal
 StandardError=journal
-SyslogIdentifier=microros-chassis
+SyslogIdentifier=microros-head
 
 [Install]
 WantedBy=multi-user.target
