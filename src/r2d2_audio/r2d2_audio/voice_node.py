@@ -41,7 +41,10 @@ from std_msgs.msg import String
 from r2d2_audio.sample_library import SampleLibrary
 from r2d2_audio.utterance_builder import UtteranceBuilder
 
-_PKG_DIR = Path(__file__).parent
+# voice_node.py lives at: src/r2d2_audio/r2d2_audio/voice_node.py
+# sounds/ lives at:       src/r2d2_audio/sounds/
+# so we need .parent.parent to get to the ROS package root
+_PKG_DIR = Path(__file__).parent.parent
 DEFAULT_SOUNDS_DIR = str(_PKG_DIR / "sounds")
 DEFAULT_ALSA_DEVICE = "plughw:1,0"
 
