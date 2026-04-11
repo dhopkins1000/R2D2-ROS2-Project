@@ -2,38 +2,26 @@
 """
 sample_library.py — R2D2 Sample Library
 
-Loads and manages two tiers of R2D2 audio samples:
+Loads and manages two tiers of R2D2 audio samples.
 
-Tier 1 — Emotional phrases (full utterances, ~0.7-4s)
-    Source: r2d2_sounds/ directory (MP3s provided by operator)
-    Used for: direct playback of emotionally labelled sounds
-    Processing: optional pitch shift ±1.5 semitones for variation
+Performance strategy: pre-bake pitch-shifted variants at startup
+-----------------------------------------------------------------
+librosa.effects.pitch_shift() takes 1-3s per sample on the Pi 4.
+Running it on every playback request causes 8+ second delays.
 
-Tier 2 — Phonemes (micro-samples, ~0.1-0.8s)
-    Source: r2d2_sounds/phonemes/ directory (WAVs from McGill R2D2 Simulator)
-    Used for: generative sequencing — chained together to form new utterances
-    Processing: pitch shift to target frequency, optional time stretch
+Solution: during __init__, pre-compute N_VARIANTS pitch-shifted versions
+of every phrase and phoneme and cache them in RAM. Playback then just
+picks a random cached variant — zero processing time at play time.
 
-HCR phoneme categories mapped to McGill samples:
-    bump      -> boop.wav           soft low boop
-    tone      -> berp.wav, dwip.wav  single beep/dip
-    whistle   -> cleanwhistle.wav   rising organic whistle
-    systle    -> bweep.wav          synthetic sweep-up
-    reeo      -> dwaep.wav, dwoop.wav, wow.wav  complex sweeping tones
-    birdsong  -> beepybeep.wav      multi-tone chitter
-    growl     -> shortgrowl.wav     low mechanical growl
+Memory impact at 22050 Hz with N_VARIANTS=5:
+    Phrases:  11 x 5 variants x avg 1.5s  = ~6 MB
+    Phonemes: 10 x 5 variants x avg 0.4s  = ~1.8 MB
+    Total: ~8 MB  (well within Pi 4 8GB budget)
 
-Sample rate: 22050 Hz
-    R2D2 sounds are all below 4kHz. 22050 Hz covers up to 11025 Hz,
-    which is well above what the 4Ohm/3W speaker can reproduce.
-    Compared to 44100 Hz: ~50% RAM, ~2x faster pitch shift processing.
-
-Dependencies: librosa, numpy, soundfile
-    pip install librosa soundfile
+Sample rate: 22050 Hz (covers 0-11025 Hz, sufficient for R2D2 <4kHz)
 """
 
 import io
-import os
 import random
 import wave
 from pathlib import Path
@@ -46,8 +34,17 @@ try:
 except ImportError:
     raise SystemExit("Missing dependency. Run: pip install librosa soundfile")
 
-# 22050 Hz: covers 0-11025 Hz — more than sufficient for R2D2 sounds (<4kHz)
 SAMPLE_RATE = 22050
+
+# Number of pitch-shifted variants to pre-bake per sample.
+# Higher = more variety, more RAM, longer startup time.
+N_VARIANTS = 5
+
+# Pitch range for pre-baked phrase variants (± semitones)
+PHRASE_PITCH_RANGE = 1.5
+
+# Pitch range for pre-baked phoneme variants (± semitones)
+PHONEME_PITCH_RANGE = 2.5
 
 # ---------------------------------------------------------------------------
 # Phoneme category definitions
@@ -78,20 +75,22 @@ EMOTION_LABELS = [
 
 class SampleLibrary:
     """
-    Loads all samples into memory at startup for low-latency playback.
-    Provides pitch-shifted and time-stretched variants on demand.
-
-    Memory footprint at 22050 Hz:
-        ~11 phrases x avg 1.5s = ~16.5s audio = ~1.4 MB
-        ~10 phonemes x avg 0.4s = ~4s audio   = ~0.35 MB
-        Total: ~1.8 MB
+    Loads all samples and pre-bakes pitch-shifted variants at startup.
+    Playback is instant — no processing happens at play time.
     """
 
     def __init__(self, sounds_dir: str):
         self._sounds_dir = Path(sounds_dir)
         self._phonemes_dir = self._sounds_dir / "phonemes"
-        self._phrases: Dict[str, np.ndarray] = {}
-        self._phonemes: Dict[str, np.ndarray] = {}
+
+        # Raw originals: {name: array}
+        self._phrases_raw: Dict[str, np.ndarray] = {}
+        self._phonemes_raw: Dict[str, np.ndarray] = {}
+
+        # Pre-baked variants: {name: [array, array, ...]}
+        self._phrases: Dict[str, List[np.ndarray]] = {}
+        self._phonemes: Dict[str, List[np.ndarray]] = {}
+
         self._load_phrases()
         self._load_phonemes()
 
@@ -109,19 +108,21 @@ class SampleLibrary:
                 continue
             try:
                 y, _ = librosa.load(str(path), sr=SAMPLE_RATE, mono=True)
-                peak = np.max(np.abs(y))
-                if peak > 0:
-                    y = y / peak * 0.85
+                y = self._normalize(y)
                 name = path.stem.replace(" ", "_").replace("-", "_")
-                self._phrases[name] = y
+                self._phrases_raw[name] = y
             except Exception as exc:
                 print(f"[SampleLibrary] Could not load phrase {path.name}: {exc}")
 
-        print(
-            f"[SampleLibrary] Loaded {len(self._phrases)} phrase(s) "
-            f"at {SAMPLE_RATE} Hz — "
-            f"~{self._total_mb(self._phrases):.1f} MB"
-        )
+        # Pre-bake variants
+        for name, y in self._phrases_raw.items():
+            self._phrases[name] = self._bake_variants(
+                y, N_VARIANTS, PHRASE_PITCH_RANGE
+            )
+            print(f"[SampleLibrary] Phrase baked: {name} ({N_VARIANTS} variants)")
+
+        mb = self._total_mb_variants(self._phrases)
+        print(f"[SampleLibrary] {len(self._phrases)} phrase(s) ready — ~{mb:.1f} MB")
 
     def _load_phonemes(self) -> None:
         if not self._phonemes_dir.exists():
@@ -132,26 +133,73 @@ class SampleLibrary:
         for path in sorted(self._phonemes_dir.glob("*.wav")):
             try:
                 y, _ = librosa.load(str(path), sr=SAMPLE_RATE, mono=True)
-                peak = np.max(np.abs(y))
-                if peak > 0:
-                    y = y / peak * 0.85
-                self._phonemes[path.stem] = y
+                y = self._normalize(y)
+                self._phonemes_raw[path.stem] = y
             except Exception as exc:
                 print(f"[SampleLibrary] Could not load phoneme {path.name}: {exc}")
 
-        print(
-            f"[SampleLibrary] Loaded {len(self._phonemes)} phoneme(s) "
-            f"at {SAMPLE_RATE} Hz — "
-            f"~{self._total_mb(self._phonemes):.1f} MB"
-        )
+        # Pre-bake variants
+        for name, y in self._phonemes_raw.items():
+            self._phonemes[name] = self._bake_variants(
+                y, N_VARIANTS, PHONEME_PITCH_RANGE
+            )
+            print(f"[SampleLibrary] Phoneme baked: {name} ({N_VARIANTS} variants)")
+
+        mb = self._total_mb_variants(self._phonemes)
+        print(f"[SampleLibrary] {len(self._phonemes)} phoneme(s) ready — ~{mb:.1f} MB")
+
+    def _bake_variants(
+        self,
+        y: np.ndarray,
+        n: int,
+        pitch_range: float,
+    ) -> List[np.ndarray]:
+        """
+        Pre-compute n pitch-shifted variants evenly spread across ±pitch_range.
+        First variant is always the original (pitch=0) for clean reference.
+        """
+        variants = [y.copy()]  # variant 0: no shift
+        pitches = np.linspace(-pitch_range, pitch_range, n - 1)
+        for semitones in pitches:
+            try:
+                shifted = librosa.effects.pitch_shift(
+                    y, sr=SAMPLE_RATE, n_steps=float(semitones)
+                )
+                variants.append(shifted)
+            except Exception as exc:
+                print(f"[SampleLibrary] Pitch shift failed ({semitones:.1f}st): {exc}")
+                variants.append(y.copy())
+        return variants
+
+    # ------------------------------------------------------------------
+    # Helpers
+    # ------------------------------------------------------------------
 
     @staticmethod
-    def _total_mb(d: Dict[str, np.ndarray]) -> float:
-        return sum(a.nbytes for a in d.values()) / 1024 / 1024
+    def _normalize(y: np.ndarray) -> np.ndarray:
+        peak = np.max(np.abs(y))
+        return (y / peak * 0.85) if peak > 0 else y
+
+    @staticmethod
+    def _total_mb_variants(d: Dict[str, List[np.ndarray]]) -> float:
+        return sum(
+            a.nbytes for variants in d.values() for a in variants
+        ) / 1024 / 1024
 
     # ------------------------------------------------------------------
-    # Phrase playback
+    # Phrase playback  (instant — just picks a cached variant)
     # ------------------------------------------------------------------
+
+    def get_random_phrase_variant(
+        self,
+        name: str,
+        pitch_range: float = 1.5,   # kept for API compat, ignored (pre-baked)
+        speed_range: float = 0.08,  # kept for API compat, ignored
+    ) -> Optional[np.ndarray]:
+        variants = self._phrases.get(name)
+        if not variants:
+            return None
+        return random.choice(variants).copy()
 
     def get_phrase(
         self,
@@ -159,27 +207,14 @@ class SampleLibrary:
         pitch_semitones: float = 0.0,
         speed: float = 1.0,
     ) -> Optional[np.ndarray]:
-        y = self._phrases.get(name)
-        if y is None:
-            return None
-        return self._process(y, pitch_semitones, speed)
-
-    def get_random_phrase_variant(
-        self,
-        name: str,
-        pitch_range: float = 1.5,
-        speed_range: float = 0.08,
-    ) -> Optional[np.ndarray]:
-        """Return a phrase with small random pitch/speed variation for naturalness."""
-        pitch = random.uniform(-pitch_range, pitch_range)
-        speed = random.uniform(1.0 - speed_range, 1.0 + speed_range)
-        return self.get_phrase(name, pitch, speed)
+        # For API compatibility — just pick a random variant
+        return self.get_random_phrase_variant(name)
 
     def available_phrases(self) -> List[str]:
         return list(self._phrases.keys())
 
     # ------------------------------------------------------------------
-    # Phoneme playback
+    # Phoneme playback  (instant — just picks a cached variant)
     # ------------------------------------------------------------------
 
     def get_phoneme(
@@ -188,10 +223,10 @@ class SampleLibrary:
         pitch_semitones: float = 0.0,
         speed: float = 1.0,
     ) -> Optional[np.ndarray]:
-        y = self._phonemes.get(name)
-        if y is None:
+        variants = self._phonemes.get(name)
+        if not variants:
             return None
-        return self._process(y, pitch_semitones, speed)
+        return random.choice(variants).copy()
 
     def get_phoneme_from_category(
         self,
@@ -203,35 +238,16 @@ class SampleLibrary:
         if not candidates:
             return None
         name = random.choice(candidates)
-        return self.get_phoneme(name, pitch_semitones, speed)
+        return self.get_phoneme(name)
 
     def available_phonemes(self) -> List[str]:
         return list(self._phonemes.keys())
-
-    # ------------------------------------------------------------------
-    # Processing
-    # ------------------------------------------------------------------
-
-    def _process(
-        self,
-        y: np.ndarray,
-        pitch_semitones: float,
-        speed: float,
-    ) -> np.ndarray:
-        if abs(pitch_semitones) > 0.05:
-            y = librosa.effects.pitch_shift(
-                y, sr=SAMPLE_RATE, n_steps=pitch_semitones
-            )
-        if abs(speed - 1.0) > 0.02:
-            y = librosa.effects.time_stretch(y, rate=speed)
-        return y
 
     # ------------------------------------------------------------------
     # Audio rendering
     # ------------------------------------------------------------------
 
     def render_to_wav_bytes(self, samples: np.ndarray) -> bytes:
-        """Convert float32 array to WAV bytes for aplay/afplay."""
         pcm = np.clip(samples, -1.0, 1.0)
         pcm_int16 = (pcm * 32767).astype(np.int16)
         buf = io.BytesIO()
@@ -247,7 +263,6 @@ class SampleLibrary:
         segments: List[np.ndarray],
         gap_s: float = 0.06,
     ) -> np.ndarray:
-        """Concatenate audio segments with a silence gap between them."""
         silence = np.zeros(int(gap_s * SAMPLE_RATE), dtype=np.float32)
         parts = []
         for seg in segments:
