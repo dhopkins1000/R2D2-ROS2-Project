@@ -1,30 +1,6 @@
 #!/usr/bin/env python3
 """
 voice_node.py — R2D2 Sample-Based Voice ROS2 Node
-
-Subscribes to /r2d2/voice_intent (std_msgs/String) and plays
-authentically R2D2-like sounds using real sample playback.
-
-Topic contract
---------------
-Subscriber: /r2d2/voice_intent   std_msgs/String
-    {
-        "speak":     true,
-        "intent":    "comment",
-        "emotion":   "excited",
-        "intensity": "high",
-        "verbosity": 7
-    }
-
-    verbosity (1-10): proportional to LLM response length.
-        1-2  = very short answer  -> 1-2 phonemes
-        3-4  = one sentence       -> 2 phonemes
-        5-6  = a few sentences    -> 3 phonemes
-        7-8  = paragraph          -> 4 phonemes + phrase tail
-        9-10 = long explanation   -> 5-6 phonemes + phrase tail
-
-Publisher:  /r2d2/voice_playing  std_msgs/String
-    {"playing": true, "intent": "comment", "emotion": "excited", "verbosity": 7}
 """
 
 import json
@@ -41,10 +17,10 @@ from std_msgs.msg import String
 from r2d2_audio.sample_library import SampleLibrary
 from r2d2_audio.utterance_builder import UtteranceBuilder
 
-# voice_node.py lives at: src/r2d2_audio/r2d2_audio/voice_node.py
-# sounds/ lives at:       src/r2d2_audio/sounds/
-# so we need .parent.parent to get to the ROS package root
-_PKG_DIR = Path(__file__).parent.parent
+# voice_node.py is at: src/r2d2_audio/r2d2_audio/voice_node.py
+# sounds/ is at:       src/r2d2_audio/r2d2_audio/sounds/
+# (placed there by Claude Code during setup)
+_PKG_DIR = Path(__file__).parent
 DEFAULT_SOUNDS_DIR = str(_PKG_DIR / "sounds")
 DEFAULT_ALSA_DEVICE = "plughw:1,0"
 
@@ -95,8 +71,6 @@ class VoiceNode(Node):
             daemon=True,
         ).start()
 
-    # ------------------------------------------------------------------
-
     def _on_intent(self, msg: String) -> None:
         try:
             data = json.loads(msg.data)
@@ -138,11 +112,7 @@ class VoiceNode(Node):
             daemon=True,
         ).start()
 
-    # ------------------------------------------------------------------
-
-    def _play_audio(
-        self, audio, intent: str, emotion: str, verbosity: int
-    ) -> None:
+    def _play_audio(self, audio, intent: str, emotion: str, verbosity: int) -> None:
         if audio is None:
             self.get_logger().warn("No audio produced (missing samples?)")
             return
@@ -174,9 +144,7 @@ class VoiceNode(Node):
                 self._playing = False
             self._publish_status(False, "", "", 0)
 
-    def _publish_status(
-        self, playing: bool, intent: str, emotion: str, verbosity: int
-    ) -> None:
+    def _publish_status(self, playing: bool, intent: str, emotion: str, verbosity: int) -> None:
         msg = String()
         msg.data = json.dumps({
             "playing":   playing,

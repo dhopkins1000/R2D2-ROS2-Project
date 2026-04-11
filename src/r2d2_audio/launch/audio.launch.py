@@ -1,12 +1,15 @@
 from launch import LaunchDescription
 from launch_ros.actions import Node
 from launch.actions import LogInfo
-from ament_index_python.packages import get_package_share_directory
 import os
 
 
 def generate_launch_description():
-    sounds_dir = os.path.expanduser('~/ros2_ws/src/r2d2_audio/sounds')
+    # Sounds are located inside the Python package directory
+    # (placed there by Claude Code during initial setup)
+    sounds_dir = os.path.expanduser(
+        '~/ros2_ws/src/r2d2_audio/r2d2_audio/sounds'
+    )
 
     return LaunchDescription([
         LogInfo(msg='[r2d2_audio] Starte Audio-Nodes...'),
@@ -28,7 +31,7 @@ def generate_launch_description():
             parameters=[{
                 'threshold': 0.5,
                 'listen_timeout': 5.0,
-                'model_path': '',   # set to path of custom r2d2.onnx model
+                'model_path': '',
             }],
         ),
 
