@@ -9,12 +9,20 @@ result to /r2d2/llm_test as a JSON string.
 Usage:
     ros2 run r2d2_soul llm_latency_test
 
-    # With custom soul workspace path:
-    ros2 run r2d2_soul llm_latency_test --ros-args -p soul_workspace:=/home/r2d2/soul
+    # With explicit parameters:
+    ros2 run r2d2_soul llm_latency_test --ros-args \
+        -p soul_workspace:=/home/r2d2/soul \
+        -p temperature:=0.0
 
 What it measures:
     - Wall-clock time from subprocess.run() to parsed JSON result.
     - Includes: Claude Code startup, network round-trip, inference, response.
+
+Temperature:
+    Default is 0.0 (deterministic). For structured JSON output this is correct —
+    we want schema compliance, not sampling variation. Personality and character
+    come from SOUL.md, not from temperature randomness.
+    Valid range: 0.0–1.0. Only change for experimentation.
 
 The Claude Code CLI envelope format (--output-format json):
     {
@@ -69,19 +77,23 @@ class LlmLatencyTestNode(Node):
     def __init__(self):
         super().__init__('llm_latency_test_node')
 
-        # ROS2 parameter — override on CLI with:
-        #   --ros-args -p soul_workspace:=/your/path
+        # ROS2 parameters — override on CLI with --ros-args -p key:=value
         self.declare_parameter('soul_workspace', '/home/r2d2/soul')
+        self.declare_parameter('temperature', 0.0)
+
         self.soul_workspace = (
             self.get_parameter('soul_workspace').get_parameter_value().string_value
+        )
+        self.temperature = (
+            self.get_parameter('temperature').get_parameter_value().double_value
         )
 
         self.publisher_ = self.create_publisher(String, '/r2d2/llm_test', 10)
 
-        self.get_logger().info(f'Soul workspace: {self.soul_workspace}')
+        self.get_logger().info(f'Soul workspace : {self.soul_workspace}')
+        self.get_logger().info(f'Temperature    : {self.temperature}')
         self.get_logger().info('Firing test in 2s...')
 
-        # Fire once after a short delay so ROS2 is fully up
         self.timer = self.create_timer(2.0, self._run_test)
 
     def _run_test(self):
@@ -126,7 +138,11 @@ class LlmLatencyTestNode(Node):
         Returns a result dict with timing, parsed response, and session_id.
         On error, returns a dict with an 'error' key.
         """
-        cmd = ['claude', '-p', prompt, '--output-format', 'json']
+        cmd = [
+            'claude', '-p', prompt,
+            '--output-format', 'json',
+            '--temperature', str(self.temperature),
+        ]
         if session_id:
             cmd.extend(['--resume', session_id])
 
@@ -186,8 +202,7 @@ class LlmLatencyTestNode(Node):
 
         # The model reply is in envelope["result"].
         # Strip markdown fences defensively — AGENTS.md forbids them, but
-        # models sometimes ignore that instruction. Log when it happens so
-        # we know to tighten the prompt further.
+        # models sometimes ignore that instruction. Log when it happens.
         raw_result = envelope.get('result', '')
         clean_result = strip_fences(raw_result)
         fences_stripped = clean_result != raw_result
