@@ -16,26 +16,20 @@ Usage:
 
 ROS2 Parameters:
     soul_workspace  (string)  Path to the soul workspace directory.
-                              Soul .md files are read from here at startup and
-                              assembled into the R2D2 agent definition.
+                              AGENTS.md is referenced from here as the agent file.
                               Default: /home/r2d2/soul
 
     effort          (string)  Claude Code --effort level: low, medium, high, max.
                               'low' minimises latency; 'high' for complex reasoning.
                               Default: low
 
-Agent loading strategy:
-    Soul workspace .md files are read at node startup and passed inline via
-    --agents / --agent r2d2. This avoids AGENTS.md auto-discovery entirely.
+Agent loading:
+    --agent <path> accepts an absolute path to an AGENTS.md file directly.
+    No --agents JSON construction needed. Claude Code loads the file and all
+    files it references (SOUL.md, IDENTITY.md, etc.) from the soul workspace.
 
-    --bare is NOT used: it disables OAuth/keychain auth, which breaks the
-    Claude Code subscription login on the Pi. Auth requires the normal
-    startup path. If a raw ANTHROPIC_API_KEY is available in the environment,
-    --bare could be reconsidered as a latency optimisation.
-
-Files loaded into the agent prompt (in order):
-    AGENTS.md, SOUL.md, IDENTITY.md, USER.md, TOOLS.md, MEMORY.md,
-    OUTPUT_FORMAT.md + memory/YYYY-MM-DD.md (today's log, if it exists)
+    Context is cached server-side after the first call — subsequent calls
+    within the cache window are significantly faster (cache_read_input_tokens).
 
 The Claude Code CLI envelope format (--output-format json):
     {
@@ -51,7 +45,6 @@ import json
 import re
 import subprocess
 import time
-from datetime import date
 from pathlib import Path
 
 import rclpy
@@ -64,18 +57,6 @@ TEST_PROMPT = (
     "OUTPUT_FORMAT.md schema. Use goal=idle, a curious utterance intent, "
     "and a short lcd line1 greeting."
 )
-
-# Soul workspace files loaded into the agent prompt, in order.
-# OUTPUT_FORMAT.md last so the output contract is freshest in context.
-SOUL_FILES = [
-    'AGENTS.md',
-    'SOUL.md',
-    'IDENTITY.md',
-    'USER.md',
-    'TOOLS.md',
-    'MEMORY.md',
-    'OUTPUT_FORMAT.md',
-]
 
 # OUTPUT_FORMAT JSON schema for --json-schema server-side validation.
 OUTPUT_JSON_SCHEMA = json.dumps({
@@ -120,26 +101,6 @@ def strip_fences(text: str) -> str:
     return m.group(1).strip() if m else text.strip()
 
 
-def load_soul_prompt(workspace: Path, logger) -> str:
-    """
-    Read soul workspace .md files and assemble a single agent prompt string.
-    Includes today's memory log if it exists.
-    """
-    sections = []
-    for filename in SOUL_FILES:
-        filepath = workspace / filename
-        if filepath.exists():
-            sections.append(f'--- {filename} ---\n{filepath.read_text()}')
-        else:
-            logger.warn(f'Soul file not found, skipping: {filepath}')
-
-    today_log = workspace / 'memory' / f'{date.today().isoformat()}.md'
-    if today_log.exists():
-        sections.append(f'--- memory/{today_log.name} ---\n{today_log.read_text()}')
-
-    return '\n\n'.join(sections)
-
-
 class LlmLatencyTestNode(Node):
 
     def __init__(self):
@@ -154,20 +115,15 @@ class LlmLatencyTestNode(Node):
         self.effort = (
             self.get_parameter('effort').get_parameter_value().string_value
         )
+        self.agents_md = str(self.soul_workspace / 'AGENTS.md')
 
         self.publisher_ = self.create_publisher(String, '/r2d2/llm_test', 10)
 
         self.get_logger().info(f'Soul workspace : {self.soul_workspace}')
+        self.get_logger().info(f'Agent file     : {self.agents_md}')
         self.get_logger().info(f'Effort         : {self.effort}')
-
-        # Load soul files once at startup
-        self.get_logger().info('Loading soul workspace files...')
-        self.agent_prompt = load_soul_prompt(self.soul_workspace, self.get_logger())
-        self.get_logger().info(
-            f'Agent prompt assembled ({len(self.agent_prompt)} chars)'
-        )
-
         self.get_logger().info('Firing test in 2s...')
+
         self.timer = self.create_timer(2.0, self._run_test)
 
     def _run_test(self):
@@ -188,39 +144,35 @@ class LlmLatencyTestNode(Node):
         else:
             self.get_logger().info('--- Results ---')
             self.get_logger().info(
-                f'  Total latency  : {result["latency_total_s"]:.2f}s'
+                f'  Total latency      : {result["latency_total_s"]:.2f}s'
             )
             self.get_logger().info(
-                f'  Fences stripped: {result["fences_stripped"]}'
+                f'  Cache read tokens  : {result.get("cache_read_tokens", "n/a")}'
             )
             self.get_logger().info(
-                f'  Model response : {result["model_response"]}'
+                f'  Cache create tokens: {result.get("cache_create_tokens", "n/a")}'
             )
             self.get_logger().info(
-                f'  Session ID     : {result["session_id"]}'
+                f'  Fences stripped    : {result["fences_stripped"]}'
+            )
+            self.get_logger().info(
+                f'  Model response     : {result["model_response"]}'
+            )
+            self.get_logger().info(
+                f'  Session ID         : {result["session_id"]}'
             )
             self.get_logger().info('Published to /r2d2/llm_test')
 
-    def _build_agents_json(self) -> str:
-        return json.dumps({
-            "r2d2": {
-                "description": "R2D2 astromech droid — soul and autonomy agent",
-                "prompt": self.agent_prompt,
-            }
-        })
-
     def _call_claude(self, prompt: str, session_id: str | None = None) -> dict:
         """
-        Call Claude Code CLI. Soul personality is injected via --agents/--agent,
-        avoiding AGENTS.md auto-discovery. --bare is omitted because it disables
-        OAuth/keychain auth required for the Claude Code subscription on the Pi.
+        Call Claude Code CLI with --agent pointing directly to AGENTS.md.
+        No JSON construction needed — Claude Code reads the file directly.
         """
         cmd = [
             'claude', '-p', prompt,
             '--output-format', 'json',
             '--effort', self.effort,
-            '--agents', self._build_agents_json(),
-            '--agent', 'r2d2',
+            '--agent', self.agents_md,
             '--json-schema', OUTPUT_JSON_SCHEMA,
         ]
         if session_id:
@@ -289,14 +241,19 @@ class LlmLatencyTestNode(Node):
                 'Model returned markdown fences despite --json-schema — stripped.'
             )
 
+        # Extract cache stats for latency analysis
+        usage = envelope.get('usage', {})
+
         return {
-            'latency_total_s': latency,
-            'model_response':  clean_result,
-            'fences_stripped': fences_stripped,
-            'session_id':      envelope.get('session_id', ''),
-            'cost_usd':        envelope.get('cost_usd', 0.0),
-            'raw_envelope':    envelope,
-            'returncode':      proc.returncode,
+            'latency_total_s':   latency,
+            'model_response':    clean_result,
+            'fences_stripped':   fences_stripped,
+            'session_id':        envelope.get('session_id', ''),
+            'cost_usd':          envelope.get('total_cost_usd', 0.0),
+            'cache_read_tokens': usage.get('cache_read_input_tokens', 0),
+            'cache_create_tokens': usage.get('cache_creation_input_tokens', 0),
+            'raw_envelope':      envelope,
+            'returncode':        proc.returncode,
         }
 
 
