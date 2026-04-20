@@ -12,33 +12,24 @@ Usage:
     # Override parameters:
     ros2 run r2d2_soul llm_latency_test --ros-args \
         -p soul_workspace:=/home/r2d2/soul \
-        -p effort:=low \
-        -p bare_mode:=true
+        -p effort:=low
 
 ROS2 Parameters:
     soul_workspace  (string)  Path to the soul workspace directory.
-                              Claude Code reads AGENTS.md from here automatically.
+                              Claude Code reads AGENTS.md from here automatically
+                              because it is set as the subprocess cwd.
                               Default: /home/r2d2/soul
 
     effort          (string)  Claude Code --effort level: low, medium, high, max.
                               'low' minimises latency; 'high' for complex reasoning.
                               Default: low
 
-    bare_mode       (bool)    Pass --bare to Claude Code: skips hooks, LSP, plugin
-                              sync, auto-memory, and background prefetches.
-                              Reduces startup overhead significantly.
-                              Default: true
+Notes:
+    --bare is intentionally NOT used: it disables CLAUDE.md/AGENTS.md
+    auto-discovery, which would prevent the soul workspace from loading.
 
-Notes on --temperature:
-    Claude Code CLI does NOT have a --temperature flag. Use --effort instead.
-
-Notes on --json-schema:
-    We pass our OUTPUT_FORMAT schema via --json-schema for server-side validation.
-    This makes fence-stripping largely unnecessary, but we keep it as a fallback.
-
-Notes on --tools "":
-    We disable all built-in tools. R2D2's LLM node only needs text inference —
-    no file editing, no bash execution. Fewer tools = less overhead.
+    --tools is intentionally NOT used: passing an empty string causes a
+    CLI parse error. Claude Code defaults are fine for our use case.
 
 The Claude Code CLI envelope format (--output-format json):
     {
@@ -66,7 +57,7 @@ TEST_PROMPT = (
     "and a short lcd line1 greeting."
 )
 
-# OUTPUT_FORMAT schema passed to --json-schema for server-side validation.
+# OUTPUT_FORMAT schema for --json-schema server-side validation.
 # Matches OUTPUT_FORMAT.md in the soul workspace.
 OUTPUT_JSON_SCHEMA = json.dumps({
     "type": "object",
@@ -117,7 +108,6 @@ class LlmLatencyTestNode(Node):
 
         self.declare_parameter('soul_workspace', '/home/r2d2/soul')
         self.declare_parameter('effort', 'low')
-        self.declare_parameter('bare_mode', True)
 
         self.soul_workspace = (
             self.get_parameter('soul_workspace').get_parameter_value().string_value
@@ -125,15 +115,11 @@ class LlmLatencyTestNode(Node):
         self.effort = (
             self.get_parameter('effort').get_parameter_value().string_value
         )
-        self.bare_mode = (
-            self.get_parameter('bare_mode').get_parameter_value().bool_value
-        )
 
         self.publisher_ = self.create_publisher(String, '/r2d2/llm_test', 10)
 
         self.get_logger().info(f'Soul workspace : {self.soul_workspace}')
         self.get_logger().info(f'Effort         : {self.effort}')
-        self.get_logger().info(f'Bare mode      : {self.bare_mode}')
         self.get_logger().info('Firing test in 2s...')
 
         self.timer = self.create_timer(2.0, self._run_test)
@@ -150,8 +136,11 @@ class LlmLatencyTestNode(Node):
 
         if result.get('error'):
             self.get_logger().error(f'FAILED: {result["error"]}')
+            # Always log stderr and stdout on failure — critical for debugging
             if result.get('stderr'):
                 self.get_logger().error(f'stderr: {result["stderr"]}')
+            if result.get('raw_stdout'):
+                self.get_logger().error(f'stdout: {result["raw_stdout"]}')
         else:
             self.get_logger().info('--- Results ---')
             self.get_logger().info(
@@ -169,15 +158,19 @@ class LlmLatencyTestNode(Node):
             self.get_logger().info('Published to /r2d2/llm_test')
 
     def _call_claude(self, prompt: str, session_id: str | None = None) -> dict:
+        """
+        Call Claude Code CLI as a subprocess with soul_workspace as cwd.
+
+        Claude Code picks up AGENTS.md automatically from the cwd.
+        --bare is intentionally omitted: it disables AGENTS.md auto-discovery.
+        --tools is intentionally omitted: empty string causes a CLI parse error.
+        """
         cmd = [
             'claude', '-p', prompt,
             '--output-format', 'json',
             '--effort', self.effort,
-            '--tools', '',                        # no tools needed — text only
-            '--json-schema', OUTPUT_JSON_SCHEMA,  # server-side schema validation
+            '--json-schema', OUTPUT_JSON_SCHEMA,
         ]
-        if self.bare_mode:
-            cmd.append('--bare')
         if session_id:
             cmd.extend(['--resume', session_id])
 
@@ -221,6 +214,7 @@ class LlmLatencyTestNode(Node):
                 'latency_total_s': latency,
                 'returncode': proc.returncode,
                 'stderr': proc.stderr.strip(),
+                'raw_stdout': proc.stdout.strip()[:500],
             }
 
         try:
@@ -261,9 +255,13 @@ def main(args=None):
         rclpy.spin(node)
     except KeyboardInterrupt:
         pass
+    except Exception as e:
+        node.get_logger().error(f'Unexpected error: {e}')
     finally:
-        node.destroy_node()
-        rclpy.shutdown()
+        if node:
+            node.destroy_node()
+        if rclpy.ok():
+            rclpy.shutdown()
 
 
 if __name__ == '__main__':
