@@ -31,6 +31,13 @@ ROS2 Parameters:
                               If False, each call is independent.
                               Default: False
 
+Note on ros2 topic echo output:
+    ros2 topic echo truncates long strings in terminal display. The full JSON
+    is always published intact. Use the node log output to see complete field
+    values, or pipe through: ros2 topic echo /r2d2/llm_response | python3 -c
+    "import sys,json; [print(json.dumps(json.loads(l.split('data: ')[1]), indent=2))
+    for l in sys.stdin if 'data:' in l]"
+
 Response published to /r2d2/llm_response is a JSON string:
     {
         "goal":         "idle",
@@ -116,10 +123,7 @@ class LlmNode(Node):
         )
         self.agents_md = str(self.soul_workspace / 'AGENTS.md')
 
-        # Persistent session ID — only used when session_persist=True
         self._session_id: str | None = None
-
-        # Guard against concurrent calls
         self._busy = False
 
         self._pub_response = self.create_publisher(String, '/r2d2/llm_response', 10)
@@ -160,10 +164,6 @@ class LlmNode(Node):
         self._publish_busy(False)
 
     def _call_claude(self, prompt: str) -> dict:
-        """
-        Call Claude Code CLI and return the structured response dict.
-        Includes a _meta field with latency, cost, and session info.
-        """
         session_id = self._session_id if self.session_persist else None
 
         cmd = [
@@ -184,7 +184,7 @@ class LlmNode(Node):
                 capture_output=True,
                 text=True,
                 timeout=60,
-                cwd='/tmp',   # neutral cwd — prevents soul workspace auto-discovery
+                cwd='/tmp',
             )
         except subprocess.TimeoutExpired:
             return self._error_response('subprocess timed out after 60s', t_start)
@@ -196,7 +196,9 @@ class LlmNode(Node):
         latency = time.monotonic() - t_start
 
         if proc.returncode != 0:
-            self.get_logger().error(f'claude exit {proc.returncode}: {proc.stderr.strip()[:200]}')
+            self.get_logger().error(
+                f'claude exit {proc.returncode}: {proc.stderr.strip()[:200]}'
+            )
             return self._error_response(
                 f'claude exited with code {proc.returncode}', t_start,
                 stderr=proc.stderr.strip()
@@ -207,13 +209,10 @@ class LlmNode(Node):
         except json.JSONDecodeError as e:
             return self._error_response(f'JSON parse failed: {e}', t_start)
 
-        # Persist session ID for conversational continuity
         new_session = envelope.get('session_id', '')
         if self.session_persist and new_session:
             self._session_id = new_session
 
-        # With --json-schema: response is in structured_output (dict)
-        # Without --json-schema: response is in result (string)
         structured = envelope.get('structured_output')
         if not structured:
             self.get_logger().warn('No structured_output in envelope — check --json-schema.')
@@ -221,20 +220,27 @@ class LlmNode(Node):
 
         usage = envelope.get('usage', {})
         structured['_meta'] = {
-            'latency_s':   round(latency, 2),
-            'cost_usd':    envelope.get('total_cost_usd', 0.0),
-            'session_id':  new_session,
-            'cache_read':  usage.get('cache_read_input_tokens', 0),
+            'latency_s':    round(latency, 2),
+            'cost_usd':     envelope.get('total_cost_usd', 0.0),
+            'session_id':   new_session,
+            'cache_read':   usage.get('cache_read_input_tokens', 0),
             'cache_create': usage.get('cache_creation_input_tokens', 0),
-            'error':       None,
+            'error':        None,
         }
 
-        self.get_logger().info(
-            f'Response: goal={structured.get("goal")} '
-            f'utterance={structured.get("utterance", {}).get("intent")} '
-            f'latency={latency:.1f}s '
-            f'cache_read={usage.get("cache_read_input_tokens", 0)}'
-        )
+        # Log response fields explicitly — ros2 topic echo truncates long strings
+        lcd = structured.get('lcd', {})
+        self.get_logger().info('--- LLM Response ---')
+        self.get_logger().info(f'  goal      : {structured.get("goal")}')
+        self.get_logger().info(f'  intent    : {structured.get("utterance", {}).get("intent")}')
+        self.get_logger().info(f'  intensity : {structured.get("utterance", {}).get("intensity")}')
+        self.get_logger().info(f'  lcd line1 : {lcd.get("line1", "")}')
+        self.get_logger().info(f'  lcd line2 : {lcd.get("line2", "")}')
+        self.get_logger().info(f'  mood_delta: {structured.get("mood_delta")}')
+        self.get_logger().info(f'  memory    : {structured.get("memory_write")}')
+        self.get_logger().info(f'  latency   : {latency:.1f}s')
+        self.get_logger().info(f'  cache_read: {usage.get("cache_read_input_tokens", 0)}')
+
         return structured
 
     def _publish_response(self, response: dict):
