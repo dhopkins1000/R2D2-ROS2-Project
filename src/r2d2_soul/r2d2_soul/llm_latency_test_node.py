@@ -33,6 +33,7 @@ Why cwd matters:
 """
 
 import json
+import re
 import subprocess
 import time
 
@@ -52,6 +53,16 @@ TEST_PROMPT = (
     "and a short lcd line1 greeting."
 )
 
+# Regex to strip markdown code fences — defensive fallback in case the
+# model wraps output in ```json ... ``` despite AGENTS.md instructions.
+_FENCE_RE = re.compile(r'^```(?:json)?\s*\n?(.*?)\n?```\s*$', re.DOTALL)
+
+
+def strip_fences(text: str) -> str:
+    """Remove markdown code fences if present. Returns raw text unchanged otherwise."""
+    m = _FENCE_RE.match(text.strip())
+    return m.group(1).strip() if m else text.strip()
+
 
 class LlmLatencyTestNode(Node):
 
@@ -67,9 +78,7 @@ class LlmLatencyTestNode(Node):
 
         self.publisher_ = self.create_publisher(String, '/r2d2/llm_test', 10)
 
-        self.get_logger().info(
-            f'Soul workspace: {self.soul_workspace}'
-        )
+        self.get_logger().info(f'Soul workspace: {self.soul_workspace}')
         self.get_logger().info('Firing test in 2s...')
 
         # Fire once after a short delay so ROS2 is fully up
@@ -94,13 +103,16 @@ class LlmLatencyTestNode(Node):
         else:
             self.get_logger().info('--- Results ---')
             self.get_logger().info(
-                f'  Total latency : {result["latency_total_s"]:.2f}s'
+                f'  Total latency  : {result["latency_total_s"]:.2f}s'
             )
             self.get_logger().info(
-                f'  Model response: {result["model_response"]}'
+                f'  Fences stripped: {result["fences_stripped"]}'
             )
             self.get_logger().info(
-                f'  Session ID    : {result["session_id"]}'
+                f'  Model response : {result["model_response"]}'
+            )
+            self.get_logger().info(
+                f'  Session ID     : {result["session_id"]}'
             )
             self.get_logger().info('Published to /r2d2/llm_test')
 
@@ -126,7 +138,7 @@ class LlmLatencyTestNode(Node):
                 capture_output=True,
                 text=True,
                 timeout=60,
-                cwd=self.soul_workspace,   # <-- this is the key line
+                cwd=self.soul_workspace,
             )
         except subprocess.TimeoutExpired:
             return {
@@ -160,6 +172,7 @@ class LlmLatencyTestNode(Node):
                 'stderr': proc.stderr.strip(),
             }
 
+        # Parse the Claude Code JSON envelope
         try:
             envelope = json.loads(proc.stdout)
         except json.JSONDecodeError as e:
@@ -171,9 +184,24 @@ class LlmLatencyTestNode(Node):
                 'stderr': proc.stderr.strip(),
             }
 
+        # The model reply is in envelope["result"].
+        # Strip markdown fences defensively — AGENTS.md forbids them, but
+        # models sometimes ignore that instruction. Log when it happens so
+        # we know to tighten the prompt further.
+        raw_result = envelope.get('result', '')
+        clean_result = strip_fences(raw_result)
+        fences_stripped = clean_result != raw_result
+
+        if fences_stripped:
+            self.get_logger().warn(
+                'Model returned markdown fences despite AGENTS.md prohibition — stripped. '
+                'Consider tightening OUTPUT_FORMAT.md or the prompt.'
+            )
+
         return {
             'latency_total_s': latency,
-            'model_response':  envelope.get('result', ''),
+            'model_response':  clean_result,
+            'fences_stripped': fences_stripped,
             'session_id':      envelope.get('session_id', ''),
             'cost_usd':        envelope.get('cost_usd', 0.0),
             'raw_envelope':    envelope,
