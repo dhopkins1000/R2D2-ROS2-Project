@@ -31,18 +31,21 @@ Agent loading:
     Context is cached server-side after the first call — subsequent calls
     within the cache window are significantly faster (cache_read_input_tokens).
 
-The Claude Code CLI envelope format (--output-format json):
+Envelope format with --json-schema:
+    When --json-schema is passed, Claude Code puts the validated response in
+    envelope["structured_output"] (a dict), NOT in envelope["result"] (string).
+    Both fields are read; structured_output takes priority.
+
     {
-        "result":     "<model response text>",
-        "session_id": "<uuid for --resume>",
-        "cost_usd":   0.0,
+        "result":           "",                  <- empty when schema is used
+        "structured_output": {"goal": "idle"},   <- actual response
+        "session_id":       "<uuid>",
+        "total_cost_usd":   0.0,
         ...
     }
-The model's actual reply lives in response["result"].
 """
 
 import json
-import re
 import subprocess
 import time
 from pathlib import Path
@@ -53,12 +56,12 @@ from std_msgs.msg import String
 
 
 TEST_PROMPT = (
-    "Latency test. Respond with a valid JSON object matching your "
-    "OUTPUT_FORMAT.md schema. Use goal=idle, a curious utterance intent, "
-    "and a short lcd line1 greeting."
+    "Latency test. Respond using your OUTPUT_FORMAT.md schema. "
+    "Use goal=idle, a curious utterance intent, and a short lcd line1 greeting."
 )
 
 # OUTPUT_FORMAT JSON schema for --json-schema server-side validation.
+# When used, Claude Code returns a parsed dict in envelope["structured_output"].
 OUTPUT_JSON_SCHEMA = json.dumps({
     "type": "object",
     "required": ["goal", "goal_params", "utterance", "lcd", "mood_delta"],
@@ -91,14 +94,6 @@ OUTPUT_JSON_SCHEMA = json.dumps({
         "internal_note": {"type": ["string", "null"]},
     },
 })
-
-# Defensive fallback: strip markdown fences if the model ignores the schema.
-_FENCE_RE = re.compile(r'^```(?:json)?\s*\n?(.*?)\n?```\s*$', re.DOTALL)
-
-
-def strip_fences(text: str) -> str:
-    m = _FENCE_RE.match(text.strip())
-    return m.group(1).strip() if m else text.strip()
 
 
 class LlmLatencyTestNode(Node):
@@ -153,9 +148,6 @@ class LlmLatencyTestNode(Node):
                 f'  Cache create tokens: {result.get("cache_create_tokens", "n/a")}'
             )
             self.get_logger().info(
-                f'  Fences stripped    : {result["fences_stripped"]}'
-            )
-            self.get_logger().info(
                 f'  Model response     : {result["model_response"]}'
             )
             self.get_logger().info(
@@ -166,7 +158,9 @@ class LlmLatencyTestNode(Node):
     def _call_claude(self, prompt: str, session_id: str | None = None) -> dict:
         """
         Call Claude Code CLI with --agent pointing directly to AGENTS.md.
-        No JSON construction needed — Claude Code reads the file directly.
+
+        With --json-schema, the response lands in envelope["structured_output"]
+        as an already-parsed dict — not in envelope["result"]. We check both.
         """
         cmd = [
             'claude', '-p', prompt,
@@ -232,28 +226,25 @@ class LlmLatencyTestNode(Node):
                 'stderr': proc.stderr.strip(),
             }
 
-        raw_result = envelope.get('result', '')
-        clean_result = strip_fences(raw_result)
-        fences_stripped = clean_result != raw_result
+        # With --json-schema, response is in structured_output (dict).
+        # Without --json-schema, response is in result (string).
+        structured = envelope.get('structured_output')
+        if structured:
+            model_response = structured  # already a parsed dict
+        else:
+            model_response = envelope.get('result', '')
 
-        if fences_stripped:
-            self.get_logger().warn(
-                'Model returned markdown fences despite --json-schema — stripped.'
-            )
-
-        # Extract cache stats for latency analysis
         usage = envelope.get('usage', {})
 
         return {
-            'latency_total_s':   latency,
-            'model_response':    clean_result,
-            'fences_stripped':   fences_stripped,
-            'session_id':        envelope.get('session_id', ''),
-            'cost_usd':          envelope.get('total_cost_usd', 0.0),
-            'cache_read_tokens': usage.get('cache_read_input_tokens', 0),
+            'latency_total_s':     latency,
+            'model_response':      model_response,
+            'session_id':          envelope.get('session_id', ''),
+            'cost_usd':            envelope.get('total_cost_usd', 0.0),
+            'cache_read_tokens':   usage.get('cache_read_input_tokens', 0),
             'cache_create_tokens': usage.get('cache_creation_input_tokens', 0),
-            'raw_envelope':      envelope,
-            'returncode':        proc.returncode,
+            'raw_envelope':        envelope,
+            'returncode':          proc.returncode,
         }
 
 
