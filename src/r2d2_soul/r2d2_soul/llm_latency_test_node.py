@@ -16,7 +16,7 @@ Usage:
 
 ROS2 Parameters:
     soul_workspace  (string)  Path to the soul workspace directory.
-                              AGENTS.md is referenced from here as the agent file.
+                              AGENTS.md is loaded from here via absolute path.
                               Default: /home/r2d2/soul
 
     effort          (string)  Claude Code --effort level: low, medium, high, max.
@@ -24,23 +24,20 @@ ROS2 Parameters:
                               Default: low
 
 Agent loading:
-    --agent <path> accepts an absolute path to an AGENTS.md file directly.
-    No --agents JSON construction needed. Claude Code loads the file and all
-    files it references (SOUL.md, IDENTITY.md, etc.) from the soul workspace.
-
-    Context is cached server-side after the first call — subsequent calls
-    within the cache window are significantly faster (cache_read_input_tokens).
+    --agent /absolute/path/AGENTS.md loads the soul workspace explicitly.
+    cwd is set to /tmp to prevent Claude Code from auto-discovering and
+    double-loading the soul workspace .md files (which would inflate token
+    count and latency significantly).
 
 Envelope format with --json-schema:
     When --json-schema is passed, Claude Code puts the validated response in
     envelope["structured_output"] (a dict), NOT in envelope["result"] (string).
-    Both fields are read; structured_output takes priority.
 
     {
-        "result":           "",                  <- empty when schema is used
-        "structured_output": {"goal": "idle"},   <- actual response
-        "session_id":       "<uuid>",
-        "total_cost_usd":   0.0,
+        "result":            "",                  <- empty when schema is used
+        "structured_output": {"goal": "idle"},    <- actual response here
+        "session_id":        "<uuid>",
+        "total_cost_usd":    0.0,
         ...
     }
 """
@@ -61,7 +58,6 @@ TEST_PROMPT = (
 )
 
 # OUTPUT_FORMAT JSON schema for --json-schema server-side validation.
-# When used, Claude Code returns a parsed dict in envelope["structured_output"].
 OUTPUT_JSON_SCHEMA = json.dumps({
     "type": "object",
     "required": ["goal", "goal_params", "utterance", "lcd", "mood_delta"],
@@ -157,10 +153,11 @@ class LlmLatencyTestNode(Node):
 
     def _call_claude(self, prompt: str, session_id: str | None = None) -> dict:
         """
-        Call Claude Code CLI with --agent pointing directly to AGENTS.md.
+        Call Claude Code CLI with absolute --agent path.
 
-        With --json-schema, the response lands in envelope["structured_output"]
-        as an already-parsed dict — not in envelope["result"]. We check both.
+        cwd is /tmp to prevent auto-discovery of soul workspace .md files,
+        which would cause double-loading and inflate token count / latency.
+        All paths are absolute so cwd is irrelevant for file access.
         """
         cmd = [
             'claude', '-p', prompt,
@@ -180,7 +177,7 @@ class LlmLatencyTestNode(Node):
                 capture_output=True,
                 text=True,
                 timeout=60,
-                cwd=str(self.soul_workspace),
+                cwd='/tmp',   # neutral cwd — prevents soul workspace auto-discovery
             )
         except subprocess.TimeoutExpired:
             return {
@@ -192,13 +189,6 @@ class LlmLatencyTestNode(Node):
         except FileNotFoundError:
             return {
                 'error': 'claude binary not found — is Claude Code installed and on PATH?',
-                'latency_total_s': time.monotonic() - t_start,
-                'returncode': -1,
-                'stderr': '',
-            }
-        except PermissionError:
-            return {
-                'error': f'soul_workspace not accessible: {self.soul_workspace}',
                 'latency_total_s': time.monotonic() - t_start,
                 'returncode': -1,
                 'stderr': '',
@@ -229,10 +219,7 @@ class LlmLatencyTestNode(Node):
         # With --json-schema, response is in structured_output (dict).
         # Without --json-schema, response is in result (string).
         structured = envelope.get('structured_output')
-        if structured:
-            model_response = structured  # already a parsed dict
-        else:
-            model_response = envelope.get('result', '')
+        model_response = structured if structured else envelope.get('result', '')
 
         usage = envelope.get('usage', {})
 
