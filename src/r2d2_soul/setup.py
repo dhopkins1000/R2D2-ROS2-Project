@@ -20,6 +20,7 @@ setup(
     entry_points={
         'console_scripts': [
             'llm_latency_test = r2d2_soul.llm_latency_test_node:main',
+            'llm_node = r2d2_soul.llm_node:main',
         ],
     },
 )
