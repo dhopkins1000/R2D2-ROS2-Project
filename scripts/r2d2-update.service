@@ -1,0 +1,30 @@
+[Unit]
+Description=R2D2 – Git Pull + Colcon Build on Boot
+After=network-online.target
+Wants=network-online.target
+# r2d2.service startet erst NACH diesem Service
+Before=r2d2.service
+
+[Service]
+Type=oneshot
+User=r2d2
+Group=r2d2
+Environment="HOME=/home/r2d2"
+Environment="PATH=/home/r2d2/.platformio/penv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+ExecStart=/bin/bash /home/r2d2/ros2_ws/scripts/r2d2-update.sh
+
+# Timeout: colcon build kann auf dem Pi dauern
+TimeoutStartSec=300
+
+# Wichtig: bei Fehler (exit 1) den Service als failed markieren
+# → r2d2.service startet nicht
+RemainAfterExit=no
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=r2d2-update
+
+[Install]
+WantedBy=multi-user.target
+# r2d2.service wird durch diesen Service geblockt wenn er failed
+RequiredBy=r2d2.service
