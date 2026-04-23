@@ -2,19 +2,30 @@
 """
 llm_node.py
 
-Listens on /r2d2/llm_input for text prompts, calls the Claude Agent SDK,
-and publishes the structured JSON response to /r2d2/llm_response.
+Listens on /r2d2/llm_input for text prompts, calls gemini-cli in headless
+mode, and publishes the structured JSON response to /r2d2/llm_response.
 
-ARCHITECTURE — Claude Agent SDK:
-    Uses the official claude-agent-sdk Python package which wraps the Claude
-    Code CLI correctly, handling the stream-json protocol, session management,
-    and auth via the existing Claude Code CLI login (no separate API key needed).
+BACKEND: gemini-cli (google-gemini/gemini-cli)
+    - Install: npm install -g @google/gemini-cli
+    - Auth:    export GOOGLE_API_KEY=<key from aistudio.google.com>
+    - GEMINI.md in /home/r2d2/soul is loaded automatically as system context
 
-    The SDK is async; ROS2 callbacks are sync. A dedicated asyncio event loop
-    runs in a background thread. Each prompt is submitted as a coroutine via
-    asyncio.run_coroutine_threadsafe() and awaited synchronously with .result().
+WHY gemini-cli OVER PYTHON SDK:
+    gemini-cli is a full agent — tool calls, web search, MCP servers,
+    and file context are built in. The Python SDK is inference-only and
+    would require reimplementing all of that manually.
 
-    Install: pip install claude-agent-sdk --break-system-packages
+LATENCY:
+    gemini-cli has Node.js startup overhead per call (~2-4s).
+    Gemini models are fast — inference itself is typically <2s.
+    Total expected: 4-8s per call, significantly less than Claude Code.
+    Improvement possible later via SDK or persistent session approaches.
+
+OUTPUT FORMAT:
+    gemini-cli --output-format json returns:
+        {"response": "<model text>", "stats": {...}}
+    The model text must be valid JSON (enforced via GEMINI.md instructions).
+    We parse response → JSON, with fence stripping as fallback.
 
 Usage:
     ros2 run r2d2_soul llm_node
@@ -29,23 +40,20 @@ Topics:
                  /r2d2/llm_busy     std_msgs/Bool    — True while processing
 
 ROS2 Parameters:
-    soul_workspace   (string)  Absolute path to soul workspace.
-                               AGENTS.md is loaded from here.
+    soul_workspace   (string)  Path to soul workspace. GEMINI.md is read
+                               from here as gemini-cli system context.
                                Default: /home/r2d2/soul
 
-    effort           (string)  Effort level: low, medium, high, max.
-                               Default: low
+    model            (string)  Gemini model to use.
+                               Default: gemini-2.5-flash
 
-    response_timeout (float)   Seconds before giving up on a response.
+    response_timeout (float)   Seconds before giving up.
                                Default: 60.0
-
-    session_persist  (bool)    Reuse session across calls for conversational
-                               continuity. Default: False
 """
 
-import asyncio
 import json
-import threading
+import re
+import subprocess
 import time
 from pathlib import Path
 
@@ -53,209 +61,14 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Bool, String
 
-# Claude Agent SDK — install with:
-#   pip install claude-agent-sdk --break-system-packages
-try:
-    from claude_agent_sdk import (
-        ClaudeAgentOptions,
-        ClaudeSDKClient,
-        ResultMessage,
-        AssistantMessage,
-    )
-    SDK_AVAILABLE = True
-except ImportError:
-    SDK_AVAILABLE = False
+
+# Strip markdown code fences — defensive fallback if model ignores GEMINI.md
+_FENCE_RE = re.compile(r'^```(?:json)?\s*\n?(.*?)\n?```\s*$', re.DOTALL)
 
 
-# R2D2 output schema — validated server-side, response lands in structured_output
-OUTPUT_SCHEMA = {
-    "type": "object",
-    "required": ["goal", "goal_params", "utterance", "lcd", "mood_delta"],
-    "properties": {
-        "goal":        {"type": "string"},
-        "goal_params": {"type": "object"},
-        "utterance": {
-            "type": "object",
-            "properties": {
-                "intent":    {"type": ["string", "null"]},
-                "intensity": {"type": "number", "minimum": 0.0, "maximum": 1.0},
-            },
-        },
-        "lcd": {
-            "type": "object",
-            "properties": {
-                "line1": {"type": "string", "maxLength": 40},
-                "line2": {"type": "string", "maxLength": 40},
-            },
-        },
-        "mood_delta": {
-            "type": "object",
-            "properties": {
-                "curiosity": {"type": "number"},
-                "boredom":   {"type": "number"},
-                "social":    {"type": "number"},
-            },
-        },
-        "memory_write":  {"type": ["string", "null"]},
-        "internal_note": {"type": ["string", "null"]},
-    },
-}
-
-
-class ClaudeSDKRunner:
-    """
-    Wraps the async claude-agent-sdk in a background asyncio event loop
-    so it can be called synchronously from ROS2 callbacks.
-
-    Uses ClaudeSDKClient for session persistence (conversation continuity)
-    or query() for stateless single-shot calls.
-    """
-
-    def __init__(self, agents_md: str, effort: str, session_persist: bool, logger):
-        self._agents_md = agents_md
-        self._effort = effort
-        self._session_persist = session_persist
-        self._log = logger
-        self._client: ClaudeSDKClient | None = None
-
-        # Dedicated asyncio loop in a background thread
-        self._loop = asyncio.new_event_loop()
-        self._thread = threading.Thread(
-            target=self._loop.run_forever,
-            daemon=True,
-            name='claude_sdk_loop',
-        )
-        self._thread.start()
-
-        # If session_persist, create a persistent client
-        if self._session_persist and SDK_AVAILABLE:
-            future = asyncio.run_coroutine_threadsafe(
-                self._create_client(), self._loop
-            )
-            try:
-                future.result(timeout=30)
-                self._log.info('ClaudeSDKClient ready (session_persist=True)')
-            except Exception as e:
-                self._log.error(f'Failed to create ClaudeSDKClient: {e}')
-
-    async def _create_client(self):
-        """Create a persistent ClaudeSDKClient for multi-turn conversations."""
-        options = self._build_options()
-        self._client = ClaudeSDKClient(options=options)
-        await self._client.__aenter__()
-
-    def _build_options(self) -> ClaudeAgentOptions:
-        """Build SDK options from configuration."""
-        return ClaudeAgentOptions(
-            # Load the soul workspace agent definition
-            agent=self._agents_md,
-            # Effort level maps to Claude Code --effort
-            effort=self._effort,
-            # Structured JSON output schema
-            output_format="json",
-            json_schema=OUTPUT_SCHEMA,
-            # No tools needed — text/reasoning only
-            allowed_tools=[],
-        )
-
-    def call(self, prompt: str, timeout: float = 60.0) -> dict:
-        """
-        Submit a prompt to Claude and wait synchronously for the response.
-        Blocks for at most `timeout` seconds.
-        """
-        if not SDK_AVAILABLE:
-            return self._error('claude-agent-sdk not installed — run: pip install claude-agent-sdk --break-system-packages')
-
-        future = asyncio.run_coroutine_threadsafe(
-            self._async_call(prompt), self._loop
-        )
-        try:
-            return future.result(timeout=timeout)
-        except TimeoutError:
-            future.cancel()
-            return self._error(f'SDK call timed out after {timeout}s')
-        except Exception as e:
-            return self._error(f'SDK call failed: {e}')
-
-    async def _async_call(self, prompt: str) -> dict:
-        """Async coroutine: send prompt, collect messages, return structured result."""
-        from claude_agent_sdk import query
-
-        t_start = time.monotonic()
-
-        try:
-            if self._session_persist and self._client:
-                # Use persistent client for conversational continuity
-                message_iter = self._client.query(prompt=prompt)
-            else:
-                # Stateless single-shot call
-                message_iter = query(
-                    prompt=prompt,
-                    options=self._build_options(),
-                )
-
-            result_msg = None
-            async for message in message_iter:
-                if isinstance(message, ResultMessage):
-                    result_msg = message
-                    break  # terminal — done
-
-        except Exception as e:
-            return self._error(f'SDK exception: {e}')
-
-        latency = time.monotonic() - t_start
-
-        if result_msg is None:
-            return self._error('No ResultMessage received from SDK')
-
-        if result_msg.is_error:
-            return self._error(f'Claude returned error: {result_msg.result}')
-
-        # Structured output is in result_msg.structured_output when json_schema is set
-        structured = getattr(result_msg, 'structured_output', None)
-        if not structured:
-            # Fallback: try parsing result as JSON
-            try:
-                structured = json.loads(result_msg.result or '{}')
-            except (json.JSONDecodeError, TypeError):
-                structured = {}
-            self._log.warn('structured_output missing — fell back to parsing result field')
-
-        # Attach metadata
-        usage = getattr(result_msg, 'usage', None) or {}
-        structured['_meta'] = {
-            'latency_s':    round(latency, 2),
-            'cost_usd':     getattr(result_msg, 'total_cost_usd', 0.0) or 0.0,
-            'session_id':   getattr(result_msg, 'session_id', '') or '',
-            'cache_read':   usage.get('cache_read_input_tokens', 0) if isinstance(usage, dict) else 0,
-            'cache_create': usage.get('cache_creation_input_tokens', 0) if isinstance(usage, dict) else 0,
-            'error':        None,
-        }
-        return structured
-
-    def shutdown(self):
-        """Clean up the persistent client and stop the event loop."""
-        if self._client:
-            asyncio.run_coroutine_threadsafe(
-                self._client.__aexit__(None, None, None), self._loop
-            )
-        self._loop.call_soon_threadsafe(self._loop.stop)
-
-    def _error(self, msg: str) -> dict:
-        self._log.error(f'LLM error: {msg}')
-        return {
-            'goal': 'idle',
-            'goal_params': {},
-            'utterance': {'intent': 'alert_warning', 'intensity': 0.8},
-            'lcd': {'line1': 'LLM Fehler', 'line2': 'Siehe Log'},
-            'mood_delta': {'curiosity': 0.0, 'boredom': 0.0, 'social': 0.0},
-            'memory_write': None,
-            'internal_note': msg,
-            '_meta': {
-                'latency_s': 0.0, 'cost_usd': 0.0, 'session_id': '',
-                'cache_read': 0, 'cache_create': 0, 'error': msg,
-            },
-        }
+def strip_fences(text: str) -> str:
+    m = _FENCE_RE.match(text.strip())
+    return m.group(1).strip() if m else text.strip()
 
 
 class LlmNode(Node):
@@ -264,15 +77,14 @@ class LlmNode(Node):
         super().__init__('llm_node')
 
         self.declare_parameter('soul_workspace',   '/home/r2d2/soul')
-        self.declare_parameter('effort',           'low')
+        self.declare_parameter('model',            'gemini-2.5-flash')
         self.declare_parameter('response_timeout', 60.0)
-        self.declare_parameter('session_persist',  False)
 
-        soul_workspace  = Path(self.get_parameter('soul_workspace').get_parameter_value().string_value)
-        effort          = self.get_parameter('effort').get_parameter_value().string_value
-        self._timeout   = self.get_parameter('response_timeout').get_parameter_value().double_value
-        session_persist = self.get_parameter('session_persist').get_parameter_value().bool_value
-        agents_md       = str(soul_workspace / 'AGENTS.md')
+        self._workspace = Path(
+            self.get_parameter('soul_workspace').get_parameter_value().string_value
+        )
+        self._model   = self.get_parameter('model').get_parameter_value().string_value
+        self._timeout = self.get_parameter('response_timeout').get_parameter_value().double_value
 
         self._busy = False
         self._pub_response = self.create_publisher(String, '/r2d2/llm_response', 10)
@@ -281,23 +93,11 @@ class LlmNode(Node):
             String, '/r2d2/llm_input', self._on_input, 10
         )
 
-        self.get_logger().info(f'Soul workspace  : {soul_workspace}')
-        self.get_logger().info(f'Agent file      : {agents_md}')
-        self.get_logger().info(f'Effort          : {effort}')
-        self.get_logger().info(f'Session persist : {session_persist}')
+        self.get_logger().info(f'Soul workspace  : {self._workspace}')
+        self.get_logger().info(f'GEMINI.md       : {self._workspace / "GEMINI.md"}')
+        self.get_logger().info(f'Model           : {self._model}')
         self.get_logger().info(f'Response timeout: {self._timeout}s')
-        self.get_logger().info(f'SDK available   : {SDK_AVAILABLE}')
-
-        if not SDK_AVAILABLE:
-            self.get_logger().error(
-                'claude-agent-sdk not installed! '
-                'Run: pip install claude-agent-sdk --break-system-packages'
-            )
-
-        self._runner = ClaudeSDKRunner(
-            agents_md, effort, session_persist, self.get_logger()
-        )
-        self.get_logger().info('LLM node ready — listening on /r2d2/llm_input')
+        self.get_logger().info('Listening on /r2d2/llm_input — ready.')
 
     def _on_input(self, msg: String):
         prompt = msg.data.strip()
@@ -312,28 +112,117 @@ class LlmNode(Node):
         self._publish_busy(True)
         self.get_logger().info(f'Prompt: "{prompt[:80]}"')
 
-        result = self._runner.call(prompt, timeout=self._timeout)
+        result = self._call_gemini(prompt)
         self._log_response(result)
         self._publish_response(result)
 
         self._busy = False
         self._publish_busy(False)
 
+    def _call_gemini(self, prompt: str) -> dict:
+        """
+        Call gemini-cli in headless mode and return a structured response dict.
+
+        gemini-cli reads GEMINI.md from cwd automatically as system context.
+        The --yolo flag auto-approves all tool actions (required for headless).
+        The response JSON lands in envelope['response'] as a string.
+        """
+        cmd = [
+            'gemini',
+            '-p', prompt,
+            '--output-format', 'json',
+            '--model', self._model,
+            '--yolo',   # auto-approve all tool actions — required for headless
+        ]
+
+        t_start = time.monotonic()
+
+        try:
+            proc = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=self._timeout,
+                cwd=str(self._workspace),  # GEMINI.md loaded from here
+            )
+        except subprocess.TimeoutExpired:
+            return self._error(f'gemini timed out after {self._timeout}s')
+        except FileNotFoundError:
+            return self._error(
+                'gemini binary not found — install with: '
+                'npm install -g @google/gemini-cli'
+            )
+
+        latency = time.monotonic() - t_start
+
+        if proc.returncode != 0:
+            stderr = proc.stderr.strip()[:300]
+            self.get_logger().error(f'gemini exit {proc.returncode}: {stderr}')
+            return self._error(f'gemini exited with code {proc.returncode}: {stderr}')
+
+        # Parse the gemini-cli JSON envelope
+        try:
+            envelope = json.loads(proc.stdout)
+        except json.JSONDecodeError as e:
+            self.get_logger().error(f'Failed to parse gemini envelope: {e}')
+            self.get_logger().error(f'Raw stdout: {proc.stdout[:300]}')
+            return self._error(f'Envelope JSON parse failed: {e}')
+
+        # The model's response is in envelope['response'] as a string
+        # GEMINI.md instructs the model to output valid JSON there
+        response_text = envelope.get('response', '')
+        clean_text = strip_fences(response_text)
+
+        if clean_text != response_text:
+            self.get_logger().warn(
+                'Model wrapped response in markdown fences despite GEMINI.md — stripped.'
+            )
+
+        try:
+            structured = json.loads(clean_text)
+        except json.JSONDecodeError as e:
+            self.get_logger().error(f'Response is not valid JSON: {e}')
+            self.get_logger().error(f'Raw response: {response_text[:300]}')
+            return self._error(f'Response JSON parse failed: {e}')
+
+        # Extract token stats from gemini envelope for monitoring
+        stats = envelope.get('stats', {})
+        models_stats = stats.get('models', {})
+        total_cached = sum(
+            m.get('tokens', {}).get('cached', 0)
+            for m in models_stats.values()
+        )
+        total_tokens = sum(
+            m.get('tokens', {}).get('total', 0)
+            for m in models_stats.values()
+        )
+
+        structured['_meta'] = {
+            'latency_s':    round(latency, 2),
+            'cost_usd':     0.0,   # free tier — no cost tracking
+            'model':        self._model,
+            'total_tokens': total_tokens,
+            'cached_tokens': total_cached,
+            'error':        None,
+        }
+        return structured
+
     def _log_response(self, r: dict):
         lcd  = r.get('lcd', {})
         meta = r.get('_meta', {})
         self.get_logger().info('--- LLM Response ---')
-        self.get_logger().info(f'  goal      : {r.get("goal")}')
-        self.get_logger().info(f'  intent    : {r.get("utterance", {}).get("intent")}')
-        self.get_logger().info(f'  intensity : {r.get("utterance", {}).get("intensity")}')
-        self.get_logger().info(f'  lcd line1 : {lcd.get("line1", "")}')
-        self.get_logger().info(f'  lcd line2 : {lcd.get("line2", "")}')
-        self.get_logger().info(f'  mood_delta: {r.get("mood_delta")}')
-        self.get_logger().info(f'  memory    : {r.get("memory_write")}')
-        self.get_logger().info(f'  latency   : {meta.get("latency_s")}s')
-        self.get_logger().info(f'  cache_read: {meta.get("cache_read")}')
+        self.get_logger().info(f'  goal         : {r.get("goal")}')
+        self.get_logger().info(f'  intent       : {r.get("utterance", {}).get("intent")}')
+        self.get_logger().info(f'  intensity    : {r.get("utterance", {}).get("intensity")}')
+        self.get_logger().info(f'  lcd line1    : {lcd.get("line1", "")}')
+        self.get_logger().info(f'  lcd line2    : {lcd.get("line2", "")}')
+        self.get_logger().info(f'  mood_delta   : {r.get("mood_delta")}')
+        self.get_logger().info(f'  memory       : {r.get("memory_write")}')
+        self.get_logger().info(f'  latency      : {meta.get("latency_s")}s')
+        self.get_logger().info(f'  total_tokens : {meta.get("total_tokens")}')
+        self.get_logger().info(f'  cached_tokens: {meta.get("cached_tokens")}')
         if meta.get('error'):
-            self.get_logger().error(f'  error     : {meta["error"]}')
+            self.get_logger().error(f'  error        : {meta["error"]}')
 
     def _publish_response(self, response: dict):
         msg = String()
@@ -345,9 +234,21 @@ class LlmNode(Node):
         msg.data = busy
         self._pub_busy.publish(msg)
 
-    def destroy_node(self):
-        self._runner.shutdown()
-        super().destroy_node()
+    def _error(self, msg: str) -> dict:
+        self.get_logger().error(f'LLM error: {msg}')
+        return {
+            'goal': 'idle',
+            'goal_params': {},
+            'utterance': {'intent': 'alert_warning', 'intensity': 0.8},
+            'lcd': {'line1': 'LLM Fehler', 'line2': 'Siehe Log'},
+            'mood_delta': {'curiosity': 0.0, 'boredom': 0.0, 'social': 0.0},
+            'memory_write': None,
+            'internal_note': msg,
+            '_meta': {
+                'latency_s': 0.0, 'cost_usd': 0.0, 'model': self._model,
+                'total_tokens': 0, 'cached_tokens': 0, 'error': msg,
+            },
+        }
 
 
 def main(args=None):
