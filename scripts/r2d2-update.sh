@@ -15,9 +15,13 @@ set -euo pipefail
 # --- Config ---
 WORKSPACE="/home/r2d2/ros2_ws"
 ROS_SETUP="/opt/ros/jazzy/setup.bash"
-LOG_FILE="/var/log/r2d2-update.log"
+LOG_DIR="${WORKSPACE}/logs"
+LOG_FILE="${LOG_DIR}/r2d2-update.log"
 GIT_REMOTE="origin"
 GIT_BRANCH="main"
+
+# --- Log-Verzeichnis anlegen falls nicht vorhanden ---
+mkdir -p "${LOG_DIR}"
 
 # --- Logging ---
 exec >> "${LOG_FILE}" 2>&1
@@ -44,7 +48,6 @@ done
 cd "${WORKSPACE}"
 echo "[INFO] Fetching from ${GIT_REMOTE}/${GIT_BRANCH}..."
 
-# Fetch remote ohne zu mergen
 git fetch "${GIT_REMOTE}" "${GIT_BRANCH}" 2>&1
 
 # Prüfen ob es Änderungen gibt
