@@ -34,19 +34,19 @@ Topics:
                  /r2d2/llm_busy     std_msgs/Bool    — True while processing
 
 ROS2 Parameters:
-    soul_workspace  (string)  Absolute path to soul workspace.
-                              AGENTS.md is loaded from here.
-                              Default: /home/r2d2/soul
+    soul_workspace   (string)  Absolute path to soul workspace.
+                               AGENTS.md is loaded from here.
+                               Default: /home/r2d2/soul
 
-    effort          (string)  Claude Code effort level: low, medium, high, max.
-                              Default: low
+    effort           (string)  Claude Code effort level: low, medium, high, max.
+                               Default: low
 
-    response_timeout (float) Seconds to wait for a response before giving up
-                              and restarting the process.
-                              Default: 60.0
+    response_timeout (float)   Seconds to wait for a response before giving up
+                               and restarting the process.
+                               Default: 60.0
 
-    max_restarts    (int)     Max consecutive process restarts before giving up.
-                              Default: 3
+    max_restarts     (int)     Max consecutive process restarts before giving up.
+                               Default: 3
 """
 
 import json
@@ -61,9 +61,6 @@ from rclpy.node import Node
 from std_msgs.msg import Bool, String
 
 
-# OUTPUT_FORMAT JSON schema — passed via --json-schema for server-side validation.
-# With --json-schema active, Claude Code returns the validated response in
-# envelope["structured_output"] as a parsed dict (not envelope["result"]).
 OUTPUT_JSON_SCHEMA = json.dumps({
     "type": "object",
     "required": ["goal", "goal_params", "utterance", "lcd", "mood_delta"],
@@ -97,7 +94,6 @@ OUTPUT_JSON_SCHEMA = json.dumps({
     },
 })
 
-# Sentinel placed in the response queue on process death
 _PROCESS_DEAD = object()
 
 
@@ -106,11 +102,10 @@ class ClaudeProcessManager:
     Manages a single persistent Claude Code subprocess.
 
     The process runs with --input-format stream-json --output-format stream-json,
-    keeping Node.js alive between calls. A background thread reads stdout
-    continuously and delivers complete responses via a Queue.
+    keeping Node.js alive between calls. Two background threads read stdout and
+    stderr continuously. Terminal responses (type=result) are delivered via Queue.
 
-    Thread safety: send() is NOT reentrant. The caller (LlmNode) must ensure
-    only one send() is in flight at a time (enforced by the busy flag).
+    Thread safety: send() is NOT reentrant. LlmNode enforces this via busy flag.
     """
 
     def __init__(self, agents_md: str, effort: str, logger):
@@ -118,7 +113,8 @@ class ClaudeProcessManager:
         self._effort = effort
         self._log = logger
         self._proc: subprocess.Popen | None = None
-        self._reader_thread: threading.Thread | None = None
+        self._stdout_thread: threading.Thread | None = None
+        self._stderr_thread: threading.Thread | None = None
         self._response_queue: queue.Queue = queue.Queue()
         self._restart_count = 0
 
@@ -126,13 +122,14 @@ class ClaudeProcessManager:
         """Launch the Claude subprocess. Returns True on success."""
         cmd = [
             'claude',
+            '-p',                           # non-interactive / print mode (flag only, no arg)
             '--output-format', 'stream-json',
-            '--input-format', 'stream-json',
-            '--effort', self._effort,
-            '--agent', self._agents_md,
-            '--json-schema', OUTPUT_JSON_SCHEMA,
-            '-p', '',   # -p required for non-interactive mode; prompt comes via stdin
+            '--input-format',  'stream-json',
+            '--effort',        self._effort,
+            '--agent',         self._agents_md,
+            '--json-schema',   OUTPUT_JSON_SCHEMA,
         ]
+        self._log.info(f'Launching: {" ".join(cmd[:6])} ...')
         try:
             self._proc = subprocess.Popen(
                 cmd,
@@ -140,40 +137,38 @@ class ClaudeProcessManager:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
-                bufsize=1,          # line-buffered
+                bufsize=1,   # line-buffered
                 cwd='/tmp',
             )
         except FileNotFoundError:
             self._log.error('claude binary not found — is Claude Code installed and on PATH?')
             return False
 
-        # Start background stdout reader thread
-        self._reader_thread = threading.Thread(
-            target=self._read_loop,
-            daemon=True,
-            name='claude_stdout_reader',
+        self._stdout_thread = threading.Thread(
+            target=self._stdout_loop, daemon=True, name='claude_stdout'
         )
-        self._reader_thread.start()
+        self._stderr_thread = threading.Thread(
+            target=self._stderr_loop, daemon=True, name='claude_stderr'
+        )
+        self._stdout_thread.start()
+        self._stderr_thread.start()
+
         self._log.info(f'Claude process started (PID {self._proc.pid})')
         return True
 
     def send(self, prompt: str, timeout: float = 60.0) -> dict:
         """
         Send a prompt to the running Claude process and wait for the response.
-
-        Writes one stream-json line to stdin, then blocks on the response queue
-        until a terminal event (type=result) or timeout arrives.
-
         Returns a result dict or an error dict on failure.
         """
         if self._proc is None or self._proc.poll() is not None:
-            self._log.warn('Claude process is not running — attempting restart...')
+            rc = self._proc.poll() if self._proc else 'None'
+            self._log.warn(f'Claude process not running (returncode={rc}) — restarting...')
             if not self._restart():
                 return self._error('Process dead and restart failed')
 
         t_start = time.monotonic()
 
-        # Write prompt as stream-json line to stdin
         msg = json.dumps({'type': 'user', 'message': prompt}) + '\n'
         try:
             self._proc.stdin.write(msg)
@@ -183,7 +178,6 @@ class ClaudeProcessManager:
             self._restart()
             return self._error('Broken pipe — process restarted')
 
-        # Wait for response from reader thread
         try:
             envelope = self._response_queue.get(timeout=timeout)
         except queue.Empty:
@@ -203,7 +197,10 @@ class ClaudeProcessManager:
 
         structured = envelope.get('structured_output')
         if not structured:
-            self._log.warn('No structured_output in envelope — schema mismatch?')
+            self._log.warn(
+                f'No structured_output in envelope — schema mismatch? '
+                f'result field: "{str(envelope.get("result", ""))[:100]}"'
+            )
             structured = {}
 
         usage = envelope.get('usage', {})
@@ -215,11 +212,10 @@ class ClaudeProcessManager:
             'cache_create': usage.get('cache_creation_input_tokens', 0),
             'error':        None,
         }
-        self._restart_count = 0  # successful response resets counter
+        self._restart_count = 0
         return structured
 
     def shutdown(self):
-        """Terminate the Claude process cleanly."""
         if self._proc and self._proc.poll() is None:
             self._log.info('Terminating Claude process...')
             try:
@@ -233,15 +229,11 @@ class ClaudeProcessManager:
                 self._proc.kill()
 
     # ------------------------------------------------------------------
-    # Internal
+    # Background threads
     # ------------------------------------------------------------------
 
-    def _read_loop(self):
-        """
-        Background thread: reads stdout line by line.
-        Puts terminal envelope objects (type=result) into the response queue.
-        Puts _PROCESS_DEAD sentinel when stdout closes.
-        """
+    def _stdout_loop(self):
+        """Read stdout line by line. Put type=result envelopes into queue."""
         try:
             for line in self._proc.stdout:
                 line = line.strip()
@@ -250,22 +242,32 @@ class ClaudeProcessManager:
                 try:
                     obj = json.loads(line)
                 except json.JSONDecodeError:
-                    continue  # partial / non-JSON line — skip
+                    self._log.debug(f'stdout non-JSON: {line[:120]}')
+                    continue
 
-                event_type = obj.get('type', '')
-
-                # Terminal events: deliver to waiting send() call
-                if event_type == 'result':
+                if obj.get('type') == 'result':
                     self._response_queue.put(obj)
-
-                # All other events (assistant partial, content_block, etc.)
-                # are intermediate streaming chunks — ignore for now.
+                # intermediate streaming chunks (assistant, content_block, etc.) ignored
 
         except Exception as e:
             self._log.error(f'stdout reader exception: {e}')
         finally:
-            # Process stdout closed — signal any waiting send()
+            self._log.warn('Claude stdout closed — process has exited')
             self._response_queue.put(_PROCESS_DEAD)
+
+    def _stderr_loop(self):
+        """Read stderr and log every line — critical for diagnosing process death."""
+        try:
+            for line in self._proc.stderr:
+                line = line.strip()
+                if line:
+                    self._log.warn(f'[claude stderr] {line}')
+        except Exception as e:
+            self._log.error(f'stderr reader exception: {e}')
+
+    # ------------------------------------------------------------------
+    # Internal helpers
+    # ------------------------------------------------------------------
 
     def _kill(self):
         if self._proc and self._proc.poll() is None:
@@ -278,17 +280,13 @@ class ClaudeProcessManager:
     def _restart(self, max_restarts: int = 3) -> bool:
         self._restart_count += 1
         if self._restart_count > max_restarts:
-            self._log.error(
-                f'Max restarts ({max_restarts}) exceeded — giving up'
-            )
+            self._log.error(f'Max restarts ({max_restarts}) exceeded — giving up')
             return False
         backoff = min(2 ** self._restart_count, 30)
         self._log.warn(
-            f'Restarting Claude process (attempt {self._restart_count}, '
-            f'backoff {backoff}s)...'
+            f'Restarting Claude process (attempt {self._restart_count}, backoff {backoff}s)...'
         )
         time.sleep(backoff)
-        # Drain any stale sentinel from previous death
         while not self._response_queue.empty():
             try:
                 self._response_queue.get_nowait()
@@ -321,22 +319,19 @@ class LlmNode(Node):
     def __init__(self):
         super().__init__('llm_node')
 
-        self.declare_parameter('soul_workspace', '/home/r2d2/soul')
-        self.declare_parameter('effort', 'low')
+        self.declare_parameter('soul_workspace',   '/home/r2d2/soul')
+        self.declare_parameter('effort',           'low')
         self.declare_parameter('response_timeout', 60.0)
-        self.declare_parameter('max_restarts', 3)
+        self.declare_parameter('max_restarts',     3)
 
         soul_workspace = Path(
             self.get_parameter('soul_workspace').get_parameter_value().string_value
         )
-        effort = self.get_parameter('effort').get_parameter_value().string_value
-        self._timeout = (
-            self.get_parameter('response_timeout').get_parameter_value().double_value
-        )
+        effort   = self.get_parameter('effort').get_parameter_value().string_value
+        self._timeout = self.get_parameter('response_timeout').get_parameter_value().double_value
         agents_md = str(soul_workspace / 'AGENTS.md')
 
         self._busy = False
-
         self._pub_response = self.create_publisher(String, '/r2d2/llm_response', 10)
         self._pub_busy     = self.create_publisher(Bool,   '/r2d2/llm_busy',     10)
         self._sub = self.create_subscription(
@@ -348,24 +343,22 @@ class LlmNode(Node):
         self.get_logger().info(f'Effort          : {effort}')
         self.get_logger().info(f'Response timeout: {self._timeout}s')
 
-        # Start persistent Claude process
         self._claude = ClaudeProcessManager(agents_md, effort, self.get_logger())
         self.get_logger().info('Starting persistent Claude process...')
         if not self._claude.start():
-            self.get_logger().error('Failed to start Claude process — node will retry on first prompt')
+            self.get_logger().error(
+                'Failed to start Claude process — will retry on first prompt'
+            )
         else:
             self.get_logger().info('Claude process ready — listening on /r2d2/llm_input')
 
     def _on_input(self, msg: String):
         prompt = msg.data.strip()
         if not prompt:
-            self.get_logger().warn('Empty prompt received — ignoring.')
+            self.get_logger().warn('Empty prompt — ignoring.')
             return
-
         if self._busy:
-            self.get_logger().warn(
-                f'Busy — dropping prompt: "{prompt[:60]}"'
-            )
+            self.get_logger().warn(f'Busy — dropping: "{prompt[:60]}"')
             return
 
         self._busy = True
