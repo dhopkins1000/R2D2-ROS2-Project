@@ -2,29 +2,24 @@
 """
 llm_node.py
 
-Listens on /r2d2/llm_input for text prompts and forwards them to a
-persistent Claude Code subprocess. Publishes the structured JSON response
-to /r2d2/llm_response.
+Listens on /r2d2/llm_input for text prompts, calls the Claude Agent SDK,
+and publishes the structured JSON response to /r2d2/llm_response.
 
-ARCHITECTURE — Persistent Process (stream-json):
-    Previous approach: subprocess.run() per call → Node.js startup ~4s per call.
-    New approach:      subprocess.Popen() once at startup, stdin/stdout pipes kept
-                       open. Prompts sent as stream-json lines on stdin; responses
-                       read from stdout until terminal event received.
+ARCHITECTURE — Claude Agent SDK:
+    Uses the official claude-agent-sdk Python package which wraps the Claude
+    Code CLI correctly, handling the stream-json protocol, session management,
+    and auth via the existing Claude Code CLI login (no separate API key needed).
 
-    Node.js starts ONCE. Subsequent calls cost only network + inference time.
-    Expected latency after first call: 3–6s (warm cache) vs 17–22s before.
+    The SDK is async; ROS2 callbacks are sync. A dedicated asyncio event loop
+    runs in a background thread. Each prompt is submitted as a coroutine via
+    asyncio.run_coroutine_threadsafe() and awaited synchronously with .result().
 
-    Claude Code stream-json protocol:
-        stdin  ← {"type": "user", "message": "<prompt>"}\\n
-        stdout → {"type": "assistant", ...}\\n   (intermediate, ignored)
-                 {"type": "result", "subtype": "success", ...}\\n  (terminal)
-                 {"type": "result", "subtype": "error",   ...}\\n  (terminal)
+    Install: pip install claude-agent-sdk --break-system-packages
 
 Usage:
     ros2 run r2d2_soul llm_node
 
-    # Test without voice node:
+    # Test:
     ros2 topic pub --once /r2d2/llm_input std_msgs/msg/String \\
         '{data: "Wie ist dein Status?"}'
 
@@ -38,20 +33,18 @@ ROS2 Parameters:
                                AGENTS.md is loaded from here.
                                Default: /home/r2d2/soul
 
-    effort           (string)  Claude Code effort level: low, medium, high, max.
+    effort           (string)  Effort level: low, medium, high, max.
                                Default: low
 
-    response_timeout (float)   Seconds to wait for a response before giving up
-                               and restarting the process.
+    response_timeout (float)   Seconds before giving up on a response.
                                Default: 60.0
 
-    max_restarts     (int)     Max consecutive process restarts before giving up.
-                               Default: 3
+    session_persist  (bool)    Reuse session across calls for conversational
+                               continuity. Default: False
 """
 
+import asyncio
 import json
-import queue
-import subprocess
 import threading
 import time
 from pathlib import Path
@@ -60,8 +53,22 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Bool, String
 
+# Claude Agent SDK — install with:
+#   pip install claude-agent-sdk --break-system-packages
+try:
+    from claude_agent_sdk import (
+        ClaudeAgentOptions,
+        ClaudeSDKClient,
+        ResultMessage,
+        AssistantMessage,
+    )
+    SDK_AVAILABLE = True
+except ImportError:
+    SDK_AVAILABLE = False
 
-OUTPUT_JSON_SCHEMA = json.dumps({
+
+# R2D2 output schema — validated server-side, response lands in structured_output
+OUTPUT_SCHEMA = {
     "type": "object",
     "required": ["goal", "goal_params", "utterance", "lcd", "mood_delta"],
     "properties": {
@@ -92,209 +99,150 @@ OUTPUT_JSON_SCHEMA = json.dumps({
         "memory_write":  {"type": ["string", "null"]},
         "internal_note": {"type": ["string", "null"]},
     },
-})
-
-_PROCESS_DEAD = object()
+}
 
 
-class ClaudeProcessManager:
+class ClaudeSDKRunner:
     """
-    Manages a single persistent Claude Code subprocess.
+    Wraps the async claude-agent-sdk in a background asyncio event loop
+    so it can be called synchronously from ROS2 callbacks.
 
-    The process runs with --input-format stream-json --output-format stream-json,
-    keeping Node.js alive between calls. Two background threads read stdout and
-    stderr continuously. Terminal responses (type=result) are delivered via Queue.
-
-    Thread safety: send() is NOT reentrant. LlmNode enforces this via busy flag.
+    Uses ClaudeSDKClient for session persistence (conversation continuity)
+    or query() for stateless single-shot calls.
     """
 
-    def __init__(self, agents_md: str, effort: str, logger):
+    def __init__(self, agents_md: str, effort: str, session_persist: bool, logger):
         self._agents_md = agents_md
         self._effort = effort
+        self._session_persist = session_persist
         self._log = logger
-        self._proc: subprocess.Popen | None = None
-        self._stdout_thread: threading.Thread | None = None
-        self._stderr_thread: threading.Thread | None = None
-        self._response_queue: queue.Queue = queue.Queue()
-        self._restart_count = 0
+        self._client: ClaudeSDKClient | None = None
 
-    def start(self) -> bool:
-        """Launch the Claude subprocess. Returns True on success."""
-        cmd = [
-            'claude',
-            '-p',                           # non-interactive / print mode (flag only, no arg)
-            '--output-format', 'stream-json',
-            '--input-format',  'stream-json',
-            '--effort',        self._effort,
-            '--agent',         self._agents_md,
-            '--json-schema',   OUTPUT_JSON_SCHEMA,
-        ]
-        self._log.info(f'Launching: {" ".join(cmd[:6])} ...')
-        try:
-            self._proc = subprocess.Popen(
-                cmd,
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                bufsize=1,   # line-buffered
-                cwd='/tmp',
+        # Dedicated asyncio loop in a background thread
+        self._loop = asyncio.new_event_loop()
+        self._thread = threading.Thread(
+            target=self._loop.run_forever,
+            daemon=True,
+            name='claude_sdk_loop',
+        )
+        self._thread.start()
+
+        # If session_persist, create a persistent client
+        if self._session_persist and SDK_AVAILABLE:
+            future = asyncio.run_coroutine_threadsafe(
+                self._create_client(), self._loop
             )
-        except FileNotFoundError:
-            self._log.error('claude binary not found — is Claude Code installed and on PATH?')
-            return False
+            try:
+                future.result(timeout=30)
+                self._log.info('ClaudeSDKClient ready (session_persist=True)')
+            except Exception as e:
+                self._log.error(f'Failed to create ClaudeSDKClient: {e}')
 
-        self._stdout_thread = threading.Thread(
-            target=self._stdout_loop, daemon=True, name='claude_stdout'
+    async def _create_client(self):
+        """Create a persistent ClaudeSDKClient for multi-turn conversations."""
+        options = self._build_options()
+        self._client = ClaudeSDKClient(options=options)
+        await self._client.__aenter__()
+
+    def _build_options(self) -> ClaudeAgentOptions:
+        """Build SDK options from configuration."""
+        return ClaudeAgentOptions(
+            # Load the soul workspace agent definition
+            agent=self._agents_md,
+            # Effort level maps to Claude Code --effort
+            effort=self._effort,
+            # Structured JSON output schema
+            output_format="json",
+            json_schema=OUTPUT_SCHEMA,
+            # No tools needed — text/reasoning only
+            allowed_tools=[],
         )
-        self._stderr_thread = threading.Thread(
-            target=self._stderr_loop, daemon=True, name='claude_stderr'
+
+    def call(self, prompt: str, timeout: float = 60.0) -> dict:
+        """
+        Submit a prompt to Claude and wait synchronously for the response.
+        Blocks for at most `timeout` seconds.
+        """
+        if not SDK_AVAILABLE:
+            return self._error('claude-agent-sdk not installed — run: pip install claude-agent-sdk --break-system-packages')
+
+        future = asyncio.run_coroutine_threadsafe(
+            self._async_call(prompt), self._loop
         )
-        self._stdout_thread.start()
-        self._stderr_thread.start()
+        try:
+            return future.result(timeout=timeout)
+        except TimeoutError:
+            future.cancel()
+            return self._error(f'SDK call timed out after {timeout}s')
+        except Exception as e:
+            return self._error(f'SDK call failed: {e}')
 
-        self._log.info(f'Claude process started (PID {self._proc.pid})')
-        return True
-
-    def send(self, prompt: str, timeout: float = 60.0) -> dict:
-        """
-        Send a prompt to the running Claude process and wait for the response.
-        Returns a result dict or an error dict on failure.
-        """
-        if self._proc is None or self._proc.poll() is not None:
-            rc = self._proc.poll() if self._proc else 'None'
-            self._log.warn(f'Claude process not running (returncode={rc}) — restarting...')
-            if not self._restart():
-                return self._error('Process dead and restart failed')
+    async def _async_call(self, prompt: str) -> dict:
+        """Async coroutine: send prompt, collect messages, return structured result."""
+        from claude_agent_sdk import query
 
         t_start = time.monotonic()
 
-        msg = json.dumps({'type': 'user', 'message': prompt}) + '\n'
         try:
-            self._proc.stdin.write(msg)
-            self._proc.stdin.flush()
-        except BrokenPipeError:
-            self._log.error('stdin pipe broken — restarting process')
-            self._restart()
-            return self._error('Broken pipe — process restarted')
+            if self._session_persist and self._client:
+                # Use persistent client for conversational continuity
+                message_iter = self._client.query(prompt=prompt)
+            else:
+                # Stateless single-shot call
+                message_iter = query(
+                    prompt=prompt,
+                    options=self._build_options(),
+                )
 
-        try:
-            envelope = self._response_queue.get(timeout=timeout)
-        except queue.Empty:
-            self._log.error(f'Response timeout after {timeout}s — restarting process')
-            self._kill()
-            self._restart()
-            return self._error(f'Timeout after {timeout}s')
+            result_msg = None
+            async for message in message_iter:
+                if isinstance(message, ResultMessage):
+                    result_msg = message
+                    break  # terminal — done
+
+        except Exception as e:
+            return self._error(f'SDK exception: {e}')
 
         latency = time.monotonic() - t_start
 
-        if envelope is _PROCESS_DEAD:
-            return self._error('Process died while waiting for response')
+        if result_msg is None:
+            return self._error('No ResultMessage received from SDK')
 
-        if envelope.get('is_error') or envelope.get('subtype') == 'error':
-            err = envelope.get('result', 'unknown error')
-            return self._error(f'Claude error: {err}')
+        if result_msg.is_error:
+            return self._error(f'Claude returned error: {result_msg.result}')
 
-        structured = envelope.get('structured_output')
+        # Structured output is in result_msg.structured_output when json_schema is set
+        structured = getattr(result_msg, 'structured_output', None)
         if not structured:
-            self._log.warn(
-                f'No structured_output in envelope — schema mismatch? '
-                f'result field: "{str(envelope.get("result", ""))[:100]}"'
-            )
-            structured = {}
+            # Fallback: try parsing result as JSON
+            try:
+                structured = json.loads(result_msg.result or '{}')
+            except (json.JSONDecodeError, TypeError):
+                structured = {}
+            self._log.warn('structured_output missing — fell back to parsing result field')
 
-        usage = envelope.get('usage', {})
+        # Attach metadata
+        usage = getattr(result_msg, 'usage', None) or {}
         structured['_meta'] = {
             'latency_s':    round(latency, 2),
-            'cost_usd':     envelope.get('total_cost_usd', 0.0),
-            'session_id':   envelope.get('session_id', ''),
-            'cache_read':   usage.get('cache_read_input_tokens', 0),
-            'cache_create': usage.get('cache_creation_input_tokens', 0),
+            'cost_usd':     getattr(result_msg, 'total_cost_usd', 0.0) or 0.0,
+            'session_id':   getattr(result_msg, 'session_id', '') or '',
+            'cache_read':   usage.get('cache_read_input_tokens', 0) if isinstance(usage, dict) else 0,
+            'cache_create': usage.get('cache_creation_input_tokens', 0) if isinstance(usage, dict) else 0,
             'error':        None,
         }
-        self._restart_count = 0
         return structured
 
     def shutdown(self):
-        if self._proc and self._proc.poll() is None:
-            self._log.info('Terminating Claude process...')
-            try:
-                self._proc.stdin.close()
-            except Exception:
-                pass
-            self._proc.terminate()
-            try:
-                self._proc.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                self._proc.kill()
-
-    # ------------------------------------------------------------------
-    # Background threads
-    # ------------------------------------------------------------------
-
-    def _stdout_loop(self):
-        """Read stdout line by line. Put type=result envelopes into queue."""
-        try:
-            for line in self._proc.stdout:
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    obj = json.loads(line)
-                except json.JSONDecodeError:
-                    self._log.debug(f'stdout non-JSON: {line[:120]}')
-                    continue
-
-                if obj.get('type') == 'result':
-                    self._response_queue.put(obj)
-                # intermediate streaming chunks (assistant, content_block, etc.) ignored
-
-        except Exception as e:
-            self._log.error(f'stdout reader exception: {e}')
-        finally:
-            self._log.warn('Claude stdout closed — process has exited')
-            self._response_queue.put(_PROCESS_DEAD)
-
-    def _stderr_loop(self):
-        """Read stderr and log every line — critical for diagnosing process death."""
-        try:
-            for line in self._proc.stderr:
-                line = line.strip()
-                if line:
-                    self._log.warn(f'[claude stderr] {line}')
-        except Exception as e:
-            self._log.error(f'stderr reader exception: {e}')
-
-    # ------------------------------------------------------------------
-    # Internal helpers
-    # ------------------------------------------------------------------
-
-    def _kill(self):
-        if self._proc and self._proc.poll() is None:
-            self._proc.kill()
-            try:
-                self._proc.wait(timeout=3)
-            except subprocess.TimeoutExpired:
-                pass
-
-    def _restart(self, max_restarts: int = 3) -> bool:
-        self._restart_count += 1
-        if self._restart_count > max_restarts:
-            self._log.error(f'Max restarts ({max_restarts}) exceeded — giving up')
-            return False
-        backoff = min(2 ** self._restart_count, 30)
-        self._log.warn(
-            f'Restarting Claude process (attempt {self._restart_count}, backoff {backoff}s)...'
-        )
-        time.sleep(backoff)
-        while not self._response_queue.empty():
-            try:
-                self._response_queue.get_nowait()
-            except queue.Empty:
-                break
-        return self.start()
+        """Clean up the persistent client and stop the event loop."""
+        if self._client:
+            asyncio.run_coroutine_threadsafe(
+                self._client.__aexit__(None, None, None), self._loop
+            )
+        self._loop.call_soon_threadsafe(self._loop.stop)
 
     def _error(self, msg: str) -> dict:
+        self._log.error(f'LLM error: {msg}')
         return {
             'goal': 'idle',
             'goal_params': {},
@@ -304,12 +252,8 @@ class ClaudeProcessManager:
             'memory_write': None,
             'internal_note': msg,
             '_meta': {
-                'latency_s':    0.0,
-                'cost_usd':     0.0,
-                'session_id':   '',
-                'cache_read':   0,
-                'cache_create': 0,
-                'error':        msg,
+                'latency_s': 0.0, 'cost_usd': 0.0, 'session_id': '',
+                'cache_read': 0, 'cache_create': 0, 'error': msg,
             },
         }
 
@@ -322,14 +266,13 @@ class LlmNode(Node):
         self.declare_parameter('soul_workspace',   '/home/r2d2/soul')
         self.declare_parameter('effort',           'low')
         self.declare_parameter('response_timeout', 60.0)
-        self.declare_parameter('max_restarts',     3)
+        self.declare_parameter('session_persist',  False)
 
-        soul_workspace = Path(
-            self.get_parameter('soul_workspace').get_parameter_value().string_value
-        )
-        effort   = self.get_parameter('effort').get_parameter_value().string_value
-        self._timeout = self.get_parameter('response_timeout').get_parameter_value().double_value
-        agents_md = str(soul_workspace / 'AGENTS.md')
+        soul_workspace  = Path(self.get_parameter('soul_workspace').get_parameter_value().string_value)
+        effort          = self.get_parameter('effort').get_parameter_value().string_value
+        self._timeout   = self.get_parameter('response_timeout').get_parameter_value().double_value
+        session_persist = self.get_parameter('session_persist').get_parameter_value().bool_value
+        agents_md       = str(soul_workspace / 'AGENTS.md')
 
         self._busy = False
         self._pub_response = self.create_publisher(String, '/r2d2/llm_response', 10)
@@ -341,16 +284,20 @@ class LlmNode(Node):
         self.get_logger().info(f'Soul workspace  : {soul_workspace}')
         self.get_logger().info(f'Agent file      : {agents_md}')
         self.get_logger().info(f'Effort          : {effort}')
+        self.get_logger().info(f'Session persist : {session_persist}')
         self.get_logger().info(f'Response timeout: {self._timeout}s')
+        self.get_logger().info(f'SDK available   : {SDK_AVAILABLE}')
 
-        self._claude = ClaudeProcessManager(agents_md, effort, self.get_logger())
-        self.get_logger().info('Starting persistent Claude process...')
-        if not self._claude.start():
+        if not SDK_AVAILABLE:
             self.get_logger().error(
-                'Failed to start Claude process — will retry on first prompt'
+                'claude-agent-sdk not installed! '
+                'Run: pip install claude-agent-sdk --break-system-packages'
             )
-        else:
-            self.get_logger().info('Claude process ready — listening on /r2d2/llm_input')
+
+        self._runner = ClaudeSDKRunner(
+            agents_md, effort, session_persist, self.get_logger()
+        )
+        self.get_logger().info('LLM node ready — listening on /r2d2/llm_input')
 
     def _on_input(self, msg: String):
         prompt = msg.data.strip()
@@ -365,7 +312,7 @@ class LlmNode(Node):
         self._publish_busy(True)
         self.get_logger().info(f'Prompt: "{prompt[:80]}"')
 
-        result = self._claude.send(prompt, timeout=self._timeout)
+        result = self._runner.call(prompt, timeout=self._timeout)
         self._log_response(result)
         self._publish_response(result)
 
@@ -399,7 +346,7 @@ class LlmNode(Node):
         self._pub_busy.publish(msg)
 
     def destroy_node(self):
-        self._claude.shutdown()
+        self._runner.shutdown()
         super().destroy_node()
 
 
