@@ -15,7 +15,7 @@ set -euo pipefail
 # --- Config ---
 WORKSPACE="/home/r2d2/ros2_ws"
 ROS_SETUP="/opt/ros/jazzy/setup.bash"
-LOG_DIR="${WORKSPACE}/logs"
+LOG_DIR="${WORKSPACE}/log"
 LOG_FILE="${LOG_DIR}/r2d2-update.log"
 GIT_REMOTE="origin"
 GIT_BRANCH="main"
