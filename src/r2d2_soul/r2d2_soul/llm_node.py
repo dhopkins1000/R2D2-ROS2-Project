@@ -10,23 +10,6 @@ BACKEND: gemini-cli (google-gemini/gemini-cli)
     - Auth:    export GOOGLE_API_KEY=<key from aistudio.google.com>
     - GEMINI.md in /home/r2d2/soul is loaded automatically as system context
 
-WHY gemini-cli OVER PYTHON SDK:
-    gemini-cli is a full agent — tool calls, web search, MCP servers,
-    and file context are built in. The Python SDK is inference-only and
-    would require reimplementing all of that manually.
-
-LATENCY:
-    gemini-cli has Node.js startup overhead per call (~2-4s).
-    Gemini models are fast — inference itself is typically <2s.
-    Total expected: 4-8s per call, significantly less than Claude Code.
-    Improvement possible later via SDK or persistent session approaches.
-
-OUTPUT FORMAT:
-    gemini-cli --output-format json returns:
-        {"response": "<model text>", "stats": {...}}
-    The model text must be valid JSON (enforced via GEMINI.md instructions).
-    We parse response → JSON, with fence stripping as fallback.
-
 Usage:
     ros2 run r2d2_soul llm_node
 
@@ -62,13 +45,21 @@ from rclpy.node import Node
 from std_msgs.msg import Bool, String
 
 
-# Strip markdown code fences — defensive fallback if model ignores GEMINI.md
 _FENCE_RE = re.compile(r'^```(?:json)?\s*\n?(.*?)\n?```\s*$', re.DOTALL)
 
 
 def strip_fences(text: str) -> str:
     m = _FENCE_RE.match(text.strip())
     return m.group(1).strip() if m else text.strip()
+
+
+def safe_get(d, *keys, default=None):
+    """Safely traverse nested dicts — returns default if any level is missing or not a dict."""
+    for key in keys:
+        if not isinstance(d, dict):
+            return default
+        d = d.get(key, default)
+    return d
 
 
 class LlmNode(Node):
@@ -112,27 +103,25 @@ class LlmNode(Node):
         self._publish_busy(True)
         self.get_logger().info(f'Prompt: "{prompt[:80]}"')
 
-        result = self._call_gemini(prompt)
-        self._log_response(result)
-        self._publish_response(result)
-
-        self._busy = False
-        self._publish_busy(False)
+        try:
+            result = self._call_gemini(prompt)
+            self._log_response(result)
+            self._publish_response(result)
+        except Exception as e:
+            self.get_logger().error(f'Unhandled error in _on_input: {e}')
+            self._publish_response(self._error(str(e)))
+        finally:
+            self._busy = False
+            self._publish_busy(False)
 
     def _call_gemini(self, prompt: str) -> dict:
-        """
-        Call gemini-cli in headless mode and return a structured response dict.
-
-        gemini-cli reads GEMINI.md from cwd automatically as system context.
-        The --yolo flag auto-approves all tool actions (required for headless).
-        The response JSON lands in envelope['response'] as a string.
-        """
+        """Call gemini-cli and return a structured response dict."""
         cmd = [
             'gemini',
             '-p', prompt,
             '--output-format', 'json',
             '--model', self._model,
-            '--yolo',   # auto-approve all tool actions — required for headless
+            '--yolo',
         ]
 
         t_start = time.monotonic()
@@ -143,14 +132,13 @@ class LlmNode(Node):
                 capture_output=True,
                 text=True,
                 timeout=self._timeout,
-                cwd=str(self._workspace),  # GEMINI.md loaded from here
+                cwd=str(self._workspace),
             )
         except subprocess.TimeoutExpired:
             return self._error(f'gemini timed out after {self._timeout}s')
         except FileNotFoundError:
             return self._error(
-                'gemini binary not found — install with: '
-                'npm install -g @google/gemini-cli'
+                'gemini binary not found — install with: npm install -g @google/gemini-cli'
             )
 
         latency = time.monotonic() - t_start
@@ -164,60 +152,64 @@ class LlmNode(Node):
         try:
             envelope = json.loads(proc.stdout)
         except json.JSONDecodeError as e:
-            self.get_logger().error(f'Failed to parse gemini envelope: {e}')
-            self.get_logger().error(f'Raw stdout: {proc.stdout[:300]}')
+            self.get_logger().error(f'Envelope parse failed: {e} — raw: {proc.stdout[:200]}')
             return self._error(f'Envelope JSON parse failed: {e}')
 
-        # The model's response is in envelope['response'] as a string
-        # GEMINI.md instructs the model to output valid JSON there
+        # The model response is in envelope['response'] as a string
         response_text = envelope.get('response', '')
         clean_text = strip_fences(response_text)
 
         if clean_text != response_text:
-            self.get_logger().warn(
-                'Model wrapped response in markdown fences despite GEMINI.md — stripped.'
-            )
+            self.get_logger().warn('Model used markdown fences — stripped.')
 
         try:
             structured = json.loads(clean_text)
         except json.JSONDecodeError as e:
-            self.get_logger().error(f'Response is not valid JSON: {e}')
-            self.get_logger().error(f'Raw response: {response_text[:300]}')
+            self.get_logger().error(f'Response not valid JSON: {e} — raw: {response_text[:200]}')
             return self._error(f'Response JSON parse failed: {e}')
 
-        # Extract token stats from gemini envelope for monitoring
+        # Ensure structured is a dict, not some other JSON type
+        if not isinstance(structured, dict):
+            self.get_logger().error(f'Response JSON is not a dict: {type(structured)}')
+            return self._error(f'Response is {type(structured).__name__}, expected dict')
+
+        # Token stats from gemini envelope
         stats = envelope.get('stats', {})
-        models_stats = stats.get('models', {})
+        models_stats = stats.get('models', {}) if isinstance(stats, dict) else {}
         total_cached = sum(
             m.get('tokens', {}).get('cached', 0)
             for m in models_stats.values()
+            if isinstance(m, dict)
         )
         total_tokens = sum(
             m.get('tokens', {}).get('total', 0)
             for m in models_stats.values()
+            if isinstance(m, dict)
         )
 
         structured['_meta'] = {
-            'latency_s':    round(latency, 2),
-            'cost_usd':     0.0,   # free tier — no cost tracking
-            'model':        self._model,
-            'total_tokens': total_tokens,
+            'latency_s':     round(latency, 2),
+            'cost_usd':      0.0,
+            'model':         self._model,
+            'total_tokens':  total_tokens,
             'cached_tokens': total_cached,
-            'error':        None,
+            'error':         None,
         }
         return structured
 
     def _log_response(self, r: dict):
-        lcd  = r.get('lcd', {})
-        meta = r.get('_meta', {})
+        """Log response fields — uses safe_get to handle malformed model output gracefully."""
+        meta = r.get('_meta', {}) if isinstance(r, dict) else {}
+        lcd  = r.get('lcd', {})   if isinstance(r, dict) else {}
+
         self.get_logger().info('--- LLM Response ---')
-        self.get_logger().info(f'  goal         : {r.get("goal")}')
-        self.get_logger().info(f'  intent       : {r.get("utterance", {}).get("intent")}')
-        self.get_logger().info(f'  intensity    : {r.get("utterance", {}).get("intensity")}')
-        self.get_logger().info(f'  lcd line1    : {lcd.get("line1", "")}')
-        self.get_logger().info(f'  lcd line2    : {lcd.get("line2", "")}')
-        self.get_logger().info(f'  mood_delta   : {r.get("mood_delta")}')
-        self.get_logger().info(f'  memory       : {r.get("memory_write")}')
+        self.get_logger().info(f'  goal         : {r.get("goal") if isinstance(r, dict) else "?"}')
+        self.get_logger().info(f'  intent       : {safe_get(r, "utterance", "intent")}')
+        self.get_logger().info(f'  intensity    : {safe_get(r, "utterance", "intensity")}')
+        self.get_logger().info(f'  lcd line1    : {safe_get(lcd, "line1", default="")}')
+        self.get_logger().info(f'  lcd line2    : {safe_get(lcd, "line2", default="")}')
+        self.get_logger().info(f'  mood_delta   : {r.get("mood_delta") if isinstance(r, dict) else "?"}')
+        self.get_logger().info(f'  memory       : {r.get("memory_write") if isinstance(r, dict) else "?"}')
         self.get_logger().info(f'  latency      : {meta.get("latency_s")}s')
         self.get_logger().info(f'  total_tokens : {meta.get("total_tokens")}')
         self.get_logger().info(f'  cached_tokens: {meta.get("cached_tokens")}')
@@ -258,8 +250,6 @@ def main(args=None):
         rclpy.spin(node)
     except KeyboardInterrupt:
         pass
-    except Exception as e:
-        node.get_logger().error(f'Unexpected error: {e}')
     finally:
         if node:
             node.destroy_node()
