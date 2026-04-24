@@ -11,33 +11,16 @@ BACKEND: gemini-cli (google-gemini/gemini-cli)
     - GEMINI.md in /home/r2d2/soul is loaded automatically as system context
 
 AUTH NOTE:
-    gemini-cli requires GEMINI_API_KEY. If only GOOGLE_API_KEY is set,
-    this node copies it to GEMINI_API_KEY automatically in the subprocess
-    environment so both variable names work.
+    gemini-cli requires GEMINI_API_KEY. This node reads /etc/r2d2/env
+    directly at startup so the key is always available, regardless of
+    whether the node was started via systemd (which loads EnvironmentFile)
+    or manually via ros2 launch (which does not).
+    If only GOOGLE_API_KEY is set, it is copied to GEMINI_API_KEY automatically.
 
 NVM / PATH NOTE:
     gemini-cli requires Node.js v18+. This node scans ~/.nvm/versions/node/
     at startup for the highest installed version and prepends it to the
-    subprocess PATH automatically. No manual PATH changes needed.
-
-Usage:
-    ros2 run r2d2_soul llm_node
-
-Topics:
-    Subscribed:  /r2d2/llm_input    std_msgs/String  - prompt text
-    Published:   /r2d2/llm_response std_msgs/String  - JSON response dict
-                 /r2d2/llm_busy     std_msgs/Bool    - True while processing
-
-ROS2 Parameters:
-    soul_workspace   (string)  Path to soul workspace.
-                               Default: /home/r2d2/soul
-    model            (string)  Gemini model.
-                               Default: gemini-2.5-flash
-    response_timeout (float)   Seconds before giving up.
-                               Default: 60.0
-    gemini_path      (string)  Explicit path to gemini binary.
-                               Empty = auto-resolve.
-                               Default: ''
+    subprocess PATH automatically.
 """
 
 import json
@@ -62,6 +45,8 @@ _NPM_GLOBAL_DIRS = [
     os.path.expanduser('~/.local/bin'),
 ]
 
+ENV_FILE = '/etc/r2d2/env'
+
 
 def strip_fences(text: str) -> str:
     m = _FENCE_RE.match(text.strip())
@@ -74,6 +59,28 @@ def safe_get(d, *keys, default=None):
             return default
         d = d.get(key, default)
     return d
+
+
+def load_env_file(path: str = ENV_FILE) -> dict:
+    """
+    Parse a key=value env file and return a dict.
+    Ignores comments (#) and blank lines.
+    Works whether or not systemd loaded the file.
+    """
+    result = {}
+    try:
+        with open(path) as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith('#') or '=' not in line:
+                    continue
+                key, _, value = line.partition('=')
+                result[key.strip()] = value.strip()
+    except FileNotFoundError:
+        pass  # file doesn't exist yet — not an error
+    except Exception:
+        pass
+    return result
 
 
 def find_nvm_node_bin() -> str | None:
@@ -97,10 +104,16 @@ def find_nvm_node_bin() -> str | None:
 def build_subprocess_env() -> dict:
     """
     Build subprocess environment:
+    - Start with os.environ
+    - Overlay /etc/r2d2/env (works with and without systemd)
     - Prepend nvm Node.js bin to PATH
     - Ensure GEMINI_API_KEY is set (copy from GOOGLE_API_KEY if needed)
     """
     env = os.environ.copy()
+
+    # Always read the env file directly so manual ros2 launch works too
+    env_file_vars = load_env_file(ENV_FILE)
+    env.update(env_file_vars)
 
     # PATH: nvm node first, then common npm global dirs
     extra: list[str] = []
@@ -110,8 +123,7 @@ def build_subprocess_env() -> dict:
     extra.extend(_NPM_GLOBAL_DIRS)
     env['PATH'] = ':'.join(extra) + ':' + env.get('PATH', '')
 
-    # Auth: gemini-cli requires GEMINI_API_KEY specifically.
-    # If only GOOGLE_API_KEY is set, copy it over automatically.
+    # gemini-cli requires GEMINI_API_KEY — copy from GOOGLE_API_KEY if needed
     if not env.get('GEMINI_API_KEY') and env.get('GOOGLE_API_KEY'):
         env['GEMINI_API_KEY'] = env['GOOGLE_API_KEY']
 
@@ -164,22 +176,26 @@ class LlmNode(Node):
         )
 
         # Startup diagnostics
-        nvm_bin  = find_nvm_node_bin()
-        api_key  = self._env.get('GEMINI_API_KEY', '')
-        key_src  = ('GEMINI_API_KEY' if os.environ.get('GEMINI_API_KEY')
-                    else 'GOOGLE_API_KEY (copied)' if api_key else 'NOT SET')
+        api_key = self._env.get('GEMINI_API_KEY', '')
+        key_src = ('GEMINI_API_KEY' if os.environ.get('GEMINI_API_KEY')
+                   else 'GOOGLE_API_KEY (copied)' if api_key
+                   else f'read from {ENV_FILE}' if api_key else 'NOT SET')
 
         self.get_logger().info(f'Soul workspace  : {self._workspace}')
         self.get_logger().info(f'Model           : {self._model}')
-        self.get_logger().info(f'nvm node bin    : {nvm_bin or "not found"}')
+        self.get_logger().info(f'nvm node bin    : {find_nvm_node_bin() or "not found"}')
         self.get_logger().info(f'Node.js version : {get_node_version(self._env)}')
         self.get_logger().info(f'gemini binary   : {self._gemini_bin or "NOT FOUND"}')
-        self.get_logger().info(f'GEMINI_API_KEY  : {"set" if api_key else "MISSING"} ({key_src})')
+        self.get_logger().info(f'GEMINI_API_KEY  : {"set ✓" if api_key else "MISSING ✗"}')
+        self.get_logger().info(f'Env file        : {ENV_FILE}')
 
         if not self._gemini_bin:
             self.get_logger().error('gemini not found — install: npm install -g @google/gemini-cli')
         if not api_key:
-            self.get_logger().error('GEMINI_API_KEY missing — add to /etc/r2d2/env')
+            self.get_logger().error(
+                f'GEMINI_API_KEY not found in environment or {ENV_FILE}. '
+                'Add GEMINI_API_KEY=your_key to /etc/r2d2/env'
+            )
 
         self.get_logger().info('Listening on /r2d2/llm_input - ready.')
 
