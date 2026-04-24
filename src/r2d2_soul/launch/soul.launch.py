@@ -3,16 +3,15 @@
 soul.launch.py
 
 Startet alle fertigen Nodes des r2d2_soul Package:
-  - mood_node    : Emotionaler Zustandsvektor, persistiert in State File.
-  - memory_node  : Episodisches Gedaechtnis (SQLite), Orte und Events.
-  - llm_node     : Lauscht auf /r2d2/llm_input, ruft gemini-cli auf,
-                   publiziert strukturierten JSON-Response.
+  - mood_node            : Emotionaler Zustandsvektor, persistiert in State File.
+  - memory_node          : Episodisches Gedaechtnis (SQLite).
+  - context_builder_node : Baut Mood + Memory zu LLM-Kontext zusammen.
+  - llm_node             : Ruft gemini-cli auf, publiziert JSON-Response.
 
 Noch NICHT gestartet (ausstehend):
-  - context_builder_node  (naechster Schritt)
-  - behavior_tree_node    (wartet auf Nav2)
-  - voice_input_node      (zurueckgestellt)
-  - whisper_stt_node      (zurueckgestellt)
+  - behavior_tree_node   (wartet auf Nav2)
+  - voice_input_node     (zurueckgestellt)
+  - whisper_stt_node     (zurueckgestellt)
 """
 
 from launch import LaunchDescription
@@ -46,6 +45,18 @@ def generate_launch_description():
         }],
     )
 
+    context_builder = Node(
+        package='r2d2_soul',
+        executable='context_builder',
+        name='context_builder_node',
+        output='screen',
+        parameters=[{
+            'boredom_threshold':    0.8,
+            'min_trigger_interval': 300.0,
+            'max_memory_events':    5,
+        }],
+    )
+
     llm_node = Node(
         package='r2d2_soul',
         executable='llm_node',
@@ -61,6 +72,7 @@ def generate_launch_description():
         LogInfo(msg='[r2d2_soul] Starte Soul-Layer...'),
         mood_node,
         memory_node,
+        context_builder,
         llm_node,
-        LogInfo(msg='[r2d2_soul] mood_node + memory_node + llm_node gestartet.'),
+        LogInfo(msg='[r2d2_soul] Soul-Layer vollstaendig gestartet.'),
     ])

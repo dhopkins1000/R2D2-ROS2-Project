@@ -23,10 +23,11 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'llm_latency_test = r2d2_soul.llm_latency_test_node:main',
-            'llm_node         = r2d2_soul.llm_node:main',
-            'mood_node        = r2d2_soul.mood_node:main',
-            'memory_node      = r2d2_soul.memory_node:main',
+            'llm_latency_test    = r2d2_soul.llm_latency_test_node:main',
+            'llm_node            = r2d2_soul.llm_node:main',
+            'mood_node           = r2d2_soul.mood_node:main',
+            'memory_node         = r2d2_soul.memory_node:main',
+            'context_builder     = r2d2_soul.context_builder_node:main',
         ],
     },
 )
