@@ -10,12 +10,18 @@ BACKEND: gemini-cli (google-gemini/gemini-cli)
     - Auth:    export GOOGLE_API_KEY=<key from aistudio.google.com>
     - GEMINI.md in /home/r2d2/soul is loaded automatically as system context
 
+PATH NOTE:
+    When launched via ros2 launch or systemd, the subprocess PATH may differ
+    from the interactive terminal. gemini-cli requires Node.js 18+.
+    The node resolves the gemini binary path at startup and logs it, so you
+    can verify the correct binary and Node.js version are being used.
+    If gemini is not on the default PATH, set the gemini_path parameter.
+
 Usage:
     ros2 run r2d2_soul llm_node
 
-    # Test:
-    ros2 topic pub --once /r2d2/llm_input std_msgs/msg/String \\
-        '{data: "Wie ist dein Status?"}'
+    # With explicit gemini path:
+    ros2 run r2d2_soul llm_node --ros-args -p gemini_path:=/usr/local/bin/gemini
 
 Topics:
     Subscribed:  /r2d2/llm_input    std_msgs/String  — prompt text
@@ -32,10 +38,16 @@ ROS2 Parameters:
 
     response_timeout (float)   Seconds before giving up.
                                Default: 60.0
+
+    gemini_path      (string)  Full path to gemini binary.
+                               Empty string = resolve from PATH automatically.
+                               Default: '' (auto-resolve)
 """
 
 import json
+import os
 import re
+import shutil
 import subprocess
 import time
 from pathlib import Path
@@ -47,6 +59,15 @@ from std_msgs.msg import Bool, String
 
 _FENCE_RE = re.compile(r'^```(?:json)?\s*\n?(.*?)\n?```\s*$', re.DOTALL)
 
+# Common locations where npm installs global packages on Linux/Pi
+_NPM_GLOBAL_DIRS = [
+    '/usr/local/bin',
+    '/usr/bin',
+    os.path.expanduser('~/.npm-global/bin'),
+    os.path.expanduser('~/.local/bin'),
+    '/opt/homebrew/bin',
+]
+
 
 def strip_fences(text: str) -> str:
     m = _FENCE_RE.match(text.strip())
@@ -54,12 +75,50 @@ def strip_fences(text: str) -> str:
 
 
 def safe_get(d, *keys, default=None):
-    """Safely traverse nested dicts — returns default if any level is missing or not a dict."""
     for key in keys:
         if not isinstance(d, dict):
             return default
         d = d.get(key, default)
     return d
+
+
+def resolve_gemini(explicit_path: str) -> str | None:
+    """
+    Return the full path to the gemini binary.
+    1. Use explicit_path if provided and executable.
+    2. Try shutil.which() with current PATH.
+    3. Try common npm global install locations.
+    Returns None if not found.
+    """
+    if explicit_path:
+        p = Path(explicit_path)
+        if p.is_file() and os.access(p, os.X_OK):
+            return str(p)
+
+    found = shutil.which('gemini')
+    if found:
+        return found
+
+    for d in _NPM_GLOBAL_DIRS:
+        candidate = Path(d) / 'gemini'
+        if candidate.is_file() and os.access(candidate, os.X_OK):
+            return str(candidate)
+
+    return None
+
+
+def node_version_for(gemini_binary: str) -> str:
+    """Return the Node.js version used by the gemini binary, for diagnostics."""
+    try:
+        # gemini is a Node.js script — find the node that runs it
+        node = shutil.which('node')
+        if node:
+            result = subprocess.run([node, '--version'],
+                                    capture_output=True, text=True, timeout=5)
+            return result.stdout.strip()
+    except Exception:
+        pass
+    return 'unknown'
 
 
 class LlmNode(Node):
@@ -70,12 +129,17 @@ class LlmNode(Node):
         self.declare_parameter('soul_workspace',   '/home/r2d2/soul')
         self.declare_parameter('model',            'gemini-2.5-flash')
         self.declare_parameter('response_timeout', 60.0)
+        self.declare_parameter('gemini_path',      '')
 
         self._workspace = Path(
             self.get_parameter('soul_workspace').get_parameter_value().string_value
         )
-        self._model   = self.get_parameter('model').get_parameter_value().string_value
-        self._timeout = self.get_parameter('response_timeout').get_parameter_value().double_value
+        self._model       = self.get_parameter('model').get_parameter_value().string_value
+        self._timeout     = self.get_parameter('response_timeout').get_parameter_value().double_value
+        gemini_path_param = self.get_parameter('gemini_path').get_parameter_value().string_value
+
+        # Resolve gemini binary once at startup
+        self._gemini_bin = resolve_gemini(gemini_path_param)
 
         self._busy = False
         self._pub_response = self.create_publisher(String, '/r2d2/llm_response', 10)
@@ -88,6 +152,23 @@ class LlmNode(Node):
         self.get_logger().info(f'GEMINI.md       : {self._workspace / "GEMINI.md"}')
         self.get_logger().info(f'Model           : {self._model}')
         self.get_logger().info(f'Response timeout: {self._timeout}s')
+
+        if self._gemini_bin:
+            node_ver = node_version_for(self._gemini_bin)
+            self.get_logger().info(f'gemini binary   : {self._gemini_bin}')
+            self.get_logger().info(f'Node.js version : {node_ver}')
+            if node_ver.startswith('v') and int(node_ver[1:].split('.')[0]) < 18:
+                self.get_logger().error(
+                    f'Node.js {node_ver} is too old — gemini-cli requires v18+. '
+                    'Install a newer Node.js version.'
+                )
+        else:
+            self.get_logger().error(
+                'gemini binary not found! '
+                'Install with: npm install -g @google/gemini-cli '
+                'or set the gemini_path parameter explicitly.'
+            )
+
         self.get_logger().info('Listening on /r2d2/llm_input — ready.')
 
     def _on_input(self, msg: String):
@@ -115,14 +196,23 @@ class LlmNode(Node):
             self._publish_busy(False)
 
     def _call_gemini(self, prompt: str) -> dict:
-        """Call gemini-cli and return a structured response dict."""
+        if not self._gemini_bin:
+            return self._error(
+                'gemini binary not found — set gemini_path parameter or check PATH'
+            )
+
         cmd = [
-            'gemini',
+            self._gemini_bin,
             '-p', prompt,
             '--output-format', 'json',
             '--model', self._model,
             '--yolo',
         ]
+
+        # Build environment: inherit current env and ensure npm global dirs are in PATH
+        env = os.environ.copy()
+        extra_paths = ':'.join(_NPM_GLOBAL_DIRS)
+        env['PATH'] = extra_paths + ':' + env.get('PATH', '')
 
         t_start = time.monotonic()
 
@@ -133,31 +223,28 @@ class LlmNode(Node):
                 text=True,
                 timeout=self._timeout,
                 cwd=str(self._workspace),
+                env=env,
             )
         except subprocess.TimeoutExpired:
             return self._error(f'gemini timed out after {self._timeout}s')
         except FileNotFoundError:
-            return self._error(
-                'gemini binary not found — install with: npm install -g @google/gemini-cli'
-            )
+            return self._error(f'gemini binary not executable: {self._gemini_bin}')
 
         latency = time.monotonic() - t_start
 
         if proc.returncode != 0:
-            stderr = proc.stderr.strip()[:300]
+            stderr = proc.stderr.strip()[:400]
             self.get_logger().error(f'gemini exit {proc.returncode}: {stderr}')
             return self._error(f'gemini exited with code {proc.returncode}: {stderr}')
 
-        # Parse the gemini-cli JSON envelope
         try:
             envelope = json.loads(proc.stdout)
         except json.JSONDecodeError as e:
             self.get_logger().error(f'Envelope parse failed: {e} — raw: {proc.stdout[:200]}')
             return self._error(f'Envelope JSON parse failed: {e}')
 
-        # The model response is in envelope['response'] as a string
         response_text = envelope.get('response', '')
-        clean_text = strip_fences(response_text)
+        clean_text    = strip_fences(response_text)
 
         if clean_text != response_text:
             self.get_logger().warn('Model used markdown fences — stripped.')
@@ -168,24 +255,15 @@ class LlmNode(Node):
             self.get_logger().error(f'Response not valid JSON: {e} — raw: {response_text[:200]}')
             return self._error(f'Response JSON parse failed: {e}')
 
-        # Ensure structured is a dict, not some other JSON type
         if not isinstance(structured, dict):
-            self.get_logger().error(f'Response JSON is not a dict: {type(structured)}')
             return self._error(f'Response is {type(structured).__name__}, expected dict')
 
-        # Token stats from gemini envelope
-        stats = envelope.get('stats', {})
+        stats        = envelope.get('stats', {})
         models_stats = stats.get('models', {}) if isinstance(stats, dict) else {}
-        total_cached = sum(
-            m.get('tokens', {}).get('cached', 0)
-            for m in models_stats.values()
-            if isinstance(m, dict)
-        )
-        total_tokens = sum(
-            m.get('tokens', {}).get('total', 0)
-            for m in models_stats.values()
-            if isinstance(m, dict)
-        )
+        total_cached = sum(m.get('tokens', {}).get('cached', 0)
+                           for m in models_stats.values() if isinstance(m, dict))
+        total_tokens = sum(m.get('tokens', {}).get('total', 0)
+                           for m in models_stats.values() if isinstance(m, dict))
 
         structured['_meta'] = {
             'latency_s':     round(latency, 2),
@@ -198,10 +276,8 @@ class LlmNode(Node):
         return structured
 
     def _log_response(self, r: dict):
-        """Log response fields — uses safe_get to handle malformed model output gracefully."""
         meta = r.get('_meta', {}) if isinstance(r, dict) else {}
         lcd  = r.get('lcd', {})   if isinstance(r, dict) else {}
-
         self.get_logger().info('--- LLM Response ---')
         self.get_logger().info(f'  goal         : {r.get("goal") if isinstance(r, dict) else "?"}')
         self.get_logger().info(f'  intent       : {safe_get(r, "utterance", "intent")}')
