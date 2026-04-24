@@ -8,27 +8,26 @@ Type=simple
 User=r2d2
 Group=r2d2
 
-# Load secrets (GOOGLE_API_KEY etc.) from environment file
-# Create this file manually: sudo nano /etc/r2d2/env
-# Contents: GOOGLE_API_KEY=your_key_here
+# Load secrets (GOOGLE_API_KEY etc.) from environment file.
+# Create this file manually — it is NOT in git:
+#   sudo mkdir -p /etc/r2d2
+#   echo 'GOOGLE_API_KEY=your_key_here' | sudo tee /etc/r2d2/env
+#   sudo chmod 600 /etc/r2d2/env && sudo chown r2d2:r2d2 /etc/r2d2/env
 EnvironmentFile=/etc/r2d2/env
 
-# Add Node.js (for gemini-cli) and ROS2 to PATH
-Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/lib/nodejs/bin
+# Include nvm-managed Node.js in PATH so gemini-cli finds the right node.
+# Update the version number below when nvm changes the active version.
+# Check current version with: node --version
+Environment=PATH=/home/r2d2/.nvm/versions/node/v22.22.2/bin:/usr/local/bin:/usr/bin:/bin
 
 ExecStart=/bin/bash -c '\
   source /opt/ros/jazzy/setup.bash && \
   source /home/r2d2/ros2_ws/install/setup.bash && \
   ros2 launch r2d2_bringup r2d2.launch.py'
 
-# Restart on failure, but not too aggressively
 Restart=on-failure
 RestartSec=10s
-
-# Give ROS2 enough time to shut down cleanly
 TimeoutStopSec=30s
-
-# Log to journal
 StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=r2d2
