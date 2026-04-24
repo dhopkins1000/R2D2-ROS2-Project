@@ -3,16 +3,16 @@
 soul.launch.py
 
 Startet alle fertigen Nodes des r2d2_soul Package:
-  - mood_node  : Emotionaler Zustandsvektor, persistiert in State File.
-  - llm_node   : Lauscht auf /r2d2/llm_input, ruft gemini-cli auf,
-                 publiziert strukturierten JSON-Response auf /r2d2/llm_response.
+  - mood_node    : Emotionaler Zustandsvektor, persistiert in State File.
+  - memory_node  : Episodisches Gedaechtnis (SQLite), Orte und Events.
+  - llm_node     : Lauscht auf /r2d2/llm_input, ruft gemini-cli auf,
+                   publiziert strukturierten JSON-Response.
 
 Noch NICHT gestartet (ausstehend):
-  - memory_node         (noch nicht implementiert)
-  - context_builder     (noch nicht implementiert)
-  - behavior_tree       (noch nicht implementiert)
-  - voice_input_node    (zurueckgestellt)
-  - whisper_stt_node    (zurueckgestellt)
+  - context_builder_node  (naechster Schritt)
+  - behavior_tree_node    (wartet auf Nav2)
+  - voice_input_node      (zurueckgestellt)
+  - whisper_stt_node      (zurueckgestellt)
 """
 
 from launch import LaunchDescription
@@ -34,6 +34,18 @@ def generate_launch_description():
         }],
     )
 
+    memory_node = Node(
+        package='r2d2_soul',
+        executable='memory_node',
+        name='memory_node',
+        output='screen',
+        parameters=[{
+            'db_path':       '/home/r2d2/.r2d2/memory.db',
+            'summary_count': 10,
+            'publish_rate':  0.2,
+        }],
+    )
+
     llm_node = Node(
         package='r2d2_soul',
         executable='llm_node',
@@ -48,6 +60,7 @@ def generate_launch_description():
     return LaunchDescription([
         LogInfo(msg='[r2d2_soul] Starte Soul-Layer...'),
         mood_node,
+        memory_node,
         llm_node,
-        LogInfo(msg='[r2d2_soul] mood_node + llm_node gestartet.'),
+        LogInfo(msg='[r2d2_soul] mood_node + memory_node + llm_node gestartet.'),
     ])

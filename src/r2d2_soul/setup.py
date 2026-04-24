@@ -26,6 +26,7 @@ setup(
             'llm_latency_test = r2d2_soul.llm_latency_test_node:main',
             'llm_node         = r2d2_soul.llm_node:main',
             'mood_node        = r2d2_soul.mood_node:main',
+            'memory_node      = r2d2_soul.memory_node:main',
         ],
     },
 )
