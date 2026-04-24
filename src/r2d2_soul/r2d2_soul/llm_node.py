@@ -7,20 +7,18 @@ mode, and publishes the structured JSON response to /r2d2/llm_response.
 
 BACKEND: gemini-cli (google-gemini/gemini-cli)
     - Install: npm install -g @google/gemini-cli
-    - Auth:    export GOOGLE_API_KEY=<key from aistudio.google.com>
+    - Auth:    set GEMINI_API_KEY (and/or GOOGLE_API_KEY) in /etc/r2d2/env
     - GEMINI.md in /home/r2d2/soul is loaded automatically as system context
 
+AUTH NOTE:
+    gemini-cli requires GEMINI_API_KEY. If only GOOGLE_API_KEY is set,
+    this node copies it to GEMINI_API_KEY automatically in the subprocess
+    environment so both variable names work.
+
 NVM / PATH NOTE:
-    gemini-cli requires Node.js v18+. On this Pi, Node.js is managed via nvm
-    and lives at ~/.nvm/versions/node/<version>/bin/. When running via
-    ros2 launch or systemd, nvm is NOT sourced, so the subprocess would pick
-    up the system node (likely too old).
-
-    Fix: this node scans ~/.nvm/versions/node/ at startup for the highest
-    installed version and prepends it to the subprocess PATH automatically.
-    No manual PATH changes needed.
-
-    The resolved node path is logged at startup for verification.
+    gemini-cli requires Node.js v18+. This node scans ~/.nvm/versions/node/
+    at startup for the highest installed version and prepends it to the
+    subprocess PATH automatically. No manual PATH changes needed.
 
 Usage:
     ros2 run r2d2_soul llm_node
@@ -57,7 +55,6 @@ from std_msgs.msg import Bool, String
 
 _FENCE_RE = re.compile(r'^```(?:json)?\s*\n?(.*?)\n?```\s*$', re.DOTALL)
 
-# Common npm global bin dirs (checked if nvm not found)
 _NPM_GLOBAL_DIRS = [
     '/usr/local/bin',
     '/usr/bin',
@@ -80,14 +77,10 @@ def safe_get(d, *keys, default=None):
 
 
 def find_nvm_node_bin() -> str | None:
-    """
-    Scan ~/.nvm/versions/node/ and return the bin directory of the highest
-    installed Node.js version. Returns None if nvm is not installed.
-    """
+    """Return bin dir of the highest nvm-installed Node.js version."""
     nvm_versions = Path.home() / '.nvm' / 'versions' / 'node'
     if not nvm_versions.is_dir():
         return None
-
     versions = sorted(
         (d for d in nvm_versions.iterdir() if d.is_dir()),
         key=lambda p: tuple(int(x) for x in p.name.lstrip('v').split('.')
@@ -103,37 +96,37 @@ def find_nvm_node_bin() -> str | None:
 
 def build_subprocess_env() -> dict:
     """
-    Build an environment dict for subprocesses that ensures the correct
-    Node.js (nvm-managed) is first in PATH.
+    Build subprocess environment:
+    - Prepend nvm Node.js bin to PATH
+    - Ensure GEMINI_API_KEY is set (copy from GOOGLE_API_KEY if needed)
     """
     env = os.environ.copy()
-    extra: list[str] = []
 
+    # PATH: nvm node first, then common npm global dirs
+    extra: list[str] = []
     nvm_bin = find_nvm_node_bin()
     if nvm_bin:
         extra.append(nvm_bin)
-
     extra.extend(_NPM_GLOBAL_DIRS)
     env['PATH'] = ':'.join(extra) + ':' + env.get('PATH', '')
+
+    # Auth: gemini-cli requires GEMINI_API_KEY specifically.
+    # If only GOOGLE_API_KEY is set, copy it over automatically.
+    if not env.get('GEMINI_API_KEY') and env.get('GOOGLE_API_KEY'):
+        env['GEMINI_API_KEY'] = env['GOOGLE_API_KEY']
+
     return env
 
 
 def resolve_gemini(explicit_path: str, env: dict) -> str | None:
-    """Resolve the gemini binary path, using the enriched env for which."""
     if explicit_path:
         p = Path(explicit_path)
         if p.is_file() and os.access(p, os.X_OK):
             return str(p)
-
-    # Use shutil.which with the enriched PATH
-    found = shutil.which('gemini', path=env.get('PATH', ''))
-    if found:
-        return found
-    return None
+    return shutil.which('gemini', path=env.get('PATH', ''))
 
 
 def get_node_version(env: dict) -> str:
-    """Return the Node.js version visible in the given environment."""
     try:
         node = shutil.which('node', path=env.get('PATH', ''))
         if node:
@@ -155,20 +148,12 @@ class LlmNode(Node):
         self.declare_parameter('response_timeout', 60.0)
         self.declare_parameter('gemini_path',      '')
 
-        self._workspace = Path(
-            self.get_parameter('soul_workspace').get_parameter_value().string_value
-        )
-        self._model       = self.get_parameter('model').get_parameter_value().string_value
-        self._timeout     = self.get_parameter('response_timeout').get_parameter_value().double_value
-        gemini_path_param = self.get_parameter('gemini_path').get_parameter_value().string_value
+        self._workspace       = Path(self.get_parameter('soul_workspace').get_parameter_value().string_value)
+        self._model           = self.get_parameter('model').get_parameter_value().string_value
+        self._timeout         = self.get_parameter('response_timeout').get_parameter_value().double_value
+        gemini_path_param     = self.get_parameter('gemini_path').get_parameter_value().string_value
 
-        # Build enriched environment (nvm node prepended to PATH)
-        self._env = build_subprocess_env()
-
-        nvm_bin = find_nvm_node_bin()
-        self.get_logger().info(f'nvm node bin    : {nvm_bin or "not found"}')
-        self.get_logger().info(f'Node.js version : {get_node_version(self._env)}')
-
+        self._env        = build_subprocess_env()
         self._gemini_bin = resolve_gemini(gemini_path_param, self._env)
 
         self._busy = False
@@ -178,17 +163,23 @@ class LlmNode(Node):
             String, '/r2d2/llm_input', self._on_input, 10
         )
 
+        # Startup diagnostics
+        nvm_bin  = find_nvm_node_bin()
+        api_key  = self._env.get('GEMINI_API_KEY', '')
+        key_src  = ('GEMINI_API_KEY' if os.environ.get('GEMINI_API_KEY')
+                    else 'GOOGLE_API_KEY (copied)' if api_key else 'NOT SET')
+
         self.get_logger().info(f'Soul workspace  : {self._workspace}')
         self.get_logger().info(f'Model           : {self._model}')
-        self.get_logger().info(f'Response timeout: {self._timeout}s')
+        self.get_logger().info(f'nvm node bin    : {nvm_bin or "not found"}')
+        self.get_logger().info(f'Node.js version : {get_node_version(self._env)}')
+        self.get_logger().info(f'gemini binary   : {self._gemini_bin or "NOT FOUND"}')
+        self.get_logger().info(f'GEMINI_API_KEY  : {"set" if api_key else "MISSING"} ({key_src})')
 
-        if self._gemini_bin:
-            self.get_logger().info(f'gemini binary   : {self._gemini_bin}')
-        else:
-            self.get_logger().error(
-                'gemini binary not found! '
-                'Install: npm install -g @google/gemini-cli'
-            )
+        if not self._gemini_bin:
+            self.get_logger().error('gemini not found — install: npm install -g @google/gemini-cli')
+        if not api_key:
+            self.get_logger().error('GEMINI_API_KEY missing — add to /etc/r2d2/env')
 
         self.get_logger().info('Listening on /r2d2/llm_input - ready.')
 
@@ -220,24 +211,14 @@ class LlmNode(Node):
         if not self._gemini_bin:
             return self._error('gemini binary not found')
 
-        cmd = [
-            self._gemini_bin,
-            '-p', prompt,
-            '--output-format', 'json',
-            '--model', self._model,
-            '--yolo',
-        ]
+        cmd = [self._gemini_bin, '-p', prompt,
+               '--output-format', 'json', '--model', self._model, '--yolo']
 
         t_start = time.monotonic()
         try:
-            proc = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=self._timeout,
-                cwd=str(self._workspace),
-                env=self._env,   # enriched env with nvm node in PATH
-            )
+            proc = subprocess.run(cmd, capture_output=True, text=True,
+                                  timeout=self._timeout,
+                                  cwd=str(self._workspace), env=self._env)
         except subprocess.TimeoutExpired:
             return self._error(f'gemini timed out after {self._timeout}s')
         except FileNotFoundError:
@@ -253,7 +234,6 @@ class LlmNode(Node):
         try:
             envelope = json.loads(proc.stdout)
         except json.JSONDecodeError as e:
-            self.get_logger().error(f'Envelope parse failed: {e}')
             return self._error(f'Envelope JSON parse failed: {e}')
 
         response_text = envelope.get('response', '')
@@ -278,12 +258,9 @@ class LlmNode(Node):
                            for m in models_stats.values() if isinstance(m, dict))
 
         structured['_meta'] = {
-            'latency_s':     round(latency, 2),
-            'cost_usd':      0.0,
-            'model':         self._model,
-            'total_tokens':  total_tokens,
-            'cached_tokens': total_cached,
-            'error':         None,
+            'latency_s': round(latency, 2), 'cost_usd': 0.0,
+            'model': self._model, 'total_tokens': total_tokens,
+            'cached_tokens': total_cached, 'error': None,
         }
         return structured
 
@@ -317,17 +294,13 @@ class LlmNode(Node):
     def _error(self, msg: str) -> dict:
         self.get_logger().error(f'LLM error: {msg}')
         return {
-            'goal': 'idle',
-            'goal_params': {},
+            'goal': 'idle', 'goal_params': {},
             'utterance': {'intent': 'alert_warning', 'intensity': 0.8},
             'lcd': {'line1': 'LLM Fehler', 'line2': 'Siehe Log'},
             'mood_delta': {'curiosity': 0.0, 'boredom': 0.0, 'social': 0.0},
-            'memory_write': None,
-            'internal_note': msg,
-            '_meta': {
-                'latency_s': 0.0, 'cost_usd': 0.0, 'model': self._model,
-                'total_tokens': 0, 'cached_tokens': 0, 'error': msg,
-            },
+            'memory_write': None, 'internal_note': msg,
+            '_meta': {'latency_s': 0.0, 'cost_usd': 0.0, 'model': self._model,
+                      'total_tokens': 0, 'cached_tokens': 0, 'error': msg},
         }
 
 
