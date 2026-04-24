@@ -1,0 +1,37 @@
+[Unit]
+Description=R2D2 ROS2 Bringup
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=r2d2
+Group=r2d2
+
+# Load secrets (GOOGLE_API_KEY etc.) from environment file
+# Create this file manually: sudo nano /etc/r2d2/env
+# Contents: GOOGLE_API_KEY=your_key_here
+EnvironmentFile=/etc/r2d2/env
+
+# Add Node.js (for gemini-cli) and ROS2 to PATH
+Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/lib/nodejs/bin
+
+ExecStart=/bin/bash -c '\
+  source /opt/ros/jazzy/setup.bash && \
+  source /home/r2d2/ros2_ws/install/setup.bash && \
+  ros2 launch r2d2_bringup r2d2.launch.py'
+
+# Restart on failure, but not too aggressively
+Restart=on-failure
+RestartSec=10s
+
+# Give ROS2 enough time to shut down cleanly
+TimeoutStopSec=30s
+
+# Log to journal
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=r2d2
+
+[Install]
+WantedBy=multi-user.target
