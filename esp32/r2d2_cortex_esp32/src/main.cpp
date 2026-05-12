@@ -1,4 +1,7 @@
 #include <Arduino.h>
+#include <soc/soc.h>
+#include <soc/rtc_cntl_reg.h>
+#include <Wire.h>
 #include "config.h"
 #include "battery.h"
 #include "power.h"
@@ -131,10 +134,30 @@ static void printStatus() {
 
 // --- Arduino entry points ---
 void setup() {
+    // Disable brownout detector — WiFi init causes current spike
+    // that triggers brownout on USB power. Safe to disable for dev.
+    WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0);
+
     Serial.begin(115200);
     delay(500);
     Serial.println();
     Serial.println("[CORTEX] Booting...");
+
+    // === I2C DIAGNOSTIC SCANNER ===
+    Serial.println("[DIAG] Starting I2C scanner on GPIO21(SDA)/GPIO22(SCL)...");
+    Wire.begin(PIN_I2C_SDA, PIN_I2C_SCL);
+    delay(100);
+
+    int devicesFound = 0;
+    for (uint8_t addr = 1; addr < 127; addr++) {
+        Wire.beginTransmission(addr);
+        uint8_t error = Wire.endTransmission();
+        if (error == 0) {
+            Serial.printf("[I2C] Device found at 0x%02X\n", addr);
+            devicesFound++;
+        }
+    }
+    Serial.printf("[DIAG] I2C scan complete: %d device(s) found\n", devicesFound);
 
     // Button pin
     pinMode(PIN_WAKE_BTN, INPUT_PULLUP);

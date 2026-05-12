@@ -13,9 +13,9 @@ void LEDMatrix::begin() {
         matrix.setBrightness(5);
         matrix.clear();
         matrix.writeDisplay();
-        Serial.println("[LED] HT16K33 initialized at 0x70.");
+        Serial.printf("[LED] HT16K33 initialized at 0x%02X.\n", HT16K33_ADDR);
     } else {
-        Serial.println("[LED] WARNING: HT16K33 not found. LED display disabled.");
+        Serial.printf("[LED] WARNING: HT16K33 not found at 0x%02X. LED display disabled.\n", HT16K33_ADDR);
     }
 }
 

@@ -46,6 +46,18 @@ const char* BatteryMonitor::modeName(uint16_t mode) {
     }
 }
 
+static const char* modbusErrorName(uint8_t code) {
+    switch (code) {
+        case 0x00: return "Success";
+        case 0xE0: return "Invalid Slave ID";
+        case 0xE1: return "Invalid Function";
+        case 0xE2: return "Timeout (no response)";
+        case 0xE3: return "CRC error / invalid response";
+        case 0xE4: return "Invalid response data";
+        default:   return "Unknown error";
+    }
+}
+
 bool BatteryMonitor::isAlarmBlocking() const {
     return _data.alarm != ALARM_OK
         && _data.alarm != ALARM_NCH
@@ -56,7 +68,11 @@ void BatteryMonitor::begin() {
     Serial2.begin(MODBUS_BAUD, SERIAL_8N1, PIN_BAT_RX, PIN_BAT_TX);
     _node.begin(MODBUS_SLAVE_ADDR, Serial2);
 
-    Serial.println("[BAT] Initializing XY-BT13L...");
+    Serial.printf("[BAT] Initializing XY-BT13L on UART2 (RX=%d TX=%d, %d baud, slave_addr=0x%02X)...\n",
+                  PIN_BAT_RX, PIN_BAT_TX, MODBUS_BAUD, MODBUS_SLAVE_ADDR);
+
+    // Extended initialization delay - some devices need time to become responsive
+    delay(500);
 
     // Step 1: Read current alarm
     delay(100);
@@ -72,7 +88,7 @@ void BatteryMonitor::begin() {
             delay(200);
         }
     } else {
-        Serial.printf("[BAT] WARNING: Could not read ALARM register (result=0x%02X)\n", result);
+        Serial.printf("[BAT] WARNING: Could not read ALARM register (0x%02X: %s)\n", result, modbusErrorName(result));
     }
 
     // Step 3: Set MODE = DCHG (1)
@@ -81,7 +97,7 @@ void BatteryMonitor::begin() {
     if (result == _node.ku8MBSuccess) {
         Serial.println("[BAT] Mode set to DCHG.");
     } else {
-        Serial.printf("[BAT] WARNING: Could not set MODE (result=0x%02X)\n", result);
+        Serial.printf("[BAT] WARNING: Could not set MODE (0x%02X: %s)\n", result, modbusErrorName(result));
     }
 
     // Step 4: Verify DCH_RELAY is ON
@@ -118,7 +134,7 @@ bool BatteryMonitor::readAllRegisters() {
     // reuses a single response buffer that gets overwritten on each call.
     uint8_t r1 = _node.readHoldingRegisters(REG_MODE, 7);
     if (r1 != _node.ku8MBSuccess) {
-        Serial.printf("[BAT] Batch1 read failed (0x%02X)\n", r1);
+        Serial.printf("[BAT] Batch1 read failed (0x%02X: %s)\n", r1, modbusErrorName(r1));
         return false;
     }
 
@@ -135,7 +151,7 @@ bool BatteryMonitor::readAllRegisters() {
     // Batch 2: registers 0x0007..0x0012 (SOC through ALARM)
     uint8_t r2 = _node.readHoldingRegisters(REG_PER, 12);
     if (r2 != _node.ku8MBSuccess) {
-        Serial.printf("[BAT] Batch2 read failed (0x%02X)\n", r2);
+        Serial.printf("[BAT] Batch2 read failed (0x%02X: %s)\n", r2, modbusErrorName(r2));
         return false;
     }
 
@@ -173,7 +189,7 @@ bool BatteryMonitor::setMode(uint8_t mode) {
         Serial.printf("[BAT] Mode set to %s\n", modeName(mode));
         return true;
     }
-    Serial.printf("[BAT] Failed to set mode (result=0x%02X)\n", result);
+    Serial.printf("[BAT] Failed to set mode (0x%02X: %s)\n", result, modbusErrorName(result));
     return false;
 }
 
@@ -183,6 +199,6 @@ bool BatteryMonitor::acknowledgeAlarm() {
         Serial.println("[BAT] Alarm acknowledged.");
         return true;
     }
-    Serial.printf("[BAT] Failed to acknowledge alarm (result=0x%02X)\n", result);
+    Serial.printf("[BAT] Failed to acknowledge alarm (0x%02X: %s)\n", result, modbusErrorName(result));
     return false;
 }
