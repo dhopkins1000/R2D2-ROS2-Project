@@ -11,12 +11,12 @@ Ein dedizierter ESP32 der **immer aktiv** ist (~0.05W) und drei Aufgaben hat:
 
 ```
 Cortex ESP32 (LOLIN D32)
-  ├── HT16K33 8x8 RGB Matrix  (I2C, GPIO21/22)  ← Status Indicator
-  ├── DS2413 #1               (1-Wire)           ← Dual Power Switch
-  │     ├── Channel A → IRLZ44N N-FET           ← 12V MD25 GND-side
-  │     └── Channel B → IRF4905 P-FET           ← 5V Pi VCC-side
-  ├── XY-BT13L Battery Manager (UART2, GPIO16/17) ← Battery Monitoring
-  └── Wake Button              (GPIO)            ← Wake from deep idle
+  ├── HT16K33 8x8 RGB Matrix  (I2C, GPIO21/22, Adresse 0x72) ← Status Indicator
+  ├── DS2413 #1               (1-Wire)                        ← Dual Power Switch
+  │     ├── Channel A → IRLZ44N N-FET                        ← 12V MD25 GND-side
+  │     └── Channel B → IRF4905 P-FET                        ← 5V Pi VCC-side
+  ├── XY-BT13L Battery Manager (UART2, GPIO16=RX, GPIO17=TX)  ← Battery Monitoring
+  └── Wake Button              (GPIO35, input-only)           ← Wake from deep idle
 ```
 
 Die Pi-Stromversorgung schaltet den gesamten Pi-USB-Bus mit:
@@ -29,6 +29,58 @@ zusätzliches Hardware-Switching.
 
 Siehe [power_management.md](power_management.md) für vollständige
 Schaltplan-Details zum DS2413 + MOSFET Circuit.
+
+---
+
+## Commissioning Findings (Live-Inbetriebnahme)
+
+Erfahrungen aus der ersten Inbetriebnahme — wichtig für zukünftige Setups:
+
+### HT16K33 I2C Adresse: 0x72 (nicht 0x70)
+Das Modul antwortet auf **0x72**, nicht auf die Standardadresse 0x70.
+Immer einen I2C-Scan durchführen bevor die Adresse im Code hartkodiert wird:
+```cpp
+Wire.begin(21, 22);
+for (uint8_t addr = 1; addr < 127; addr++) {
+    Wire.beginTransmission(addr);
+    if (Wire.endTransmission() == 0)
+        Serial.printf("I2C device at 0x%02X\n", addr);
+}
+```
+
+### XY-BT13L Modbus Baudrate: 115200
+Die Werkseinstellung des XY-BT13L ist **115200 Baud** — nicht 9600.
+`Serial2.begin()` muss explizit mit Baudrate und Pins initialisiert werden:
+```cpp
+// Korrekt:
+Serial2.begin(115200, SERIAL_8N1, 16, 17);
+_node.begin(1, Serial2);
+
+// Falsch (Default 9600, keine expliziten Pins):
+Serial2.begin(9600);
+```
+
+### ModbusMaster: Serial2 direkt verwenden
+`HardwareSerial _serial(2)` als Wrapper funktioniert nicht zuverlässig.
+`Serial2` direkt an ModbusMaster übergeben:
+```cpp
+ModbusMaster _node;
+_node.begin(1, Serial2);  // ✓ funktioniert
+```
+
+### Brownout bei WiFi-Initialisierung
+WiFi-Init zieht kurz 300–500mA — zu viel für schwache USB-Hubs oder
+USB-Anschlüsse am Pi. Lösung: Brownout-Detektor in setup() deaktivieren
+und powered USB-Hub verwenden:
+```cpp
+#include "soc/soc.h"
+#include "soc/rtc_cntl_reg.h"
+WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0);  // ganz am Anfang von setup()
+```
+
+### Powered USB Hub erforderlich
+Unpowered USB Hub → Brownout → Bootloop → auch XY-BT13L Modbus Fehler.
+Der Hub muss ein eigenes Netzteil haben wenn ESP32 + weitere Geräte daran hängen.
 
 ---
 
@@ -53,7 +105,7 @@ Cortex ESP32 (LOLIN D32)        XY-BT13L
 ```
 
 **Modbus Parameter (Werkseinstellung):**
-- Baud Rate: 115200
+- Baud Rate: **115200** (nicht 9600!)
 - Format: 8N1 (kein Parity, 1 Stop Bit)
 - Slave Adresse: 1
 
@@ -68,249 +120,219 @@ Das XY-BT13L sitzt als Gateway zwischen Akku, Ladegerät und Last.
 Es verwaltet Lade- und Entladerelais eigenständig nach konfigurierten
 Schwellwerten.
 
+### ⚠️ Relay-Blocking durch aktive Alarme
+
+**Bestätigt durch Live-Test:** Jeder aktive Alarm (inkl. NBE) verhindert
+das Schließen des DCH-Relais, selbst wenn MODE=DCHG gesetzt ist.
+OUT+/OUT- hat erst Spannung nach Alarm-Quittierung.
+
+Alarm quittieren per Modbus: `writeSingleRegister(0x0012, 0)`
+
+**Firmware-Startup-Sequenz:**
+```
+1. Boot → ALARM Register (0x0012) lesen
+2. Falls ALARM != 0 und != 3 (NCH): per Modbus auf 0 setzen, 200ms warten
+3. MODE = 1 (DCHG) schreiben → Register 0x0000
+4. 200ms warten, DCH_RELAY (0x0002) == 1 verifizieren
+5. Monitoring-Loop starten
+```
+
 ### NCH — Normaler Betriebszustand ohne Ladegerät
 
-Im Normalbetrieb (Akku angeschlossen, kein Ladegerät) zeigt das Modul
-dauerhaft den Alarmcode **NCH** (No Charger). Das ist **kein Fehler**,
-sondern der erwartete Zustand wenn R2D2 fährt.
+Im Normalbetrieb zeigt das Modul dauerhaft **NCH** (No Charger).
+Das ist kein Fehler — wird in der Firmware ignoriert.
 
-Die Cortex-Firmware muss NCH explizit als Normalzustand behandeln und
-**nicht** als Alert weiterleiten. Nur echte Alarme (OCP, OVP, LVP etc.)
-werden als `/r2d2/battery/alert` publiziert.
-
-Das Andocken an der Ladestation wird nicht über NCH erkannt, sondern über
-den Anstieg von VCHARGE (Register 0x0008) von 0 auf > 0:
-
+Charger-Erkennung über VCHARGE (Register 0x0008):
 ```
-VCHARGE = 0  →  Normalbetrieb (NCH erwartet, ignorieren)
-VCHARGE > 0  →  Ladegerät verbunden → UPS Mode aktivieren
+VCHARGE = 0   →  Normalbetrieb (NCH ignorieren)
+VCHARGE > 1V  →  Ladegerät verbunden → UPS Mode aktivieren
 ```
+Noise-Schwellwert: raw > 100 (entspricht 1.00V) als Charger-Erkennung.
+Rohwert 55–58 ist Rauschen ohne Ladegerät (~0.55V).
 
 ### UPS Mode — Laden während Betrieb
 
-Im UPS-Modus sind beide Relais (Laden + Entladen) gleichzeitig geschlossen.
+Im UPS-Modus sind beide Relais gleichzeitig geschlossen.
 Das Ladegerät versorgt die Last **und** lädt den Akku parallel.
-Bei Ausfall des Ladegeräts übernimmt der Akku nahtlos — kein Reboot nötig.
 
-**Für R2D2 ideal:** Während des Dockens an der Ladestation läuft der
-Roboter einfach weiter. Kein Shutdown, keine Unterbrechung.
-
+**Für R2D2 ideal:** Während des Dockens läuft der Roboter weiter.
 UPS Mode wird beim Andocken per Modbus aktiviert (Register 0x0000 = 2).
+
+**Einschränkung:** MODE-Write wird im UPS-Modus ignoriert.
+Zum Beenden muss das Ladegerät physisch getrennt werden.
+
+### Relay-Verhalten nach Mode
+
+| MODE | Name       | CH_RELAY | DCH_RELAY | OUT Spannung | Verwendung              |
+|------|------------|----------|-----------|--------------|-------------------------|
+| 0    | Charge     | ON       | OFF       | Keine        | Nur Laden, kein Betrieb |
+| 1    | Discharge  | OFF      | ON        | ✅ Akku-V    | Normalbetrieb R2D2      |
+| 2    | UPS        | ON       | ON        | ✅ Akku-V    | Docking + Laden         |
 
 ### Modbus Registersatz
 
-Alle Register sind 16-bit (2 Bytes). Kapazität (AH) und Energie (WH)
-sind 32-bit und verteilen sich auf zwei aufeinanderfolgende Register (LOW/HIGH).
+| Adresse | Name        | R/W | Einheit | Divisor | Beschreibung                    |
+|---------|-------------|-----|---------|---------|---------------------------------|
+| 0x0000  | MODE        | R/W | —       | —       | 0=Charge, 1=Discharge, 2=UPS    |
+| 0x0001  | CH_RELAY    | R   | —       | —       | Laderelais Status               |
+| 0x0002  | DCH_RELAY   | R   | —       | —       | Entladerelais Status            |
+| 0x0003  | AH_LOW      | R   | Ah      | ÷100    | Kapazität rest. (low 16 bit)    |
+| 0x0004  | AH_HIGH     | R   | Ah      | ÷100    | Kapazität rest. (high 16 bit)   |
+| 0x0005  | WH_LOW      | R   | Wh      | ÷100    | Energie rest. (low 16 bit)      |
+| 0x0006  | WH_HIGH     | R   | Wh      | ÷100    | Energie rest. (high 16 bit)     |
+| 0x0007  | PER         | R   | %       | ÷10     | State of Charge (SOC)           |
+| 0x0008  | VCHARGE     | R   | V       | ÷100    | Ladegerät-Spannung              |
+| 0x0009  | VBAT        | R   | V       | ÷100    | Batteriespannung                |
+| 0x000A  | IBAT        | R   | A       | ÷100    | Batteriestrom                   |
+| 0x000B  | W_LOW       | R   | mW      | ÷1000   | Leistung (low 16 bit)           |
+| 0x000C  | W_HIGH      | R   | mW      | ÷1000   | Leistung (high 16 bit)          |
+| 0x000D  | CH_Runtime  | R   | Min     | —       | Laufzeit Laden                  |
+| 0x000E  | DCH_Runtime | R   | Min     | —       | Laufzeit Entladen               |
+| 0x000F  | LOOPCOUNT   | R   | —       | —       | Anzahl Ladezyklen               |
+| 0x0010  | IN_TEMP     | R   | °C      | ÷10     | Boardtemperatur                 |
+| 0x0011  | EX_TEMP     | R   | °C      | ÷10     | Externe Temperatur (NTC Probe)  |
+| 0x0012  | ALARM       | R/W | —       | —       | Alarmstatus (0 = quittieren)    |
+| 0x0015  | CAP         | R/W | Ah      | —       | Effektive Gesamtkapazität       |
+| 0x0016  | LBP         | R/W | %       | —       | Low Battery Alarm Schwellwert   |
+| 0x0017  | LVP         | R/W | V       | ÷100    | Unterspannungsschutz ⚠️         |
+| 0x0018  | OVP         | R/W | V       | ÷100    | Überspannungsschutz ⚠️          |
+| 0x001A  | OCP         | R/W | A       | ÷100    | Überstromschutz                 |
 
-| Adresse (Hex) | Name        | R/W | Einheit | Beschreibung                        |
-|---------------|-------------|-----|---------|-------------------------------------|
-| 0x0000        | MODE        | R/W | -       | 0=Charge, 1=Discharge, 2=UPS        |
-| 0x0001        | CH_RELAY    | R   | -       | Laderelais Status                   |
-| 0x0002        | DCH_RELAY   | R   | -       | Entladerelais Status                |
-| 0x0003        | AH_LOW      | R   | mAh     | Verbleibende Kapazität (low 16 bit) |
-| 0x0004        | AH_HIGH     | R   | mAh     | Verbleibende Kapazität (high 16 bit)|
-| 0x0005        | WH_LOW      | R   | mWh     | Verbleibende Energie (low 16 bit)   |
-| 0x0006        | WH_HIGH     | R   | mWh     | Verbleibende Energie (high 16 bit)  |
-| 0x0007        | PER         | R   | %       | State of Charge (SOC)               |
-| 0x0008        | VCHARGE     | R   | V       | Ladegerät-Spannung                  |
-| 0x0009        | VBAT        | R   | V       | Batteriespannung                    |
-| 0x000A        | IBAT        | R   | A       | Batteriestrom                       |
-| 0x000B        | W_LOW       | R   | mW      | Leistung (low 16 bit)               |
-| 0x000C        | W_HIGH      | R   | mW      | Leistung (high 16 bit)              |
-| 0x000D        | CH_Runtime  | R   | Min     | Laufzeit Laden                      |
-| 0x000E        | DCH_Runtime | R   | Min     | Laufzeit Entladen                   |
-| 0x000F        | LOOPCOUNT   | R   | -       | Anzahl Ladezyklen                   |
-| 0x0010        | IN_TEMP     | R   | °C      | Boardtemperatur                     |
-| 0x0011        | EX_TEMP     | R   | °C      | Externe Temperatur (NTC Probe)      |
-| 0x0012        | ALARM       | R/W | -       | Alarmstatus                         |
-| 0x0013        | STOP        | R/W | -       | Mode Pause                          |
-| 0x0015        | CAP         | R/W | Ah      | Effektive Gesamtkapazität           |
-| 0x0016        | LBP         | R/W | %       | Low Battery Alarm Schwellwert       |
-| 0x0017        | LVP         | R/W | V       | Unterspannungsschutz                |
-| 0x0018        | OVP         | R/W | V       | Überspannungsschutz                 |
-| 0x001A        | OCP         | R/W | A       | Überstromschutz                     |
+**⚠️ Konfiguration vor echtem Akkueinsatz:**
 
-**Konfigurationsregister (per Modbus beim Start setzen):**
-
-| Parameter | Wert   | Beschreibung                          |
-|-----------|--------|---------------------------------------|
-| LIGHT     | 0      | Display dunkelst (Stromsparen)        |
-| BEP       | OFF    | Buzzer deaktivieren                   |
-| ADD       | 1      | Modbus Adresse (Default)              |
-| BAUD      | 115200 | Baudrate (Default)                    |
+| Register | Parameter | Werk (raw) | 12V Blei-Acid | 3S Li-Ion  |
+|----------|-----------|------------|---------------|------------|
+| 0x0017   | LVP       | 100=1.00V  | 1150=11.50V   | 1000=10.00V|
+| 0x0018   | OVP       | 0=disabled | 1500=15.00V   | 1260=12.60V|
+| 0x0016   | LBP       | 0=disabled | 20 (%)        | 20 (%)     |
+| 0x0015   | CAP       | 24 Ah      | Actual Ah     | Actual Ah  |
 
 ### Alarmcodes
 
-| Code | Beschreibung       | Priorität | Normalbetrieb? |
-|------|--------------------|-----------|----------------|
-| OCP  | Überstrom          | Höchste   | Nein → Alert   |
-| NBE  | Kein Akku          | 2         | Nein → Alert   |
-| NCH  | Kein Ladegerät     | 3         | **Ja → ignorieren** |
-| OVP  | Überspannung       | 10        | Nein → Alert   |
-| LVP  | Unterspannung      | 11        | Nein → Alert   |
-| CAP  | Kapazitätsschwelle | 14        | Nein → Alert   |
+| Code | Name | Relay-Verhalten    | Firmware-Aktion               |
+|------|------|--------------------|-------------------------------|
+| 0    | OK   | Normal             | Normal                        |
+| 1    | OCP  | Relay öffnet       | ALERT + quittieren            |
+| 2    | NBE  | **Relay blockiert**| Mit PSU normal; mit Akku ALERT|
+| 3    | NCH  | Normal             | **Ignorieren — Normalzustand**|
+| 5    | VOE  | Relay öffnet       | ALERT + DCHG re-assertieren   |
+| 10   | OVP  | Relay öffnet       | ALERT + quittieren            |
+| 11   | LVP  | Relay öffnet       | ALERT + quittieren            |
 
 ### ROS2 Topics (Cortex → Pi)
 
 ```
 /r2d2/battery/state    (sensor_msgs/BatteryState)  1 Hz
-  → voltage, current, charge, percentage, temperature
-
 /r2d2/battery/alert    (std_msgs/String)
   → "low_battery"      (SOC < 20%)
   → "critical"         (SOC < 10%)
-  → "charging"         (VCHARGE > 0 erkannt)
-  → "charging_complete"
-  → "alarm:<CODE>"     (OCP, LVP, OVP etc. — NCH wird NICHT weitergeleitet)
+  → "charging"         (VCHARGE > 1.0V erkannt)
+  → "alarm:<CODE>"     (NCH wird NICHT weitergeleitet)
 ```
 
 ### Low Battery Flow
 
 ```
-SOC < 20%    → /r2d2/battery/alert: "low_battery"
-             → RGB Matrix: Violett blinken
-             → Pi: Navigation zur Ladestation einleiten
-
-SOC < 10%    → /r2d2/battery/alert: "critical"
-             → Forced Shutdown Sequenz
-
-VCHARGE > 0  → Ladegerät erkannt (Dockingstation)
-             → Modbus: MODE = 2 (UPS)
-             → RGB Matrix: Violett sweep
-             → /r2d2/battery/alert: "charging"
-             → Roboter läuft weiter ohne Unterbrechung
-
-VCHARGE = 0  → Ladegerät getrennt (Undock)
-             → Modbus: MODE = 1 (Discharge)
-             → RGB Matrix zurück zu vorherigem State
+SOC < 20%    → alert: "low_battery" + RGB: Violett blinken
+SOC < 10%    → alert: "critical"    + Forced Shutdown
+VCHARGE > 1V → MODE=UPS + RGB: Violett sweep + alert: "charging"
+VCHARGE = 0  → MODE=DCHG + RGB: vorheriger State
 ```
-
-### Kapazitätskalibrierung (Erstinbetriebnahme)
-
-Beim ersten Einsatz oder Akkutausch muss die Gesamtkapazität gesetzt werden.
-Entweder manuell über die Tasten (CAP SET) oder per Modbus (Register 0x0015).
-Nach vollständiger Entladung und anschließendem vollem Laden kalibriert das
-Gerät die Kapazität automatisch (Learning Mode).
 
 ---
 
 ## RGB Matrix – Status Zustände
 
-| Zustand     | Farbe        | Animation                  | Beschreibung                     |
-|-------------|--------------|----------------------------|----------------------------------|
-| Boot        | Weiß         | Wipe von links nach rechts | System startet                   |
-| Active      | Blau         | Langsam pulsieren          | R2D2 ist aktiv                   |
-| Navigating  | Grün         | Rotation / Sweep           | Fährt / navigiert                |
-| Listening   | Cyan         | Schnelles Pulsieren        | Wake Word erkannt                |
-| Speaking    | Gelb         | Wellen-Animation           | TTS aktiv                        |
-| Idle        | Gelb/Orange  | Sehr langsames Glimmen     | Wartemodus                       |
-| Deep Idle   | Orange       | Einzelne Pixel, sehr langsam | Pi aus, nur Cortex aktiv       |
-| Error       | Rot          | Blinken                    | Fehler / Watchdog                |
-| Charging    | Violett      | Langsamer Sweep            | Am Ladekabel (UPS Mode)          |
-| Low Battery | Violett      | Blinken                    | SOC < 20%                        |
-| Shutdown    | Rot          | Fade out                   | System fährt herunter            |
+| Zustand     | Farbe       | Animation              |
+|-------------|-------------|------------------------|
+| Boot        | Weiß        | Wipe links → rechts    |
+| Active      | Blau        | Langsam pulsieren      |
+| Standalone  | Gelb        | Langsam pulsieren      |
+| Navigating  | Grün        | Rotation / Sweep       |
+| Listening   | Cyan        | Schnelles Pulsieren    |
+| Speaking    | Gelb        | Wellen-Animation       |
+| Idle        | Orange      | Sehr langsames Glimmen |
+| Deep Idle   | Orange      | Einzelne Pixel, langsam|
+| Error       | Rot         | Blinken                |
+| Charging    | Violett     | Langsamer Sweep        |
+| Low Battery | Violett     | Blinken                |
+| Health AP   | Cyan        | Langsam pulsieren      |
+| Shutdown    | Rot         | Fade out               |
+
+HT16K33 I2C Adresse: **0x72** (bestätigt, nicht Default 0x70)
+
+---
+
+## WiFi & HTTP Health Server
+
+```
+STA Mode (normal):  verbindet mit Heimnetz, HTTP auf lokaler IP
+AP Mode (auf Knopf): SSID "R2D2-Status", PW "r2d2health", IP 192.168.4.1
+```
+
+**AP aktivieren:** Langer Tastendruck (>3s) auf GPIO35 ODER Pi ist aus.
+**Health Page:** `http://<IP>/` — zeigt VBAT, SOC, IBAT, TEMP, Mode, Status
+**JSON API:** `http://<IP>/status`
+**Wake Button:** POST `/wake` auf der Health Page
 
 ---
 
 ## ROS2 Topic Interface
 
-Der Cortex verbindet sich per **WiFi + micro-ROS** mit dem Pi (gleicher
-Reconnect-Loop Pattern wie der Chassis ESP32). Wenn der Pi aus ist, läuft
-der Cortex standalone im Deep-Idle-Modus und wartet auf Wake-Signal.
-
 ```
-/r2d2/power/state   (std_msgs/String) → empfangen vom Pi
-  "active"       → Blau pulsierend
-  "navigating"   → Grün rotating
-  "listening"    → Cyan pulsierend
-  "speaking"     → Gelb Wellen
-  "idle"         → Orange glimmen
-  "shutdown"     → Rot fade out → Shutdown Sequenz auslösen
-  "error"        → Rot blinken
-  "charging"     → Violett sweep
+/r2d2/power/state   (std_msgs/String) → vom Pi empfangen
+  "active" / "navigating" / "listening" / "speaking"
+  "idle" / "shutdown" / "error" / "charging"
 
 /r2d2/cortex/leds   (std_msgs/String, JSON) → direkte LED-Steuerung
-  Beispiel: {"pattern": "pulse", "color": [0,0,255], "speed": "slow"}
 ```
 
 ---
 
 ## Power Management
 
-### DS2413 Firmware (Cortex)
+### DS2413 Firmware
 
 ```cpp
-// Libraries: OneWire + DS2413 (Arduino)
-// DS2413 Channel A = MD25 (active = motor power on)
-// DS2413 Channel B = Pi   (active = Pi power on)
-// Note: DS2413 open-drain LOW activates the NPN → MOSFET ON
-// Logic convention in firmware: true = powered, false = off
-
+// DS2413 open-drain LOW = MOSFET ON (invertierte Logik)
 void setPower(bool md25, bool pi) {
-    ds2413.setOutput(
-        !md25,   // Ch.A: inverted (low = on)
-        !pi      // Ch.B: inverted (low = on)
-    );
+    ds2413.setOutput(!md25, !pi);
 }
 ```
 
 ### Shutdown Sequenz
-
 ```
-1. Pi publiziert /r2d2/power/state: "shutdown"
-2. Cortex zeigt Rot fade-out Animation
-3. Pi GPIO geht LOW (sudo shutdown -h now)
-4. Cortex wartet 10s (Pi fährt runter)
-5. DS2413 Ch.B → HIGH → P-FET sperrt → Pi 5V aus
-   (schaltet: Pi, Xtion, Webcam, ReSpeaker, Hub, Chassis ESP32)
-6. DS2413 Ch.A → HIGH → N-FET sperrt → MD25 aus (falls noch aktiv)
-7. Cortex wechselt zu Deep Idle Animation (orange, sehr langsam)
-8. Nur Cortex aktiv, wartet auf Wake-Signal
+Pi → /r2d2/power/state: "shutdown"
+Cortex → Rot fade-out
+Cortex → GPIO32 LOW (500ms) → Pi initiiert shutdown
+Cortex → wartet auf GPIO34 LOW (Pi shutdown complete) oder Timeout 15s
+Cortex → DS2413: Pi OFF, MD25 OFF
+Cortex → State: DEEP_IDLE (Orange Animation)
 ```
 
 ### Wake Sequenz
-
 ```
-1. Wake-Signal: physischer Knopf an Cortex GPIO ODER Timer-Interrupt
-2. Cortex zeigt Boot Animation (weiß, wipe)
-3. DS2413 Ch.A → LOW → MD25 vorbereitet (optional, erst bei Fahrt)
-4. DS2413 Ch.B → LOW → P-FET leitet → Pi 5V ein
-5. Pi bootet, r2d2.service startet automatisch
-6. micro-ROS Agent auf Pi startet
-7. Cortex reconnectet zum micro-ROS Agent (Reconnect-Loop)
-8. Pi publiziert /r2d2/power/state: "active"
-9. Cortex wechselt zu Blau pulsierend
+Trigger: GPIO35 Knopf ODER POST /wake auf Health Page
+Cortex → Weiß wipe Animation
+Cortex → DS2413: Pi ON
+Cortex → wartet auf micro-ROS Agent
+Pi → /r2d2/power/state: "active"
+Cortex → State: ACTIVE (Blau pulsieren)
 ```
 
 ### Watchdog
-
 ```
-Cortex überwacht /r2d2/power/state Heartbeat
-→ kein Signal für >30s → Rot blinken, Warnung loggen
-→ kein Signal für >60s → Hard Power Cycle via DS2413
-   (Ch.B HIGH → 5s warten → Ch.B LOW → Pi neu gestartet)
+Kein /r2d2/power/state Heartbeat für >30s → Rot blinken
+Kein Heartbeat für >60s → Hard Power Cycle (DS2413: Pi OFF → 5s → Pi ON)
 ```
 
 ---
 
-## Wake aus Deep Idle: Mechanismen
+## Wake-Mechanismen aus Deep Idle
 
-| Mechanismus       | Unterstützt | Details                                          |
-|-------------------|-------------|--------------------------------------------------|
-| Physischer Knopf  | ✅          | GPIO an Cortex, interrupt-driven                 |
-| Timer (geplant)   | ✅          | ESP32 RTC oder Software-Timer                    |
-| Wake Word (Stimme)| ❌          | ReSpeaker braucht Pi – nicht möglich in Deep Idle|
-
-Voice Wake ist in allen anderen States verfügbar. Deep Idle ist nur für
-"wirklich aus" — manuelle oder geplante Aktivierung.
-
----
-
-## Warum Cortex und nicht Head ESP32?
-
-- **Immer sichtbar**: Status auch wenn Pi aus ist (Deep Idle)
-- **Unabhängig**: kein ROS2 nötig für Basis-Status
-- **Sicherheit**: Fehler und Shutdown-Status immer anzeigbar
-- **Einfacher**: Head ESP32 wird schlanker
-
-Der Head ESP32 behält SerLCD 40x2 für Text-Output und Ultraschall-Sensor.
+| Mechanismus        | Status | Details                                   |
+|--------------------|--------|-------------------------------------------|
+| Physischer Knopf   | ✅     | GPIO35, interrupt-driven                  |
+| HTTP /wake Button  | ✅     | WiFi AP muss aktiv sein                   |
+| Timer (geplant)    | ✅     | ESP32 RTC                                 |
+| Wake Word (Stimme) | ❌     | ReSpeaker braucht Pi — nicht möglich      |
