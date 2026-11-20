@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- ============================================================
+       Dome — rotierbarer Kopf.
+       Rotation via Stepper (A4988) am Head-ESP32.
+       Winkel kommt zur Laufzeit per /joint_states vom Head-ESP32
+       micro-ROS Node (Topic-Vertrag siehe
+       docs/architecture/esp32_firmware.md).
+       Solange kein Head-ESP32 läuft, publiziert joint_state_publisher
+       Default-Winkel = 0.
+       ============================================================ -->
+  <link name="dome_link">
+    <visual>
+      <origin xyz="0 0 ${dome_height/2}" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="${dome_radius}" length="${dome_height}"/>
+        <!-- <mesh filename="package://r2d2_description/meshes/dome.stl"/> -->
+      </geometry>
+      <material name="dark_blue"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 ${dome_height/2}" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="${dome_radius}" length="${dome_height}"/>
+      </geometry>
+    </collision>
+    <xacro:cylinder_inertial mass="1.5" radius="${dome_radius}" length="${dome_height}">
+      <origin xyz="0 0 ${dome_height/2}" rpy="0 0 0"/>
+    </xacro:cylinder_inertial>
+  </link>
+
+  <joint name="dome_joint" type="revolute">
+    <parent link="chassis_link"/>
+    <child link="dome_link"/>
+    <origin xyz="0 0 ${chassis_height + neck_height}" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="${-dome_limit}" upper="${dome_limit}" effort="2.0" velocity="2.0"/>
+  </joint>
+
+</robot>

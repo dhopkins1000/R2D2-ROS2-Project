@@ -1,0 +1,136 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- ============================================================
+       CHASSIS-SENSOREN
+       ============================================================ -->
+
+  <!-- HMC5883L Kompass: oben im Chassis -->
+  <link name="compass_link"/>
+  <joint name="compass_joint" type="fixed">
+    <parent link="chassis_link"/>
+    <child link="compass_link"/>
+    <origin xyz="0 0 ${chassis_height - 0.02}" rpy="0 0 0"/>
+  </joint>
+
+  <!-- SRF02 Treppen-Sensor: unten vorn, Strahl zeigt nach unten (Pitch +90°) -->
+  <link name="stair_sensor_link"/>
+  <joint name="stair_sensor_joint" type="fixed">
+    <parent link="chassis_link"/>
+    <child link="stair_sensor_link"/>
+    <origin xyz="${chassis_radius-0.02} 0 0.03" rpy="0 1.5708 0"/>
+  </joint>
+
+  <!-- SSD1306 OLED Display: vorne am Chassis -->
+  <link name="chassis_oled_link"/>
+  <joint name="chassis_oled_joint" type="fixed">
+    <parent link="chassis_link"/>
+    <child link="chassis_oled_link"/>
+    <origin xyz="${chassis_radius} 0 ${chassis_height*0.6}" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ============================================================
+       KAMERAS (Body-Mount, nicht am Dome)
+       ============================================================ -->
+
+  <!-- ASUS Xtion Pro: Tiefenkamera, vorne oben am Chassis -->
+  <link name="xtion_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.04 0.18 0.03"/>
+        <!-- <mesh filename="package://r2d2_description/meshes/xtion.stl"/> -->
+      </geometry>
+      <material name="black"/>
+    </visual>
+  </link>
+  <joint name="xtion_joint" type="fixed">
+    <parent link="chassis_link"/>
+    <child link="xtion_link"/>
+    <origin xyz="${chassis_radius} 0 ${chassis_height*0.80}" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Xtion RGB/Depth/IR Frames + optical frames (REP-103 Konvention:
+       optical Z nach vorn, X nach rechts, Y nach unten) -->
+  <xacro:macro name="xtion_camera" params="name y_offset">
+    <link name="xtion_${name}_frame"/>
+    <joint name="xtion_${name}_joint" type="fixed">
+      <parent link="xtion_link"/>
+      <child link="xtion_${name}_frame"/>
+      <origin xyz="0.01 ${y_offset} 0" rpy="0 0 0"/>
+    </joint>
+    <link name="xtion_${name}_optical_frame"/>
+    <joint name="xtion_${name}_optical_joint" type="fixed">
+      <parent link="xtion_${name}_frame"/>
+      <child link="xtion_${name}_optical_frame"/>
+      <origin xyz="0 0 0" rpy="-1.5708 0 -1.5708"/>
+    </joint>
+  </xacro:macro>
+
+  <xacro:xtion_camera name="rgb"   y_offset="0.025"/>
+  <xacro:xtion_camera name="depth" y_offset="-0.025"/>
+  <xacro:xtion_camera name="ir"    y_offset="-0.065"/>
+
+  <!-- USB Webcam: unter Xtion -->
+  <link name="webcam_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.03 0.06 0.03"/></geometry>
+      <material name="black"/>
+    </visual>
+  </link>
+  <joint name="webcam_joint" type="fixed">
+    <parent link="chassis_link"/>
+    <child link="webcam_link"/>
+    <origin xyz="${chassis_radius} 0 ${chassis_height*0.55}" rpy="0 0 0"/>
+  </joint>
+  <link name="webcam_optical_frame"/>
+  <joint name="webcam_optical_joint" type="fixed">
+    <parent link="webcam_link"/>
+    <child link="webcam_optical_frame"/>
+    <origin xyz="0 0 0" rpy="-1.5708 0 -1.5708"/>
+  </joint>
+
+  <!-- ============================================================
+       DOME-SENSOREN (children von dome_link — rotieren mit)
+       ============================================================ -->
+
+  <!-- ReSpeaker Mic Array V1.0: flache Scheibe im Dome -->
+  <link name="respeaker_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.035" length="0.008"/></geometry>
+      <material name="silver"/>
+    </visual>
+  </link>
+  <joint name="respeaker_joint" type="fixed">
+    <parent link="dome_link"/>
+    <child link="respeaker_link"/>
+    <origin xyz="0 0 ${dome_height*0.35}" rpy="0 0 0"/>
+  </joint>
+
+  <!-- SRF08 Ultraschall vorn am Dome -->
+  <link name="head_ultrasonic_link"/>
+  <joint name="head_ultrasonic_joint" type="fixed">
+    <parent link="dome_link"/>
+    <child link="head_ultrasonic_link"/>
+    <origin xyz="${dome_radius-0.01} 0 ${dome_height*0.5}" rpy="0 0 0"/>
+  </joint>
+
+  <!-- SerLCD 40x2 Display vorn am Dome -->
+  <link name="head_lcd_link"/>
+  <joint name="head_lcd_joint" type="fixed">
+    <parent link="dome_link"/>
+    <child link="head_lcd_link"/>
+    <origin xyz="${dome_radius-0.005} 0 ${dome_height*0.70}" rpy="0 0 0"/>
+  </joint>
+
+  <!-- HT16K33 RGB 8x8 Matrix im Dome (Cortex-gesteuert) -->
+  <link name="ht16k33_link"/>
+  <joint name="ht16k33_joint" type="fixed">
+    <parent link="dome_link"/>
+    <child link="ht16k33_link"/>
+    <origin xyz="${dome_radius-0.005} 0 ${dome_height*0.85}" rpy="0 0 0"/>
+  </joint>
+
+</robot>

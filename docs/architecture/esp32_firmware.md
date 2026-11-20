@@ -92,6 +92,40 @@ Bluetooth               →  micro-ROS Agent on Pi
 | `/r2d2/head/cmd` | Subscribe | std_msgs/Float32 (angle °) |
 | `/r2d2/head/ultrasonic` | Publish | sensor_msgs/Range |
 | `/r2d2/head/display` | Subscribe | std_msgs/String |
+| `/joint_states` | Publish | sensor_msgs/JointState |
+
+### Dome-Winkel → TF (`/joint_states` Contract)
+
+Der Head-ESP32 publiziert den aktuellen Dome-Rotationswinkel als
+`sensor_msgs/JointState`, damit `robot_state_publisher` ihn in den TF-Tree
+überträgt (Joint `dome_joint`, definiert in `src/r2d2_description/urdf/dome.xacro`).
+
+**Message-Vertrag:**
+```
+header.stamp     = aktuelle ESP32-Zeit (micro-ROS synced)
+header.frame_id  = ""  (joint states sind global, kein Frame)
+name             = ["dome_joint"]
+position         = [winkel_in_rad]   # -1.745 .. +1.745 (±100°)
+velocity         = []                # optional, leer OK
+effort           = []                # optional, leer OK
+```
+
+**Rate:** 10 Hz (empfohlen), auch wenn der Dome steht.
+
+**Topic-Name:** exakt `/joint_states` (ROS2-Konvention, kein `/r2d2/...`-Prefix,
+weil `robot_state_publisher` standardmäßig dort subscribt).
+
+**Übergang:**
+- Solange kein Head-ESP32 läuft, publiziert `joint_state_publisher`
+  (im `r2d2_description`-Launch) den Default-Winkel 0.
+- Sobald der Head-ESP32 selbst `/joint_states` publiziert, wird
+  `joint_state_publisher` aus dem Launch entfernt — zwei Publisher auf dem
+  gleichen Topic führen sonst zu springenden TFs.
+
+**Rotation → Richtung:**
+- Winkel 0 → Dome schaut nach vorn (X-Achse von `base_link`).
+- Positiver Winkel → Dome dreht gegen den Uhrzeigersinn (Z-Achse, von oben).
+- Hardware-Limit ±100° (A4988 Stepper, aus IDENTITY.md).
 
 ## Cortex ESP32 (LOLIN D32) – Power Controller + Status
 
